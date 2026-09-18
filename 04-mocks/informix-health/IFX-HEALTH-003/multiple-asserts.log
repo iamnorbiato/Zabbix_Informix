@@ -1,0 +1,12 @@
+10:00:00 Informix Dynamic Server Started.
+10:01:15 Assert Failed: First example failure
+10:01:15 Who: Session(42, user@host, 12345, 0x12345678)
+10:01:15 File: first.c Line: 100
+10:01:15 See Also: /informix/tmp/af.first
+
+10:05:20 Checkpoint Completed.
+
+10:07:30 Assert Failed: Second example failure
+10:07:30 Who: Session(51, user2@host, 22345, 0x87654321)
+10:07:30 File: second.c Line: 200
+10:07:30 See Also: /informix/tmp/af.second

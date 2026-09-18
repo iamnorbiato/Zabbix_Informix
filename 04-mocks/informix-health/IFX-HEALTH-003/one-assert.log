@@ -1,0 +1,7 @@
+10:00:00 Informix Dynamic Server Started.
+10:01:15 Assert Failed: Example failure
+10:01:15 Who: Session(42, user@host, 12345, 0x12345678)
+10:01:15 Thread(7, sqlexec, 12345678, 1)
+10:01:15 File: example.c Line: 123
+10:01:15 Action: Please contact IBM Technical Support.
+10:01:15 See Also: /informix/tmp/af.abc123

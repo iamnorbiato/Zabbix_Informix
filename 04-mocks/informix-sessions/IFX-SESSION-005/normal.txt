@@ -1,0 +1,3 @@
+REASON_A|Synthetic reason A|12
+REASON_B|Synthetic reason B|7
+REASON_C|Synthetic reason C|3

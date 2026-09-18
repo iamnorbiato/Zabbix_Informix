@@ -1,0 +1,8 @@
+10:00:00 Informix Dynamic Server Started.
+10:01:00 Assert Warning: Example warning
+10:02:00 Checkpoint Completed.
+10:03:00 Assert Failed: Real assertion failure
+10:03:00 Who: Session(77, user@host, 33333, 0x11223344)
+10:03:00 File: failure.c Line: 300
+10:03:00 See Also: /informix/tmp/af.failure
+10:04:00 Logical Log 16 Complete.

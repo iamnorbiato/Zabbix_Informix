@@ -1,0 +1,6 @@
+10:00:00 Informix Dynamic Server Started.
+10:01:00 Checkpoint Completed.
+10:05:00 Assert Failed: New assertion after monitoring started
+10:05:00 Who: Session(88, user@host, 44444, 0x55667788)
+10:05:00 File: newfailure.c Line: 400
+10:05:00 See Also: /informix/tmp/af.newfailure

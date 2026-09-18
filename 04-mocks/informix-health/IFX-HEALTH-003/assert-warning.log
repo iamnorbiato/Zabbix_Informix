@@ -1,0 +1,4 @@
+10:00:00 Informix Dynamic Server Started.
+10:03:00 Assert Warning: Example warning condition
+10:03:00 Who: Session(42, user@host, 12345, 0x12345678)
+10:03:00 File: warning.c Line: 50

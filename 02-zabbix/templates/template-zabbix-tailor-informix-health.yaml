@@ -1,0 +1,39 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    - uuid: d8dd2d075c6a4b6c8ee5d55e2100f014
+      template: 'Template Zabbix Tailor Informix Health'
+      name: 'Template Zabbix Tailor Informix Health'
+      groups:
+        - name: Templates
+      items:
+        - uuid: b25cae27e5064d64ae9434b3784f4500
+          name: 'HEALTH-003 — assertion failures count'
+          type: DEPENDENT
+          key: ifx.health.assert_failures.count
+          delay: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '(?m)^COUNT\|([0-9]+)$'
+                - \1
+          master_item:
+            key: ifx.health.assert_failures.raw
+          triggers:
+            - uuid: 8465f29ed9df4d1ebe883f7f0c1c7167
+              expression: 'last(/Template Zabbix Tailor Informix Health/ifx.health.assert_failures.count)>0'
+              name: 'Informix HEALTH-003: new assertion failure event(s) detected'
+              priority: HIGH
+              tags:
+                - tag: informix
+                  value: health-003
+        - uuid: 4c8082f8bea54326884acd74f07e388f
+          name: 'Informix HEALTH-003 — raw collector output'
+          type: ZABBIX_ACTIVE
+          key: ifx.health.assert_failures.raw
+          value_type: TEXT
+          trends: '0'
+          timeout: 30s

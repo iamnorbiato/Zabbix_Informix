@@ -1,0 +1,1 @@
+IBM Informix Dynamic Server Version 14.10.FC10 -- Fast Recovery -- Up 00:03:17 -- 8388608 Kbytes
