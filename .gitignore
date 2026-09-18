@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Private Informix connection credentials
+**/informix-connect.sql
+
+# Collector runtime state and temporary files
+**/*.last-id
+**/informix-batch.*.sql
+**/informix-result.*.unl
+**/informix-statement.*.sql
+
+# Local test artefacts
+**/test-output.txt
+**/test-unload.unl
