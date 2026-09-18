@@ -58,3 +58,17 @@ zabbix_export:
               tags:
                 - tag: informix
                   value: health-001
+        - uuid: 18b7824b8d4341c591c81d50746cca71
+          name: 'HEALTH-002 — instance uptime'
+          type: ZABBIX_ACTIVE
+          key: ifx.health.instance_uptime
+          units: uptime
+          timeout: 30s
+          triggers:
+            - uuid: a761df1690804ffabb87046cf0465ad0
+              expression: 'last(/Template Zabbix Tailor Informix Health/ifx.health.instance_uptime)<last(/Template Zabbix Tailor Informix Health/ifx.health.instance_uptime,#2)'
+              name: 'Informix HEALTH-002: instance restart detected'
+              priority: WARNING
+              tags:
+                - tag: informix
+                  value: health-002

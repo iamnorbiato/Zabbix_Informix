@@ -87,6 +87,7 @@ agent_config="${agent_include_dir}/zabbix-informix.conf"
 
 rm -f "${agent_config}" || fail "Unable to remove Zabbix Agent configuration."
 rm -f "${launcher_home}/ifx-health-001" || fail "Unable to remove HEALTH-001 launcher."
+rm -f "${launcher_home}/ifx-health-002" || fail "Unable to remove HEALTH-002 launcher."
 rm -f "${launcher_home}/ifx-health-003" || fail "Unable to remove HEALTH-003 launcher."
 
 if [[ -d "${launcher_home}" ]]; then

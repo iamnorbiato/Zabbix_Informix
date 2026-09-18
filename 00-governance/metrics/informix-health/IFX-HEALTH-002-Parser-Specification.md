@@ -1,18 +1,24 @@
 # IFX-HEALTH-002 — Parser Specification
 
+> Historical mock-parser specification.
+>
+> This document is retained for engineering traceability. It is superseded for operational implementation by `IFX-HEALTH-002-Instance-Uptime.md`, which defines the remote SQL collector based on `sysmaster:sysshmhdr` and `bttime`.
+
 ## 1. Purpose
 
 This document defines the expected parsing behavior for:
 
 `IFX-HEALTH-002 — Instance Uptime`
 
-The parser shall extract the Informix instance uptime from the candidate `onstat -` output and normalize it into total seconds.
+This historical parser extracted uptime from mocked `onstat -` output and normalized it into total seconds.
+
+It is not used by the deployed collector.
 
 ---
 
-# 2. Input Source
+# 2. Historical Mock Input Source
 
-Current candidate source:
+Historical mock candidate source:
 
 ```text
 onstat -
@@ -396,19 +402,15 @@ non-zero process exit code
 
 ---
 
-# 20. Shared Source Consideration
+# 20. Historical Shared Source Consideration
 
-`IFX-HEALTH-001` and `IFX-HEALTH-002` currently share:
+The former mock designs for `IFX-HEALTH-001` and `IFX-HEALTH-002` shared:
 
 ```text
 onstat -
 ```
 
-Standalone parsers are acceptable during mock validation.
-
-This shall not imply separate source executions in the eventual runtime collection architecture.
-
-The future collector should permit one source execution to feed both metrics.
+This section describes the former mock architecture only. The deployed HEALTH-001 and HEALTH-002 collectors use independent low-cost remote SQL statements against `sysmaster:sysshmhdr`.
 
 ---
 
@@ -429,36 +431,46 @@ The parser specification is approved for mock implementation when:
 
 ---
 
-# 22. Current Status
+# 22. Historical Status
 
-Specification:
+Historical specification:
 
-`APPROVED`
+`ARCHIVED — SUPERSEDED FOR OPERATIONAL IMPLEMENTATION`
 
 Mock inputs:
 
 `AVAILABLE`
 
-Parser implementation:
+Historical parser implementation:
 
-`IMPLEMENTED`
+`RETAINED AS MOCK MATERIAL ONLY`
 
 Mock validation:
 
 `PASSED — 7/7 tests`
 
-Metric lifecycle state:
+Operational metric lifecycle state:
 
-`MOCK_VALIDATED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Real environment validation:
+Target Informix/AIX validation:
 
 `PENDING`
 
 ---
 
-# 23. Next Step
+# 23. Current Operational Reference
 
-After approval of this specification, implement the minimum `IFX-HEALTH-002` parser against the available mocks.
+The operational implementation is defined by:
 
-The implementation shall remain independent from Zabbix template development.
+```text
+00-governance/metrics/informix-health/IFX-HEALTH-002-Instance-Uptime.md
+```
+
+The deployed collector uses:
+
+```text
+sysmaster:sysshmhdr
+name = 'bttime'
+CAST(DBINFO('utc_current') - value AS INT8)
+```

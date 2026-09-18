@@ -130,8 +130,10 @@ esac
 [[ -f "${informix_sqlhosts}" ]] || fail "Informix sqlhosts file not found: ${informix_sqlhosts}"
 [[ -f "${connection_source}" ]] || fail "Connection file not found: ${connection_source}"
 [[ -f "${release_dir}/01-statements/informix-health/IFX-HEALTH-001-Instance-State.sql" ]] || fail "HEALTH-001 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-health/IFX-HEALTH-002-Instance-Uptime.sql" ]] || fail "HEALTH-002 statement is missing from the release."
 [[ -f "${release_dir}/01-statements/informix-health/IFX-HEALTH-003-Assert-Failures.sql" ]] || fail "HEALTH-003 statement is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-state.ksh" ]] || fail "HEALTH-001 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/health/ifx-health-uptime.ksh" ]] || fail "HEALTH-002 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-assert-failures.ksh" ]] || fail "HEALTH-003 collector is missing from the release."
 [[ -f "${release_dir}/03-deployment/zabbix-informix.conf.template" ]] || fail "Zabbix Agent template is missing from the release."
 
@@ -191,14 +193,17 @@ chown root:zabbix "${runtime_env}" || fail "Unable to set runtime-configuration 
 chmod 640 "${runtime_env}" || fail "Unable to protect runtime configuration."
 
 cp "${release_dir}/03-deployment/launchers/ifx-health-001" "${launcher_home}/ifx-health-001" || fail "Unable to install HEALTH-001 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-health-002" "${launcher_home}/ifx-health-002" || fail "Unable to install HEALTH-002 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-health-003" "${launcher_home}/ifx-health-003" || fail "Unable to install HEALTH-003 launcher."
 
 chown root:zabbix \
     "${launcher_home}/ifx-health-001" \
+    "${launcher_home}/ifx-health-002" \
     "${launcher_home}/ifx-health-003" || fail "Unable to set launcher ownership."
 
 chmod 750 \
     "${launcher_home}/ifx-health-001" \
+    "${launcher_home}/ifx-health-002" \
     "${launcher_home}/ifx-health-003" || fail "Unable to protect launchers."
 
 sed \

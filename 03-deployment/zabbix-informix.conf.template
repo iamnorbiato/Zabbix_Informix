@@ -2,4 +2,5 @@
 # @RUNTIME_ENV@ and @LAUNCHER_HOME@ are replaced by the installer.
 
 UserParameter=ifx.health.instance_state,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-001
+UserParameter=ifx.health.instance_uptime,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-002
 UserParameter=ifx.health.assert_failures.raw,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-003

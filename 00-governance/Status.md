@@ -7,7 +7,7 @@
 Informix Health status:
 
 - IFX-HEALTH-001 — Instance State — DEVELOPMENT_RUNTIME_VALIDATED
-- IFX-HEALTH-002 — Instance Uptime — MOCK_VALIDATED
+- IFX-HEALTH-002 — Instance Uptime — DEVELOPMENT_RUNTIME_VALIDATED
 - IFX-HEALTH-003 — Assert Failures — DEVELOPMENT_RUNTIME_VALIDATED
 - IFX-HEALTH-004 — Checkpoint Count — MOCK_VALIDATED
 - IFX-HEALTH-005 — Checkpoint Duration — MOCK_VALIDATED
@@ -15,7 +15,7 @@ Informix Health status:
 - IFX-HEALTH-007 — LRU Writes — MOCK_VALIDATED
 - IFX-HEALTH-008 — Foreground Writes — MOCK_VALIDATED
 
-`DEVELOPMENT_RUNTIME_VALIDATED` for IFX-HEALTH-001 and IFX-HEALTH-003 means that their remote SQL collectors, Informix Client SDK, Zabbix Agent active checks, Zabbix items and triggers were validated in the Linux development topology.
+`DEVELOPMENT_RUNTIME_VALIDATED` for IFX-HEALTH-001, IFX-HEALTH-002 and IFX-HEALTH-003 means that their remote SQL collectors, Informix Client SDK, Zabbix Agent active checks, Zabbix items and trigger configurations were validated in the Linux development topology.
 
 Target-environment validation remains pending. The production topology may use Informix on AIX and a separate Zabbix Server, Agent and Client SDK host.
 

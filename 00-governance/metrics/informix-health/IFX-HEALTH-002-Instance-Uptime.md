@@ -2,17 +2,15 @@
 
 ## 1. Purpose
 
-This document defines the engineering specification and validation state of metric:
+This document defines the engineering contract and validation status for:
 
 `IFX-HEALTH-002 — Instance Uptime`
 
-The metric represents the elapsed time since the current IBM Informix instance was started.
-
-This document is the authoritative engineering definition of this metric before Zabbix implementation.
+The metric reports elapsed time, in seconds, since the current IBM Informix engine startup.
 
 ---
 
-# 2. Monitoring Domain
+## 2. Monitoring Domain
 
 Domain:
 
@@ -22,67 +20,48 @@ Metric ID:
 
 `IFX-HEALTH-002`
 
-Metric Name:
+Metric name:
 
 `Instance Uptime`
 
 ---
 
-# 3. Objective
+## 3. Objective
 
-The objective of this metric is to determine how long the current Informix instance has been running.
+The metric supports:
 
-The metric shall support:
-
-- detection of recent instance restarts;
-- visualization of instance availability history;
-- correlation of restarts with operational events;
-- identification of unexpected uptime resets;
-- future restart-related alerting.
+- visibility of the current engine uptime;
+- detection of a decrease in uptime, indicating an instance restart;
+- correlation of restart events with Informix, Zabbix and operating-system events.
 
 ---
 
-# 4. Candidate Source
+## 4. Authoritative Source
 
-Initial candidate source:
+The operational source is:
 
-```text
-onstat -
+`sysmaster:sysshmhdr`
+
+The collector uses the row where:
+
+```sql
+name = 'bttime'
 ```
 
-Representative output:
+`bttime` is the engine boot-time epoch value. Uptime is calculated from the current UTC epoch value.
 
-```text
-IBM Informix Dynamic Server Version 14.10.FC10 -- On-Line -- Up 123 days 04:32:10 -- 8388608 Kbytes
+```sql
+SELECT
+    CAST(DBINFO('utc_current') - value AS INT8) AS uptime_seconds
+FROM sysshmhdr
+WHERE name = 'bttime';
 ```
 
-The same source currently used by `IFX-HEALTH-001` exposes both instance state and uptime.
-
-This creates an important future collection optimization opportunity: one execution of `onstat -` may supply both metrics.
-
-No duplicate `onstat -` execution should be introduced merely because the metrics have different IDs.
+The `INT8` cast is required so that the SQL collector receives an integer result rather than a decimal-formatted unload value.
 
 ---
 
-# 5. Current Validation Mode
-
-The target IBM AIX / Informix environment is not currently available.
-
-Validation shall initially use:
-
-1. documented Informix behavior;
-2. representative mocked outputs;
-3. parser tests against those mocks.
-
-Current validation target:
-
-`MOCK_VALIDATED`
-
-Real environment validation remains mandatory before `SOURCE_VALIDATED`.
-
----
-
-# 6. Metric Semantics
+## 5. Metric Semantics
 
 Metric type:
 
@@ -92,349 +71,234 @@ Unit:
 
 `seconds`
 
-The normalized value shall represent total elapsed uptime in seconds.
+The returned value is the elapsed time since the current engine boot time.
 
-Example:
+It is not a counter. A lower valid value than the previous valid sample indicates a restart or a change of monitored instance identity.
+
+---
+
+## 6. Source Validation
+
+The Linux development topology returned:
 
 ```text
-Up 1 days 01:00:00
+bttime:      1789492156
+utc_current: 1789749221
+uptime:      257065 seconds
 ```
 
-shall become:
+After a subsequent collection, uptime changed from `257065` to `257102`, an increase of `37` seconds.
+
+The explicit `INT8` query returned:
 
 ```text
-90000
+raw_uptime:     257300
+uptime_seconds: 257300
 ```
 
-The original formatted Informix uptime string shall not be used as the primary monitoring value.
+This validates the source calculation and its expected continuous growth in the development environment.
 
 ---
 
-# 7. Normalization
-
-The parser shall convert the Informix uptime representation into total seconds.
-
-Conceptually:
+## 7. Collection Architecture
 
 ```text
-total_seconds =
-    (days * 86400)
-  + (hours * 3600)
-  + (minutes * 60)
-  + seconds
+Informix instance
+    ↓ remote SQL through Informix Client SDK
+sysmaster:sysshmhdr (bttime)
+    ↓
+ifx-health-uptime.ksh
+    ↓
+Zabbix Agent active item
+    ↓
+Zabbix Server
 ```
 
-Example:
+The collector statement is:
 
 ```text
-123 days 04:32:10
+01-statements/informix-health/IFX-HEALTH-002-Instance-Uptime.sql
 ```
 
-becomes:
+The collector implementation is:
 
 ```text
-10643530
+05-collectors/informix/health/ifx-health-uptime.ksh
 ```
 
 ---
 
-# 8. Expected Input Variations
+## 8. Collector Output Contract
 
-Initial mocks shall cover at least:
+On success, standard output contains one non-negative integer:
 
 ```text
-Up 123 days 04:32:10
-Up 1 days 00:00:01
-Up 0 days 00:03:17
+257337
 ```
 
-Possible singular/plural and formatting differences must remain subject to source validation.
+An empty, decimal-formatted, malformed, negative or multi-record result is a collection failure. It must not become a synthetic uptime value.
 
-The parser shall not assume that mocked formatting is authoritative for every supported Informix version.
+Diagnostics belong to standard error.
 
 ---
 
-# 9. State Independence
+## 9. Collection Failure Semantics
 
-Instance uptime is a separate metric from instance state.
+The following conditions MUST NOT produce uptime `0` or any other synthetic value:
 
-For example, an Informix banner containing:
+- Informix Client SDK failure;
+- remote SQL connection failure;
+- invalid `INFORMIXSERVER` or `sqlhosts` configuration;
+- permission failure;
+- collector execution failure;
+- timeout;
+- malformed query result.
+
+A collection failure means that uptime cannot be determined. It is distinct from a valid near-zero uptime after a restart.
+
+---
+
+## 10. Parameterized Deployment
+
+The collector is installed through the versioned deployment process and does not execute the repository working tree.
+
+The deployment installs a dedicated HEALTH-002 launcher and publishes:
 
 ```text
-Quiescent -- Up 123 days 04:32:10
+ifx.health.instance_uptime
 ```
 
-still contains a potentially valid uptime.
+Runtime paths, Client SDK location, Informix server identifier, sqlhosts and private connection file are provided through the external runtime configuration.
 
-The uptime parser shall not require the instance to be `On-Line` merely to extract uptime.
+Credentials remain outside Git.
 
 ---
 
-# 10. Version Independence
+## 11. Zabbix Representation
 
-The parser shall not depend on a specific Informix version such as:
+Template:
+
+`Template Zabbix Tailor Informix Health`
+
+Implemented item:
+
+| Field | Value |
+|---|---|
+| Name | `HEALTH-002 — instance uptime` |
+| Type | Zabbix agent (active) |
+| Key | `ifx.health.instance_uptime` |
+| Value type | Numeric unsigned |
+| Units | `uptime` |
+| Update interval | 1 minute |
+| Timeout | 30 seconds |
+| Trends | 365 days in the development template |
+
+The Zabbix frontend renders the received seconds as a human-readable uptime value. The stored source value remains seconds.
+
+---
+
+## 12. Restart Detection
+
+Implemented trigger:
 
 ```text
-14.10.FC10
+Name: Informix HEALTH-002: instance restart detected
+Severity: Warning
+Expression: last(.../ifx.health.instance_uptime)<last(.../ifx.health.instance_uptime,#2)
 ```
 
-Version information is unrelated to uptime normalization.
+The trigger opens when a valid current uptime is lower than the preceding valid sample and recovers on the following non-decreasing sample.
+
+The normal uptime collection and trigger configuration were validated. A restart was not forced in the development environment.
+
+Target-environment validation must define maintenance-window handling, expected restart scenarios and escalation policy.
 
 ---
 
-# 11. Memory Independence
+## 13. Dependencies
 
-The parser shall not depend on the shared-memory value appearing after the uptime.
+The metric depends on:
 
-Example:
-
-```text
-8388608 Kbytes
-```
-
-must have no effect on the resulting uptime value.
+- Informix Client SDK on the collection host;
+- correct `INFORMIXSERVER` and `INFORMIXSQLHOSTS` values;
+- private connection credentials readable by the Zabbix service account;
+- SQL access to `sysmaster:sysshmhdr`;
+- Zabbix Agent active checks reaching the Zabbix Server.
 
 ---
 
-# 12. Invalid or Missing Uptime
+## 14. Historical Mock Design
 
-If a valid uptime cannot be identified, the collector must not return:
+Earlier project work parsed uptime from `onstat -` output. That parser and its mock cases remain historical design material only.
 
-```text
-0
-```
-
-unless the source explicitly and validly reports zero uptime.
-
-Missing, malformed or unparseable uptime represents:
-
-`COLLECTION_FAILURE`
-
-This distinction prevents parser failures from being interpreted as a newly started Informix instance.
+They are superseded for operational implementation by the remote SQL source defined in section 4.
 
 ---
 
-# 13. Instance Down
-
-If the Informix instance is unavailable and `onstat -` cannot provide a valid uptime, this metric shall not manufacture an uptime value.
-
-Instance availability belongs primarily to:
-
-`IFX-HEALTH-001 — Instance State`
-
-Therefore an unavailable instance normally means that no valid uptime sample can be collected.
-
-The future Zabbix architecture shall determine how unsupported/unavailable uptime samples are represented operationally.
-
----
-
-# 14. Restart Semantics
-
-A significant decrease in uptime between valid samples indicates that the Informix instance was restarted or that collection changed to a different instance.
-
-Example:
-
-```text
-Previous: 864000
-Current : 120
-```
-
-The raw metric itself shall only report uptime.
-
-Restart detection should preferably be derived by Zabbix rather than embedded as monitoring logic inside the parser.
-
----
-
-# 15. Expected Zabbix Representation
-
-Conceptual future item key:
-
-```text
-informix.instance.uptime
-```
-
-Final naming convention remains unapproved.
-
-Expected value type:
-
-`Numeric unsigned`
-
-Expected unit:
-
-`uptime`
-
-or equivalent Zabbix representation appropriate for seconds.
-
-The stored raw value shall remain seconds.
-
----
-
-# 16. Candidate Collection Frequency
-
-Frequency class:
-
-`MEDIUM`
-
-However, because `IFX-HEALTH-001` and `IFX-HEALTH-002` currently share the same candidate source, the eventual collection architecture should avoid executing `onstat -` independently for each metric.
-
-The final effective frequency may therefore follow the shared collection cycle.
-
----
-
-# 17. Expected Collection Cost
-
-Expected source cost:
-
-`LOW`
-
-The actual cost must still be confirmed against the real Informix environment.
-
----
-
-# 18. Discovery Requirement
-
-Low-Level Discovery:
-
-`NO`
-
-The metric belongs to a specific Informix instance.
-
-Multi-instance host modeling remains a separate architectural concern.
-
----
-
-# 19. Alerting Relevance
-
-Alerting:
-
-`CONDITIONAL`
-
-Uptime itself is primarily informational.
-
-Useful future conditions may include:
-
-- unexpected restart;
-- restart outside maintenance window;
-- repeated restarts;
-- unusually short uptime.
-
-These conditions should be derived from the raw metric rather than encoded in the parser.
-
----
-
-# 20. Grafana Relevance
-
-Grafana:
-
-`YES`
-
-Expected uses include:
-
-- current uptime;
-- restart visualization;
-- correlation with assert failures;
-- correlation with checkpoint behavior;
-- correlation with backup/replication events;
-- correlation with AIX events.
-
----
-
-# 21. Collection Optimization
-
-`IFX-HEALTH-001` and `IFX-HEALTH-002` currently share:
-
-```text
-onstat -
-```
-
-as their candidate source.
-
-Therefore the architecture should eventually favor:
-
-```text
-one source execution
-        │
-        ├── Instance State
-        └── Instance Uptime
-```
-
-rather than:
-
-```text
-onstat - → State
-onstat - → Uptime
-```
-
-This follows the project principle that shared or expensive source execution should not be unnecessarily repeated.
-
-The current standalone parsers may remain independent for mock validation.
-
----
-
-# 22. Mock Validation Criteria
-
-The metric may become `MOCK_VALIDATED` when tests demonstrate:
-
-1. valid multi-day uptime conversion;
-2. valid single-day uptime conversion;
-3. valid near-zero uptime conversion;
-4. uptime extraction independent of instance state;
-5. malformed uptime causes collection failure;
-6. missing uptime causes collection failure;
-7. parser does not depend on Informix version;
-8. parser does not depend on memory value;
-9. collection failure does not become uptime `0`.
-
----
-
-# 23. Real Environment Validation Criteria
-
-The metric may become `SOURCE_VALIDATED` only after the real environment confirms:
-
-- actual `onstat -` uptime format;
-- singular/plural day representation;
-- behavior immediately after startup;
-- behavior in non-Online engine states;
-- behavior when uptime is unavailable;
-- command return codes;
-- source execution cost;
-- version-specific formatting differences.
-
----
-
-# 24. Current Status
+## 15. Development Runtime Validation
 
 Current lifecycle state:
 
-`MOCK_VALIDATED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Current source status:
+Validated in the Linux development topology:
 
-`CANDIDATE SOURCE — onstat -`
+- `bttime` source discovery;
+- UTC epoch subtraction and `INT8` output typing;
+- monotonic increase between valid samples;
+- SQL statement and collector execution;
+- installed launcher execution as user `zabbix`;
+- Zabbix Agent active key;
+- Zabbix item with `uptime` unit and 30-second timeout;
+- configured Warning restart-detection trigger;
+- exported template configuration.
 
-Current validation environment:
+Development topology:
 
-`MOCK VALIDATION PASSED — 7/7 tests`
-
-Real Informix/AIX validation:
-
-`PENDING`
+```text
+Informix and Zabbix Server: home
+Informix Client SDK and Zabbix Agent: cluster-prime
+```
 
 ---
 
-# 25. Exit Criteria
+## 16. Target Environment Validation Criteria
 
-`IFX-HEALTH-002` shall complete the current documentation/mock phase when:
+Before promotion beyond development runtime validation, validate against the destination Informix/AIX environment:
 
-- metric semantics are approved;
-- uptime normalization is approved;
-- mocks are established;
-- parser behavior is specified;
-- parser is implemented;
-- all approved mock tests pass.
+- `bttime` availability and permissions;
+- UTC epoch and `INT8` arithmetic behavior for the deployed Informix version;
+- engine boot-time semantics across Informix restart;
+- Client SDK connectivity and authentication;
+- service-account permissions;
+- collection cost under expected workload;
+- restart trigger behavior during an approved restart;
+- maintenance-window and escalation policy;
+- deployment and rollback through the versioned scripts.
 
-After that:
+---
 
-`IFX-HEALTH-002 → MOCK_VALIDATED`
+## 17. Grafana
 
-Real source validation shall remain pending until access to the target Informix/AIX environment becomes available.
+Grafana integration:
+
+`PENDING`
+
+A future dashboard may present uptime, restart markers, state transitions, assert failures and related AIX events.
+
+---
+
+## 18. Exit Criteria
+
+The development-runtime phase is complete when:
+
+- a SQL source and native unit are defined;
+- uptime is returned as an integer number of seconds;
+- collection failure remains distinct from zero uptime;
+- the installed collector and active Agent key are validated;
+- restart trigger configuration is versioned;
+- deployment is independent from the repository path.
+
+These criteria are satisfied in the Linux development topology.
+
+Promotion to target-environment validation requires the checks in section 16.

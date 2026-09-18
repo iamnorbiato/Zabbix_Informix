@@ -1,22 +1,26 @@
 # IFX-HEALTH-001 — Parser Specification
 
+> Historical mock-parser specification.
+>
+> This document is retained for engineering traceability. It is superseded for operational implementation by `IFX-HEALTH-001-Instance-State.md`, which defines the remote SQL collector based on `sysmaster:sysshmhdr` and `name = 'mode'`.
+
 ## 1. Purpose
 
 This document defines the expected parsing behavior for:
 
 `IFX-HEALTH-001 — Instance State`
 
-The parser shall transform Informix instance-state source output into a normalized monitoring value.
+This historical parser transformed mocked Informix instance-state output into a provisional normalized monitoring value.
 
-This specification exists before collector implementation.
+It is not used by the deployed collector.
 
 Its purpose is to make parser behavior deterministic and testable.
 
 ---
 
-# 2. Input Source
+# 2. Historical Mock Input Source
 
-Current candidate source:
+Historical mock candidate source:
 
 ```text
 onstat -
@@ -522,36 +526,45 @@ The parser specification is considered approved for mock implementation when:
 
 ---
 
-# 21. Current Status
+# 21. Historical Status
 
-Specification:
+Historical specification:
 
-`APPROVED`
+`ARCHIVED — SUPERSEDED FOR OPERATIONAL IMPLEMENTATION`
 
 Mock inputs:
 
 `AVAILABLE`
 
-Parser implementation:
+Historical parser implementation:
 
-`IMPLEMENTED`
+`RETAINED AS MOCK MATERIAL ONLY`
 
 Mock validation:
 
 `PASSED — 7/7 tests`
 
-Metric lifecycle state:
+Operational metric lifecycle state:
 
-`MOCK_VALIDATED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Real environment validation:
+Target Informix/AIX validation:
 
 `PENDING`
 
 ---
 
-# 22. Next Step
+# 22. Current Operational Reference
 
-After approval of this specification, the next step is to implement the minimum parser for `IFX-HEALTH-001` against the available mocks.
+The operational implementation is defined by:
 
-That implementation shall remain independent from Zabbix template development.
+```text
+00-governance/metrics/informix-health/IFX-HEALTH-001-Instance-State.md
+```
+
+The deployed collector uses:
+
+```text
+sysmaster:sysshmhdr
+name = 'mode'
+```

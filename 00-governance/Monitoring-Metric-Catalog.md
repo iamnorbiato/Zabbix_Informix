@@ -139,15 +139,15 @@ The Linux development topology validated the remote SQL source, parameterized in
 
 **Purpose**
 
-Determine how long the Informix instance has been continuously running.
+Determine elapsed time since the current Informix engine startup.
 
-**Candidate Source**
+**Authoritative Source**
 
-Informix engine information through `sysmaster` or `onstat`.
+`sysmaster:sysshmhdr`, using `name = 'bttime'`.
 
 **Collection Method**
 
-Statement or collector.
+Remote SQL collector through the Informix Client SDK, exposed by a Zabbix Agent active item.
 
 **Type**
 
@@ -155,7 +155,7 @@ Gauge.
 
 **Unit**
 
-Seconds.
+Seconds, returned as `INT8`.
 
 **Semantics**
 
@@ -163,7 +163,7 @@ Current uptime.
 
 **Frequency**
 
-MEDIUM.
+One minute in the development topology.
 
 **Cost**
 
@@ -175,15 +175,17 @@ No.
 
 **Trigger**
 
-Potentially, primarily for unexpected restart detection.
+Yes. A Warning-severity restart event is configured when the current uptime is lower than the preceding valid sample.
 
 **Grafana**
 
-Yes.
+Pending.
 
 **Validation Status**
 
-MOCK_VALIDATED.
+DEVELOPMENT_RUNTIME_VALIDATED.
+
+The Linux development topology validated the `bttime` SQL source, monotonic uptime growth, installed collector, active Zabbix item and restart-trigger configuration. Target Informix/AIX validation remains pending.
 
 ---
 
