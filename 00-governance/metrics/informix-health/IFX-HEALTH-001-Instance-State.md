@@ -2,17 +2,15 @@
 
 ## 1. Purpose
 
-This document defines the engineering specification and validation state of metric:
+This document defines the current engineering contract and validation status for:
 
 `IFX-HEALTH-001 — Instance State`
 
-The metric represents the current operational state of an IBM Informix instance.
-
-This document is the authoritative engineering definition of this metric before Zabbix implementation.
+The metric reports the native operational mode of one IBM Informix instance.
 
 ---
 
-# 2. Monitoring Domain
+## 2. Monitoring Domain
 
 Domain:
 
@@ -22,539 +20,360 @@ Metric ID:
 
 `IFX-HEALTH-001`
 
-Metric Name:
+Metric name:
 
 `Instance State`
 
 ---
 
-# 3. Objective
+## 3. Objective
 
-The objective of this metric is to determine whether the Informix instance is operational and identify its current engine state.
+The metric determines the current engine mode returned by Informix and distinguishes a valid engine state from a failure to collect that state.
 
-The metric shall allow the monitoring system to distinguish normal operation from transitional, administrative or unavailable states.
+It answers these operational questions:
 
-Typical operational questions answered by this metric are:
-
-- Is the Informix instance running?
-- Is the instance Online?
-- Is it in Recovery?
-- Is it Quiescent?
-- Is it shutting down?
-- Is the Informix engine unavailable?
+- Is the Informix instance Online?
+- Is it in an administrative or transitional mode?
+- Is a valid state currently being collected?
 
 ---
 
-# 4. Candidate Source
+## 4. Authoritative Source
 
-Initial candidate source:
+The operational source is:
 
-```text
-onstat -
+`sysmaster:sysshmhdr`
+
+The collector selects the row where:
+
+```sql
+name = 'mode'
 ```
 
-`onstat -` is expected to provide the Informix engine status in the command header.
+The authoritative value is `sysshmhdr.value`.
 
-This source is currently considered:
+The current operational statement is:
 
-`CANDIDATE`
+```sql
+SELECT value
+FROM sysshmhdr
+WHERE name = 'mode';
+```
 
-It has not yet been validated against the target Informix environment.
+The source was executed successfully in the Linux development topology and returned:
 
----
+```text
+5|
+```
 
-# 5. Current Validation Mode
-
-The target IBM AIX / Informix environment is not currently available.
-
-Therefore this metric shall initially be validated through:
-
-1. documented Informix behavior;
-2. representative mocked command outputs;
-3. collector parsing tests against those mocks.
-
-This validation level shall be identified as:
-
-`MOCK_VALIDATED`
-
-and must not be confused with:
-
-`SOURCE_VALIDATED`
-
-Real environment validation remains mandatory before production deployment.
+`5` means `Online`.
 
 ---
 
-# 6. Metric Semantics
+## 5. Native Informix Mode Mapping
+
+The collector preserves the native numeric value. It does not translate it into an alternative numeric model.
+
+| Value | Operational Mode | Technical Description |
+|------:|------------------|-----------------------|
+| 0 | Initialization | The instance is initializing shared-memory structures and allocating engine resources. |
+| 1 | Quiescent | Administrative or single-user operational mode. |
+| 2 | Recovery | The instance is performing recovery processing. |
+| 3 | Backup | The instance is operating in applicable engine backup procedures. |
+| 4 | Shutdown | The instance is actively shutting down engine resources. |
+| 5 | Online | Normal operational state. The engine accepts normal user workload. |
+| 6 | Abort | The instance is processing an abort condition. |
+| 7 | User | Restricted user operational mode. |
+| 255 | Off-Line | Off-line mode when observable through the engine state structure. |
+
+The destination Informix/AIX environment must confirm the modes that are observable in that environment.
+
+---
+
+## 6. Metric Semantics
 
 Metric type:
 
 `STATE`
 
-The metric represents the current state of the Informix engine.
+Each successful collection represents the native engine mode observed at that moment.
 
-The metric is not a counter.
+The metric is not cumulative and is not a counter.
 
-The metric is not cumulative.
-
-Each collection represents the state observed at that moment.
-
----
-
-# 7. Expected Informix States
-
-The initial state model shall consider at least the following conceptual conditions:
-
-| Conceptual State | Meaning |
-|---|---|
-| Online | Instance available for normal operation |
-| Quiescent | Engine running in restricted administrative state |
-| Recovery | Engine performing recovery activity |
-| Shutdown | Engine shutting down or intentionally unavailable |
-| Down | Engine unavailable or inaccessible |
-
-Exact textual representations returned by supported Informix versions remain subject to real environment validation.
-
-No parser shall assume that these names are final until source validation is completed.
-
----
-
-# 8. Internal Normalized Representation
-
-Zabbix shall eventually receive a normalized numeric state rather than relying on arbitrary text.
-
-Initial proposed normalized mapping:
-
-| Value | State |
-|---:|---|
-| 0 | Down |
-| 1 | Shutdown |
-| 2 | Recovery |
-| 3 | Quiescent |
-| 4 | Online |
-| 99 | Unknown |
-
-This mapping is provisional until real Informix states are validated.
-
-The mapping shall be represented in Zabbix through a Value Map.
-
----
-
-# 9. Mock Input — Online
-
-Representative input:
+The healthy operational value is:
 
 ```text
-IBM Informix Dynamic Server Version 14.10.FCxx -- On-Line -- Up 123 days 04:32:10 -- 1234567 Kbytes
-```
-
-Expected normalized result:
-
-```text
-4
-```
-
-Expected logical state:
-
-```text
-Online
+5 = Online
 ```
 
 ---
 
-# 10. Mock Input — Quiescent
+## 7. Collection Architecture
 
-Representative input:
+The collector is executed remotely from the collection host. It does not execute `onstat`, `oncheck`, or monitoring logic on the Informix server.
 
 ```text
-IBM Informix Dynamic Server Version 14.10.FCxx -- Quiescent -- Up 123 days 04:32:10 -- 1234567 Kbytes
+Informix instance
+    ↓ remote SQL through Informix Client SDK
+sysmaster:sysshmhdr
+    ↓
+ifx-health-state.ksh
+    ↓
+Zabbix Agent active item
+    ↓
+Zabbix Server
 ```
 
-Expected normalized result:
+The collector statement is:
 
 ```text
-3
+01-statements/informix-health/IFX-HEALTH-001-Instance-State.sql
 ```
 
-Expected logical state:
+The collector implementation is:
 
 ```text
-Quiescent
+05-collectors/informix/health/ifx-health-state.ksh
 ```
 
 ---
 
-# 11. Mock Input — Recovery
+## 8. Collector Output Contract
 
-Representative input:
-
-```text
-IBM Informix Dynamic Server Version 14.10.FCxx -- Fast Recovery -- Up 00:03:17 -- 1234567 Kbytes
-```
-
-Expected normalized result:
+On success, standard output contains exactly one supported native mode code:
 
 ```text
-2
+5
 ```
 
-Expected logical state:
+Supported values are:
 
 ```text
-Recovery
+0, 1, 2, 3, 4, 5, 6, 7, 255
 ```
 
-The exact recovery-state strings must be verified against the actual Informix version.
+The collector returns a non-zero exit code for an empty, malformed, unsupported, or multi-record SQL result.
+
+Diagnostics belong to standard error and must not be emitted as a valid state value.
 
 ---
 
-# 12. Mock Input — Shutdown
+## 9. Collection Failure Semantics
 
-A shutdown condition may be represented differently depending on the engine lifecycle stage.
+The following conditions MUST NOT produce a synthetic Informix state value:
 
-The exact `onstat` output must be validated in the target environment.
-
-For mock purposes, the conceptual expected result is:
-
-```text
-1
-```
-
-Expected logical state:
-
-```text
-Shutdown
-```
-
-No exact textual parser shall be finalized for this state before real source validation.
-
----
-
-# 13. Mock Input — Down / Unavailable
-
-A stopped Informix instance may cause `onstat` to fail rather than return a normal engine header.
-
-Representative condition:
-
-```text
-onstat: cannot attach to shared memory
-```
-
-or another non-zero command execution result indicating that the engine cannot be accessed.
-
-Expected normalized result:
-
-```text
-0
-```
-
-Expected logical state:
-
-```text
-Down
-```
-
-The distinction between:
-
-```text
-Informix is Down
-```
-
-and:
-
-```text
-collection itself failed
-```
-
-must be explicitly preserved.
-
-A command failure caused by permission, environment or collector problems must not automatically be interpreted as Informix Down.
-
----
-
-# 14. Unknown State
-
-If the collector successfully accesses Informix but receives a state that it does not recognize, the result shall be:
-
-```text
-99
-```
-
-Logical state:
-
-```text
-Unknown
-```
-
-Unknown shall be treated differently from Down.
-
-This protects the monitoring system against:
-
-- new Informix versions;
-- unexpected state strings;
-- parser incompatibility;
-- undocumented engine states.
-
----
-
-# 15. Collection Failure Semantics
-
-The following conditions must not automatically produce state `0`:
-
-- `onstat` binary not found;
-- incorrect Informix environment;
-- invalid `INFORMIXSERVER`;
+- Informix Client SDK failure;
+- remote SQL connection failure;
+- invalid `INFORMIXSERVER` or `sqlhosts` configuration;
 - permission failure;
 - collector execution failure;
 - timeout;
-- parser failure.
+- malformed or unsupported `sysshmhdr.value`.
 
-These represent collection problems rather than proven Informix engine state.
+In particular, `255` MUST NOT be synthesized when the remote SQL connection fails.
 
-The future collector shall therefore distinguish between:
-
-```text
-valid Informix state
-```
-
-and:
-
-```text
-collection failure
-```
+A collection failure means that the state cannot be determined. It is semantically distinct from a successfully returned engine mode.
 
 ---
 
-# 16. Expected Zabbix Representation
+## 10. Parameterized Deployment Contract
 
-The future Zabbix item is expected to conceptually represent:
+The Zabbix Agent never executes the repository working tree directly.
 
-```text
-informix.instance.state
-```
+The deployment process installs collector code to a configurable `IFX_COLLECTOR_HOME` and loads runtime values from a private configuration file.
 
-Final item naming convention is not yet approved.
-
-Expected type:
+Required runtime values are:
 
 ```text
-Numeric unsigned
+IFX_COLLECTOR_HOME
+IFX_INFORMIXDIR
+IFX_INFORMIXSERVER
+IFX_INFORMIXSQLHOSTS
+IFX_CONFIG_DIR
+IFX_STATE_DIR
+IFX_CONNECT_FILE
 ```
 
-Expected Value Map:
+The private Informix connection file is outside Git. It must be readable by the Zabbix service account and protected with restricted permissions.
+
+The development deployment uses these product-owned locations:
 
 ```text
-0  = Down
-1  = Shutdown
-2  = Recovery
-3  = Quiescent
-4  = Online
-99 = Unknown
+/opt/zabbix-informix
+/etc/zabbix-informix
+/usr/local/lib/zabbix-informix
+/etc/zabbix/zabbix_agentd.d/zabbix-informix.conf
 ```
 
-The exact Zabbix key shall be defined during template implementation.
+These are deployment defaults, not source-code paths. A destination environment may choose different configured locations.
 
 ---
 
-# 17. Candidate Collection Frequency
+## 11. Zabbix Representation
 
-Frequency class:
+Template:
 
-`HIGH`
+`Template Zabbix Tailor Informix Health`
 
-The instance state is a primary availability metric and should be collected frequently.
+Implemented item:
 
-The exact interval remains undefined until the Zabbix implementation phase.
+| Field | Value |
+|---|---|
+| Name | `HEALTH-001 — instance state code` |
+| Type | Zabbix agent (active) |
+| Key | `ifx.health.instance_state` |
+| Value type | Numeric unsigned |
+| Update interval | 1 minute |
+| Timeout | 30 seconds |
+| Trends | Disabled |
 
-Candidate intervals may later be evaluated in the range of tens of seconds rather than minutes.
-
-No final interval is established by this document.
+The item preserves the native Informix mode code. A future Zabbix value map may add human-readable presentation without changing the stored value.
 
 ---
 
-# 18. Expected Collection Cost
+## 12. Alerting
 
-Expected cost:
+The following High-severity triggers are configured in the template.
+
+### 12.1 Valid non-Online state
+
+```text
+Name: Informix HEALTH-001: instance is not Online
+Expression: last(.../ifx.health.instance_state)<>5
+```
+
+This trigger applies only when the collector successfully returns a valid mode code other than `5`.
+
+### 12.2 No state received
+
+```text
+Name: Informix HEALTH-001: instance state has not been collected for 3 minutes
+Expression: nodata(.../ifx.health.instance_state,3m)=1
+```
+
+This trigger reports absence of data. It does not assert that the Informix instance is Off-Line.
+
+The normal state `5` was collected and the template configuration was verified. A non-Online engine mode and a three-minute no-data condition were not forced in the development environment because doing so would require disrupting the instance or collection path.
+
+Target-environment trigger severity and maintenance-window policy remain subject to operational validation.
+
+---
+
+## 13. Collection Frequency and Cost
+
+Configured development interval:
+
+`1 minute`
+
+Configured timeout:
+
+`30 seconds`
+
+Observed development cost:
 
 `LOW`
 
-`onstat -` is expected to be a lightweight engine-status operation.
+The collector executes one remote SQL query against `sysmaster:sysshmhdr`.
 
-This assumption must still be confirmed during real environment validation.
+The target Informix/AIX environment must confirm acceptable cost under expected production workload.
 
 ---
 
-# 19. Discovery Requirement
+## 14. Discovery Requirement
 
 Low-Level Discovery:
 
 `NO`
 
-This metric belongs to a specific Informix instance and does not require resource discovery.
-
-If a single AIX host runs multiple Informix instances, instance-level discovery or host-modeling strategy shall be addressed separately.
+This metric represents one configured Informix instance. A future multi-instance host model must define explicit instance identity and deployment configuration.
 
 ---
 
-# 20. Alerting Relevance
+## 15. Dependencies
 
-Alerting:
+The metric depends on:
 
-`YES`
-
-The primary healthy state is expected to be:
-
-```text
-Online
-```
-
-Potential future severity model:
-
-| State | Initial Interpretation |
-|---|---|
-| Online | OK |
-| Quiescent | Warning |
-| Recovery | Context-dependent |
-| Shutdown | High / Disaster depending on context |
-| Down | Disaster |
-| Unknown | Warning / High depending on collection state |
-
-These are not final trigger definitions.
-
-Maintenance windows and expected administrative transitions must be considered before production triggers are implemented.
+- Informix Client SDK installed on the collection host;
+- correct `INFORMIXSERVER` and `INFORMIXSQLHOSTS` values;
+- a private connection file readable by the Zabbix service account;
+- SQL access to `sysmaster:sysshmhdr`;
+- Zabbix Agent active checks reaching the Zabbix Server.
 
 ---
 
-# 21. Grafana Relevance
+## 16. Historical Mock Design
 
-Grafana:
+Earlier project work modeled this metric through `onstat -` output and a provisional mapping such as `4 = Online`.
 
-`YES`
+That material remains historical mock-design context only. It is superseded for operational implementation by the native SQL mapping in section 5.
 
-The metric should be visible in the Informix Overview dashboard.
-
-Expected presentation:
-
-- current state;
-- state history;
-- transitions between operational states;
-- correlation with uptime and restart events.
+The historical mock parser is not used by the deployed collector.
 
 ---
 
-# 22. Dependencies
-
-This metric depends on:
-
-- correct Informix environment;
-- ability to execute the selected source;
-- correct target instance identification;
-- future collector execution mechanism.
-
-The metric does not depend on SQL connectivity if `onstat -` remains the approved source.
-
----
-
-# 23. Mock Validation Criteria
-
-The metric may be marked `MOCK_VALIDATED` only when the future parser or collection logic demonstrates correct behavior for at least:
-
-1. Online state;
-2. Quiescent state;
-3. Recovery state;
-4. engine unavailable condition;
-5. unknown state;
-6. command execution failure;
-7. malformed output.
-
-Mock validation shall verify that:
-
-- known states are normalized correctly;
-- unknown states do not become Down;
-- collection failures do not become valid engine states.
-
----
-
-# 24. Real Environment Validation Criteria
-
-The metric may progress to `SOURCE_VALIDATED` only after execution against a real Informix environment confirms:
-
-- actual `onstat -` output;
-- actual Online representation;
-- supported recovery-state representation;
-- behavior while Quiescent, if testable;
-- behavior when the engine is stopped, if testable;
-- command return codes;
-- command execution cost;
-- required permissions;
-- differences caused by Informix version.
-
-Observed outputs shall replace or supplement the mock examples in this document.
-
----
-
-# 25. Current Status
+## 17. Development Runtime Validation
 
 Current lifecycle state:
 
-`MOCK_VALIDATED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Current source status:
+Validated in the Linux development topology:
 
-`CANDIDATE SOURCE — onstat -`
+- remote SQL source `sysmaster:sysshmhdr`;
+- returned native value `5` for the Online state;
+- SQL statement artifact;
+- state collector syntax and direct execution;
+- parameterized installation independent from the repository path;
+- execution through the installed launcher as user `zabbix`;
+- Zabbix Agent active item;
+- exported Zabbix template configuration;
+- configured non-Online and no-data triggers.
 
-Current validation environment:
+Development topology:
 
-`MOCK VALIDATION PASSED — 7/7 tests`
-
-Real Informix/AIX validation:
-
-`PENDING`
+```text
+Informix and Zabbix Server: home
+Informix Client SDK and Zabbix Agent: cluster-prime
+```
 
 ---
 
-# 26. Exit Criteria
+## 18. Target Environment Validation Criteria
 
-`IFX-HEALTH-001` shall be considered complete for the current documentation/mock phase when:
+Before promotion beyond the development runtime status, validate against the destination Informix/AIX environment:
 
-- metric semantics are approved;
-- normalized state model is approved;
-- mock scenarios are established;
-- mock parsing behavior is validated;
-- known collection failures are distinguished from engine state.
+- availability and permissions for `sysmaster:sysshmhdr`;
+- native `mode` values observed for relevant engine states;
+- Informix Client SDK connectivity and authentication;
+- Zabbix Agent service-account permissions;
+- collector cost under expected workload;
+- behavior during approved administrative transitions;
+- trigger severity, maintenance-window and escalation policy;
+- deployment and rollback using the versioned installation process.
 
-After that, work may proceed to:
+---
 
-`IFX-HEALTH-002 — Instance Uptime`
+## 19. Grafana
 
-Real source validation of `IFX-HEALTH-001` shall remain pending until access to the target Informix/AIX environment becomes available.
+Grafana integration:
 
-## Instance State Mapping
+`PENDING`
 
-The operational state is obtained from:
+A future dashboard may present the current native code, human-readable mapping, state history, uptime, restart events and related availability signals.
 
-`sysmaster:sysshmhdr`
+---
 
-using the row:
+## 20. Exit Criteria
 
-`name = 'mode'`
+The development-runtime implementation phase is complete when:
 
-| Value | Operational Mode | Technical Description |
-|------:|------------------|-----------------------|
-| 0 | Initialization | The instance is initializing shared-memory structures and allocating engine resources. User connections are not yet accepted. |
-| 1 | Quiescent | Administrative/single-user operational mode. Normal user connections are restricted. |
-| 2 | Recovery | The instance is performing recovery processing, including fast recovery and other recovery-related operations. |
-| 3 | Backup | The instance is operating in backup mode during applicable engine backup procedures. |
-| 4 | Shutdown | The instance is actively shutting down threads, flushing pending work, and dismantling engine resources. |
-| 5 | Online | Normal operational state. The engine is available for normal user connections and workload processing. |
-| 6 | Abort | The instance is in an abort processing state following a critical engine condition. |
-| 7 | User | Restricted user operational mode used for controlled engine operations. |
-| 255 | Off-Line | Off-line state when observable through the engine state structure. A remotely unreachable or stopped instance normally cannot expose this value through SQL. |
+- the authoritative SQL source is defined;
+- native state-code semantics are documented;
+- the collector preserves the native numeric value;
+- collection failures remain distinct from state values;
+- the Zabbix item and trigger configuration is installed and validated;
+- deployment is parameterized and independent from the source repository path.
 
-### Collection Semantics
+These criteria are satisfied in the Linux development topology.
 
-`255` MUST NOT be synthesized when the remote SQL connection fails.
-
-Failure to connect to Informix is a collection/availability failure and is semantically distinct from an engine state successfully returned by `sysshmhdr`.
-
-The collector MUST preserve the numeric `mode` value as the authoritative metric value. Human-readable operational modes are presentation metadata and MUST NOT replace the numeric value.
+Promotion to target-environment validation requires the checks defined in section 18.

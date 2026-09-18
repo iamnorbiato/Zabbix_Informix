@@ -85,23 +85,15 @@ Exact intervals shall be established after collection cost is measured.
 
 **Purpose**
 
-Determine the current operational state of the Informix instance.
+Determine the current native operational mode of the Informix instance.
 
-Expected states include:
+**Authoritative Source**
 
-- Online;
-- Recovery;
-- Quiescent;
-- Shutdown;
-- Down.
-
-**Candidate Source**
-
-`onstat`
+`sysmaster:sysshmhdr`, using `name = 'mode'`.
 
 **Collection Method**
 
-Direct or collector.
+Remote SQL collector through the Informix Client SDK, exposed by a Zabbix Agent active item.
 
 **Type**
 
@@ -109,15 +101,15 @@ State.
 
 **Unit**
 
-State code.
+Native Informix mode code.
 
 **Semantics**
 
-Current state.
+Current engine mode observed at collection time.
 
 **Frequency**
 
-HIGH.
+One minute in the development topology.
 
 **Cost**
 
@@ -129,15 +121,17 @@ No.
 
 **Trigger**
 
-Yes.
+Yes. A High-severity problem is configured when the returned code differs from `5` (`Online`), and separately when no state is collected for three minutes.
 
 **Grafana**
 
-Yes.
+Pending.
 
 **Validation Status**
 
-MOCK_VALIDATED.
+DEVELOPMENT_RUNTIME_VALIDATED.
+
+The Linux development topology validated the remote SQL source, parameterized installed collector, active Zabbix item and trigger configuration. Target Informix/AIX validation remains pending.
 
 ---
 
@@ -197,19 +191,21 @@ MOCK_VALIDATED.
 
 **Purpose**
 
-Detect critical Informix assert failures and engine failures.
+Detect newly recorded critical Informix assertion-failure events.
 
-**Candidate Source**
+**Authoritative Source**
 
-`online.log`.
+`sysadmin:ph_alert`
+
+Only Event Alarm records with Class ID `6` and Event ID `6300` or `6500` are classified as assertion failures.
 
 **Collection Method**
 
-Event collector / log monitoring.
+Stateful remote SQL collector executed through the Informix Client SDK and exposed through a Zabbix Agent active item.
 
 **Type**
 
-Event and counter.
+Event batch and derived counter.
 
 **Unit**
 
@@ -217,15 +213,15 @@ Failures.
 
 **Semantics**
 
-New occurrences and accumulated occurrences.
+New classified assertion-failure events since the persisted `ph_alert.id` cursor.
 
 **Frequency**
 
-EVENT.
+One-minute Zabbix active-check interval in the development topology.
 
 **Cost**
 
-LOW to MEDIUM.
+LOW.
 
 **Discovery**
 
@@ -233,15 +229,17 @@ No.
 
 **Trigger**
 
-Yes.
+Yes. A High-severity problem is opened when the derived assertion-failure count is greater than zero.
 
 **Grafana**
 
-Yes.
+Pending.
 
 **Validation Status**
 
-MOCK_VALIDATED.
+DEVELOPMENT_RUNTIME_VALIDATED.
+
+The Linux development topology validated the remote SQL source, protected persistent state, collector locking, Zabbix Agent active collection, dependent counter item and High-severity trigger. Target Informix/AIX validation remains pending.
 
 ---
 

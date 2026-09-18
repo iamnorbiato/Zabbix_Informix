@@ -1,118 +1,67 @@
-#!/usr/bin/ksh
-
+#!/usr/bin/env ksh
 # ==============================================================================
 # Author  : Norba
-# Date    : 2026-09-14
+# Date    : 2026-09-18
 # Script  : ifx-health-state.ksh
-# Purpose : Parse and normalize the IBM Informix instance operational state.
+# Purpose : Collect the native IBM Informix instance operational mode through
+#           sysmaster:sysshmhdr.
 #
 # Change Control
 # Date    : 2026-09-14
 # Author  : Norba
-# Change  : Initial version.
+# Change  : Initial onstat-based mock parser.
+# Date    : 2026-09-18
+# Author  : Norba
+# Change  : Replace the onstat parser with remote SQL collection from
+#           sysmaster:sysshmhdr.
 # ==============================================================================
 
-#
-# IFX-HEALTH-001 — Instance State
-#
-# Input:
-#   $1 = file containing stdout from "onstat -"
-#
-# Output:
-#   0  = Down          (mock/provisional)
-#   1  = Shutdown      (reserved; not implemented)
-#   2  = Recovery
-#   3  = Quiescent
-#   4  = Online
-#   99 = Unknown
-#
-# Exit codes:
-#   0 = metric successfully determined
-#   1 = collection/parsing failure
-#
+IFX_HEALTH_DIR="$(cd "$(dirname "${.sh.file}")" && pwd)"
+IFX_INFORMIX_DIR="$(cd "${IFX_HEALTH_DIR}/.." && pwd)"
+IFX_REPOSITORY_DIR="$(cd "${IFX_HEALTH_DIR}/../../.." && pwd)"
+IFX_STATEMENTS_DIR="${IFX_REPOSITORY_DIR}/01-statements/informix-health"
 
+. "${IFX_INFORMIX_DIR}/lib/informix-db.ksh" || exit 1
 
-if [ "$#" -ne 1 ]; then
-    print -u2 "usage: $0 <input-file>"
+IFX_HEALTH_001_STATEMENT_FILE="${IFX_HEALTH_001_STATEMENT_FILE:-${IFX_STATEMENTS_DIR}/IFX-HEALTH-001-Instance-State.sql}"
+
+typeset dataset
+typeset state_code
+
+fail()
+{
+    print -u2 "${1}"
     exit 1
+}
+
+if (( $# != 0 )); then
+    fail "Usage: $0"
 fi
 
-INPUT_FILE="$1"
-
-if [ ! -r "$INPUT_FILE" ]; then
-    print -u2 "input file is not readable: $INPUT_FILE"
-    exit 1
+if [[ ! -f "${IFX_HEALTH_001_STATEMENT_FILE}" ]]; then
+    fail "HEALTH-001 statement file not found: ${IFX_HEALTH_001_STATEMENT_FILE}"
 fi
 
-OUTPUT="$(cat "$INPUT_FILE")"
+dataset="$(ifx_db_execute sysmaster "${IFX_HEALTH_001_STATEMENT_FILE}")" || {
+    fail "Unable to collect HEALTH-001 instance state."
+}
 
-if [ -z "$OUTPUT" ]; then
-    print -u2 "empty input"
-    exit 1
-fi
-
-#
-# Provisional mock rule.
-#
-# This must NOT be considered production-safe until validated
-# against a real Informix/AIX environment.
-#
-if print -- "$OUTPUT" | grep -i "cannot attach to shared memory" >/dev/null 2>&1
-then
-    print "0"
-    exit 0
-fi
-
-#
-# A valid state-bearing response must look like an Informix
-# Dynamic Server banner.
-#
-if ! print -- "$OUTPUT" | grep -i "IBM Informix Dynamic Server" >/dev/null 2>&1
-then
-    print -u2 "invalid Informix output"
-    exit 1
-fi
-
-#
-# The current mock format uses:
-#
-#   ... -- STATE -- Up ...
-#
-# Extract the state between the first and second "--".
-#
-STATE="$(print -- "$OUTPUT" | awk -F'--' 'NF >= 3 {
-    value=$2
-    gsub(/^[ \t]+/, "", value)
-    gsub(/[ \t]+$/, "", value)
-    print value
-    exit
-}')"
-
-if [ -z "$STATE" ]; then
-    print -u2 "unable to extract Informix state"
-    exit 1
-fi
-
-STATE_NORMALIZED="$(print -- "$STATE" | tr '[:upper:]' '[:lower:]')"
-
-case "$STATE_NORMALIZED" in
-    "on-line")
-        print "4"
-        exit 0
+case "${dataset}" in
+    *'|')
+        state_code="${dataset%"|"}"
         ;;
-
-    "quiescent")
-        print "3"
-        exit 0
-        ;;
-
-    "fast recovery")
-        print "2"
-        exit 0
-        ;;
-
     *)
-        print "99"
-        exit 0
+        fail "Invalid HEALTH-001 instance state dataset."
         ;;
 esac
+
+case "${state_code}" in
+    0|1|2|3|4|5|6|7|255)
+        print -r -- "${state_code}"
+        ;;
+    *)
+        fail "Invalid HEALTH-001 instance state value."
+        ;;
+esac
+
+exit 0

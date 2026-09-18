@@ -37,3 +37,24 @@ zabbix_export:
           value_type: TEXT
           trends: '0'
           timeout: 30s
+        - uuid: aa8a9e5eac3642e6b41efd6eb8199ef1
+          name: 'HEALTH-001 — instance state code'
+          type: ZABBIX_ACTIVE
+          key: ifx.health.instance_state
+          trends: '0'
+          timeout: 30s
+          triggers:
+            - uuid: c23e73c29e5f4185852c3bb08b0c63c9
+              expression: 'last(/Template Zabbix Tailor Informix Health/ifx.health.instance_state)<>5'
+              name: 'Informix HEALTH-001: instance is not Online'
+              priority: HIGH
+              tags:
+                - tag: informix
+                  value: health-001
+            - uuid: c66d8e6ba73041deac8161f10d626496
+              expression: 'nodata(/Template Zabbix Tailor Informix Health/ifx.health.instance_state,3m)=1'
+              name: 'Informix HEALTH-001: instance state has not been collected for 3 minutes'
+              priority: HIGH
+              tags:
+                - tag: informix
+                  value: health-001

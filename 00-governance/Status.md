@@ -2,36 +2,30 @@
 
 *2. montar catálogo/matriz das métricas (DONE)*
 
-**3. validar cada métrica manualmente em um Informix/AIX real (CURRENT — BLOCKED: REAL ENVIRONMENT NOT YET AVAILABLE)**
+**3. validar cada métrica manualmente em um Informix/AIX real (CURRENT — IN PROGRESS)**
 
-Informix Health mock validation completed while real source validation is unavailable:
+Informix Health status:
 
-- IFX-HEALTH-001 — Instance State — MOCK_VALIDATED
+- IFX-HEALTH-001 — Instance State — DEVELOPMENT_RUNTIME_VALIDATED
 - IFX-HEALTH-002 — Instance Uptime — MOCK_VALIDATED
-- IFX-HEALTH-003 — Assert Failures — MOCK_VALIDATED
+- IFX-HEALTH-003 — Assert Failures — DEVELOPMENT_RUNTIME_VALIDATED
 - IFX-HEALTH-004 — Checkpoint Count — MOCK_VALIDATED
 - IFX-HEALTH-005 — Checkpoint Duration — MOCK_VALIDATED
 - IFX-HEALTH-006 — Checkpoint Waits — MOCK_VALIDATED
 - IFX-HEALTH-007 — LRU Writes — MOCK_VALIDATED
 - IFX-HEALTH-008 — Foreground Writes — MOCK_VALIDATED
 
-Informix Sessions and Concurrency mock validation completed while real source validation is unavailable:
+`DEVELOPMENT_RUNTIME_VALIDATED` for IFX-HEALTH-001 and IFX-HEALTH-003 means that their remote SQL collectors, Informix Client SDK, Zabbix Agent active checks, Zabbix items and triggers were validated in the Linux development topology.
+
+Target-environment validation remains pending. The production topology may use Informix on AIX and a separate Zabbix Server, Agent and Client SDK host.
+
+Informix Sessions and Concurrency status:
 
 - IFX-SESSION-001 — Total Connected Sessions — MOCK_VALIDATED
 - IFX-SESSION-002 — Active Sessions — MOCK_VALIDATED
 - IFX-SESSION-003 — Historical Session Peak — MOCK_VALIDATED
 - IFX-SESSION-004 — Waiting Threads Total — MOCK_VALIDATED
 - IFX-SESSION-005 — Waiting Threads by Reason — MOCK_VALIDATED
-
-Next lifecycle target for these metrics:
-
-`SOURCE_VALIDATED`
-
-This requires access to a real Informix/AIX environment.
-
-The existing mock parsers and collectors validate normalized collection contracts only.
-
-They do not constitute completion of the operational collector implementation defined by item 4.
 
 **4. construir collector mínimo**
 

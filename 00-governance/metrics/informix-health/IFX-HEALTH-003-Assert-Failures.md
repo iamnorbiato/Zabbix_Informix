@@ -25,11 +25,13 @@ The normative implementation contract is defined by the later sections:
 
 Current implementation status:
 
-- SQL source and dataset contract: validated;
-- query-layer parameterization: validated;
-- persistent collector state: not implemented;
-- HEALTH-003 collector: not implemented;
-- Zabbix and Grafana integration: not implemented.
+- SQL source and dataset contract: validated against `sysadmin:ph_alert`;
+- query-layer `LAST_ID` parameterization: validated;
+- persistent collector state and exclusive lock: implemented and validated;
+- HEALTH-003 collector: implemented and validated;
+- Zabbix Agent active item, dependent counter item and High-severity trigger: implemented and validated;
+- Grafana integration: not implemented;
+- target Informix/AIX validation: pending.
 
 ---
 
@@ -779,25 +781,39 @@ Therefore implementation of this metric will also establish an important reusabl
 
 Current lifecycle state:
 
-`MOCK_VALIDATED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Current source status:
+Authoritative source:
 
-`CANDIDATE SOURCE — online.log via MSGPATH`
+`sysadmin:ph_alert`
 
-Current event marker:
+Classification:
 
-`CANDIDATE — Assert Failed:`
+`Class ID 6 with Event ID 6300 or 6500`
 
-Current validation environment:
+Collection architecture:
 
-`MOCK VALIDATION PASSED — 11/11 tests`
+`Stateful remote SQL collector using the Informix Client SDK and Zabbix Agent active checks`
 
-Persistent collector state:
+Development validation completed:
 
-`IMPLEMENTED`
+- protected state directory and `last_id` cursor;
+- bootstrap and incremental collection behavior;
+- invalid cursor and concurrent collector lock handling;
+- structured standard output containing only `COUNT|...` and optional `EVENT|...` lines;
+- protected temporary batch, result, rendered-statement and diagnostic files;
+- Zabbix raw item, dependent numeric counter and High-severity trigger;
+- isolated synthetic assertion-event test, including problem opening and recovery.
 
-Real Informix/AIX validation:
+Development topology:
+
+`Informix and Zabbix Server on home; Informix Client SDK and Zabbix Agent on cluster-prime`
+
+Target Informix/AIX validation:
+
+`PENDING`
+
+Grafana integration:
 
 `PENDING`
 
@@ -805,25 +821,33 @@ Real Informix/AIX validation:
 
 # 38. Exit Criteria
 
-`IFX-HEALTH-003` shall complete the current documentation/mock phase when:
+The development-runtime implementation phase is complete when:
 
-- assertion-failure event semantics are approved;
-- `Assert Failed` and `Assert Warning` behavior is explicitly distinguished;
-- bootstrap behavior is approved;
-- incremental-reading semantics are defined;
-- mocks are established;
-- parser/collector behavior is specified;
-- state persistence behavior is specified;
-- mock implementation is completed;
-- all approved mock tests pass.
+- the authoritative remote SQL source is defined;
+- assertion-failure classification is explicitly defined;
+- bootstrap and incremental cursor semantics are implemented;
+- protected persistent state and exclusive locking are implemented;
+- collector output contains only the structured batch contract on standard output;
+- Zabbix collection, derived counter and trigger behavior are validated.
 
-After that:
+These criteria are satisfied for the Linux development topology.
+
+Before promotion to target-environment validation, the implementation must be validated against the destination Informix/AIX environment, including:
+
+- `sysadmin:ph_alert` availability and permissions;
+- Informix version-specific Event Alarm semantics;
+- Client SDK connectivity and authentication;
+- state-directory ownership and permissions;
+- collection cost and scheduling;
+- expected operational alert volume and trigger tuning.
+
+After those validations:
 
 ```text
-IFX-HEALTH-003 → MOCK_VALIDATED
+IFX-HEALTH-003 → TARGET_ENVIRONMENT_VALIDATED
 ```
 
-Real source validation shall remain pending until access to the target Informix/AIX environment becomes available.
+Grafana delivery remains a separate pending integration.
 
 ## Source Validation
 

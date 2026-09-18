@@ -50,6 +50,7 @@ ifx_db_execute()
     typeset rendered_statement_file
     typeset batch_file
     typeset result_file
+    typeset diagnostic_file
     typeset unload_statement
     typeset delimiter_statement
     typeset rc
@@ -77,36 +78,42 @@ ifx_db_execute()
         return 1
     }
 
-    rendered_statement_file="$(mktemp "${IFX_CONFIG_DIR}/informix-statement.XXXXXX.sql")" || {
+    diagnostic_file="$(mktemp "${IFX_CONFIG_DIR}/informix-diagnostic.XXXXXX.log")" || {
         rm -f "${batch_file}" "${result_file}"
+        print -u2 "Unable to create protected Informix diagnostic file."
+        return 1
+    }
+
+    rendered_statement_file="$(mktemp "${IFX_CONFIG_DIR}/informix-statement.XXXXXX.sql")" || {
+        rm -f "${batch_file}" "${result_file}" "${diagnostic_file}"
         print -u2 "Unable to create protected Informix statement file."
         return 1
     }
 
-    chmod 600 "${batch_file}" "${result_file}" "${rendered_statement_file}" || {
-        rm -f "${batch_file}" "${result_file}" "${rendered_statement_file}"
+    chmod 600 "${batch_file}" "${result_file}" "${diagnostic_file}" "${rendered_statement_file}" || {
+        rm -f "${batch_file}" "${result_file}" "${diagnostic_file}" "${rendered_statement_file}"
         print -u2 "Unable to protect Informix temporary files."
         return 1
     }
 
-    trap 'rm -f "${batch_file}" "${result_file}" "${rendered_statement_file}"' EXIT HUP INT TERM
+    trap 'rm -f "${batch_file}" "${result_file}" "${diagnostic_file}" "${rendered_statement_file}"' EXIT HUP INT TERM
 
     if [[ -n "${last_id}" ]]; then
         ifx_db_render_last_id "${statement_file}" "${last_id}" > "${rendered_statement_file}" || {
-            rm -f "${batch_file}" "${result_file}" "${rendered_statement_file}"
+            rm -f "${batch_file}" "${result_file}" "${diagnostic_file}" "${rendered_statement_file}"
             trap - EXIT HUP INT TERM
             return 1
         }
     else
         cat "${statement_file}" > "${rendered_statement_file}" || {
-            rm -f "${batch_file}" "${result_file}" "${rendered_statement_file}"
+            rm -f "${batch_file}" "${result_file}" "${diagnostic_file}" "${rendered_statement_file}"
             trap - EXIT HUP INT TERM
             return 1
         }
     fi
 
     if grep -q '{{' "${rendered_statement_file}"; then
-        rm -f "${batch_file}" "${result_file}" "${rendered_statement_file}"
+        rm -f "${batch_file}" "${result_file}" "${diagnostic_file}" "${rendered_statement_file}"
         trap - EXIT HUP INT TERM
         print -u2 "Unresolved Informix SQL placeholder."
         return 1
@@ -128,14 +135,16 @@ ifx_db_execute()
         print "DISCONNECT CURRENT;"
     } > "${batch_file}"
 
-    dbaccess -a - "${batch_file}" >/dev/null
+    dbaccess -a - "${batch_file}" >/dev/null 2>"${diagnostic_file}"
     rc=$?
 
     if (( rc == 0 )); then
         cat "${result_file}"
+    else
+        cat "${diagnostic_file}" >&2
     fi
 
-    rm -f "${batch_file}" "${result_file}" "${rendered_statement_file}"
+    rm -f "${batch_file}" "${result_file}" "${diagnostic_file}" "${rendered_statement_file}"
     trap - EXIT HUP INT TERM
 
     return ${rc}
