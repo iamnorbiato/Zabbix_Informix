@@ -1,30 +1,61 @@
 # IFX-HEALTH-004 — Parser Specification
 
+## Current Operational Status
+
+`DEVELOPMENT_RUNTIME_VALIDATED`
+
+The historical mock-parser implementation was replaced by a remote SQL collector.
+
+The current operational collector is:
+
+`05-collectors/informix/health/ifx-health-checkpoint-count.ksh`
+
+It executes the approved statement against database `sysmaster`, requires exactly one `UNLOAD` scalar terminated by `|`, removes that terminal delimiter and accepts only a non-negative integer.
+
 ## 1. Purpose
 
-This document defines the parser contract for:
+This document defines the current normalized-output contract for:
 
 `IFX-HEALTH-004 — Checkpoint Count`
 
-The parser normalizes the result obtained from the future approved Informix checkpoint source into a non-negative integer suitable for Zabbix collection.
+The collector exposes the Informix cumulative checkpoint counter as a non-negative integer suitable for Zabbix active collection.
 
-This specification validates the normalized result contract only.
-
-It does not validate the actual `sysmaster` source, table, column or SQL statement.
+The remaining mock-parser sections are preserved as historical validation evidence. They do not describe the current production collection path.
 
 ---
 
-# 2. Candidate Source
+# 2. Validated Source
 
-Current candidate source:
+Database:
 
 `sysmaster`
 
-Exact SQL source:
+Table:
 
-`PENDING SOURCE VALIDATION`
+`sysshmhdr`
 
-The parser shall remain independent from the final SQL implementation wherever practical.
+Row selector:
+
+`name = 'pf_numckpts'`
+
+Approved SQL statement:
+
+```sql
+SELECT
+    CAST(value AS INT8) AS checkpoint_count
+FROM sysshmhdr
+WHERE name = 'pf_numckpts';
+```
+
+Normalized collector output example:
+
+```text
+200
+```
+
+The development runtime validates remote SQL collection, KornShell normalization, the deployment launcher, Zabbix Agent active execution and the Zabbix numeric item.
+
+Target Informix/AIX validation remains pending.
 
 ---
 
@@ -447,31 +478,31 @@ Specification:
 
 `APPROVED`
 
-Candidate source:
+Validated source:
 
-`sysmaster`
+`sysmaster:sysshmhdr.pf_numckpts`
 
-Exact SQL source:
+Collector implementation:
 
-`PENDING SOURCE VALIDATION`
+`05-collectors/informix/health/ifx-health-checkpoint-count.ksh`
 
-Mock inputs:
+SQL statement:
 
-`AVAILABLE`
+`01-statements/informix-health/IFX-HEALTH-004-Checkpoint-Count.sql`
 
-Parser implementation:
+Zabbix active-check key:
 
-`IMPLEMENTED`
-
-Mock validation:
-
-`PASSED — 9/9`
+`ifx.health.checkpoint_count`
 
 Metric lifecycle state:
 
-`MOCK_VALIDATED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Real environment validation:
+Development runtime validation:
+
+`PASSED`
+
+Target Informix/AIX validation:
 
 `PENDING`
 
@@ -479,6 +510,10 @@ Real environment validation:
 
 # 24. Next Step
 
-After approval of this specification, implement the minimum KornShell parser for the existing `IFX-HEALTH-004` mock inputs.
+Use the collected counter for historical trends and derived checkpoint-rate visualizations.
 
-No real `sysmaster` SQL statement shall be introduced as authoritative during this step.
+Do not create a direct threshold trigger from the raw counter alone. Counter decreases must be interpreted together with:
+
+`IFX-HEALTH-002 — Instance Uptime`
+
+Before production rollout, validate the source, permissions and query cost on the target Informix/AIX environment.

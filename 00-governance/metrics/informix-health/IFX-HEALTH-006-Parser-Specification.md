@@ -1,54 +1,71 @@
 # IFX-HEALTH-006 — Parser Specification
 
+## Current Operational Status
+
+`DEVELOPMENT_RUNTIME_VALIDATED`
+
+The historical mock parser was replaced by a remote SQL collector.
+
+The current operational collector is:
+
+`05-collectors/informix/health/ifx-health-checkpoint-waits.ksh`
+
+It executes the approved statement against `sysmaster`, requires exactly one scalar `UNLOAD` result terminated by `|`, removes the terminal delimiter and accepts only a non-negative integer.
+
 ## 1. Purpose
 
-This document defines the parser contract for:
+This document defines the current normalized-output contract for:
 
 `IFX-HEALTH-006 — Checkpoint Waits`
 
-The parser normalizes the result obtained from the future approved Informix checkpoint-wait source into a value suitable for monitoring.
+The collector exposes the cumulative Informix checkpoint-wait counter as a non-negative integer suitable for Zabbix active collection.
 
-This specification validates the provisional mock contract only.
-
-It does not validate the actual `sysmaster` source, SQL statement or checkpoint-wait semantics.
+The remaining mock-parser sections are preserved as historical validation evidence. They do not describe the current operational collection path.
 
 ---
 
-# 2. Candidate Source
+# 2. Validated Source
 
-Current candidate source:
+Database:
 
 `sysmaster`
 
-Exact SQL source:
+Table:
 
-`PENDING SOURCE VALIDATION`
+`sysshmhdr`
 
-No specific `sysmaster` table, view or column is authoritative at this stage.
+Row selector:
+
+`name = 'pf_ckptwts'`
+
+Approved SQL statement:
+
+```sql
+SELECT
+    CAST(value AS INT8) AS checkpoint_wait_count
+FROM sysshmhdr
+WHERE name = 'pf_ckptwts';
+```
 
 ---
 
-# 3. Provisional Semantic
+# 3. Validated Semantic
 
-For the mock phase, the parser assumes:
+The metric represents the cumulative number of waits for checkpoint completion.
 
-`cumulative checkpoint-related wait count`
+A decrease is a valid numeric sample and can indicate an Informix restart or source reset. It must be interpreted with:
 
-This semantic is provisional.
+`IFX-HEALTH-002 — Instance Uptime`
 
-It must be confirmed or revised during real Informix source validation.
+`syscheckpoint.n_crit_waits` has per-checkpoint semantics and is not the HEALTH-006 source.
 
 ---
 
 # 4. Metric Type
 
-Under the provisional semantic:
-
 `COUNTER`
 
-The parser exposes the raw counter.
-
-It does not calculate rate or delta.
+The collector exposes the raw counter. Rate and delta calculations belong to Zabbix or Grafana.
 
 ---
 

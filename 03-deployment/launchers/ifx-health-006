@@ -1,0 +1,39 @@
+#!/bin/ksh
+
+RUNTIME_ENV="${ZABBIX_INFORMIX_RUNTIME_ENV:-/etc/zabbix-informix/runtime.env}"
+
+if [[ ! -r "${RUNTIME_ENV}" ]]; then
+    print -u2 "Informix runtime configuration is not readable: ${RUNTIME_ENV}"
+    exit 1
+fi
+
+. "${RUNTIME_ENV}" || exit 1
+
+if [[ -z "${IFX_COLLECTOR_HOME}" ||
+      -z "${IFX_INFORMIXDIR}" ||
+      -z "${IFX_INFORMIXSERVER}" ||
+      -z "${IFX_INFORMIXSQLHOSTS}" ||
+      -z "${IFX_CONFIG_DIR}" ||
+      -z "${IFX_CONNECT_FILE}" ]]; then
+    print -u2 "Informix runtime configuration is incomplete."
+    exit 1
+fi
+
+COLLECTOR="${IFX_COLLECTOR_HOME}/05-collectors/informix/health/ifx-health-checkpoint-waits.ksh"
+
+if [[ ! -f "${COLLECTOR}" ]]; then
+    print -u2 "Informix HEALTH-006 collector not found: ${COLLECTOR}"
+    exit 1
+fi
+
+export IFX_INFORMIXDIR
+export IFX_INFORMIXSERVER
+export IFX_INFORMIXSQLHOSTS
+export IFX_CONFIG_DIR
+export IFX_STATE_DIR
+export IFX_CONNECT_FILE
+export INFORMIXDIR="${IFX_INFORMIXDIR}"
+export PATH="${INFORMIXDIR}/bin:${PATH}"
+export LD_LIBRARY_PATH="${INFORMIXDIR}/lib:${INFORMIXDIR}/lib/esql${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+
+exec /bin/ksh "${COLLECTOR}"

@@ -1,58 +1,77 @@
 # IFX-HEALTH-005 — Parser Specification
 
+## Current Operational Status
+
+`DEVELOPMENT_RUNTIME_VALIDATED`
+
+The historical mock parser was replaced by a remote SQL collector.
+
+The current operational collector is:
+
+`05-collectors/informix/health/ifx-health-checkpoint-duration.ksh`
+
+It executes the approved statement against `sysmaster`, requires exactly one scalar `UNLOAD` result terminated by `|`, removes the terminal delimiter and accepts a non-negative integer or decimal duration.
+
 ## 1. Purpose
 
-This document defines the parser contract for:
+This document defines the current normalized-output contract for:
 
 `IFX-HEALTH-005 — Checkpoint Duration`
 
-The parser normalizes the result obtained from the future approved Informix checkpoint source into a checkpoint duration suitable for monitoring.
+The collector exposes the duration of the most recently completed Informix checkpoint in seconds with fractional precision.
 
-This specification validates the mock normalized-result contract only.
-
-It does not validate the actual `sysmaster` source, SQL statement, source unit or source precision.
+The remaining mock-parser sections are preserved as historical validation evidence. They do not describe the current operational collection path.
 
 ---
 
-# 2. Candidate Source
+# 2. Validated Source
 
-Current candidate source:
+Database:
 
 `sysmaster`
 
-Exact SQL source:
+Table:
 
-`PENDING SOURCE VALIDATION`
+`syscheckpoint`
 
-The parser shall remain independent from the final SQL implementation wherever practical.
+Approved SQL statement:
+
+```sql
+SELECT FIRST 1
+    cp_time AS checkpoint_duration_seconds
+FROM syscheckpoint
+ORDER BY clock_time DESC;
+```
+
+Validated source column:
+
+`cp_time`
 
 ---
 
 # 3. Intended Semantic
 
-The intended metric semantic is:
+The metric represents the elapsed duration from checkpoint pending until checkpoint completion for the most recently recorded completed checkpoint.
 
-`duration of the most recently completed checkpoint`
-
-This semantic remains:
-
-`PENDING SOURCE VALIDATION`
-
-The parser shall not attempt to determine which checkpoint record is the most recent.
-
-That responsibility belongs to the eventual approved source query.
+The source row is selected by descending `clock_time`.
 
 ---
 
-# 4. Mock Normalized Unit
+# 4. Current Normalized Unit
 
-For the mock phase, input values are treated as:
+Normalized unit:
 
 `SECONDS`
 
-This is a provisional normalized contract.
+The collector preserves the source decimal precision.
 
-It does not establish that the real Informix source natively reports seconds.
+Example normalized output:
+
+```text
+0.008315329443905282
+```
+
+Target Informix/AIX validation remains pending.
 
 ---
 
@@ -472,43 +491,39 @@ Specification:
 
 `APPROVED`
 
-Candidate source:
+Validated source:
 
-`sysmaster`
+`sysmaster:syscheckpoint.cp_time`
 
 Intended semantic:
 
 `MOST RECENTLY COMPLETED CHECKPOINT DURATION`
 
-Mock normalized unit:
+SQL statement:
 
-`SECONDS`
+`01-statements/informix-health/IFX-HEALTH-005-Checkpoint-Duration.sql`
 
-Exact SQL source:
+Collector implementation:
 
-`PENDING SOURCE VALIDATION`
+`05-collectors/informix/health/ifx-health-checkpoint-duration.ksh`
 
-Source unit/precision:
+Zabbix active-check key:
 
-`PENDING SOURCE VALIDATION`
+`ifx.health.checkpoint_duration`
 
-Mock inputs:
+Normalized unit and precision:
 
-`AVAILABLE`
-
-Parser implementation:
-
-`IMPLEMENTED`
-
-Mock validation:
-
-`PASSED — 9/9`
+`SECONDS — DECIMAL`
 
 Metric lifecycle state:
 
-`MOCK_VALIDATED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Real environment validation:
+Development runtime validation:
+
+`PASSED`
+
+Target Informix/AIX validation:
 
 `PENDING`
 
@@ -516,6 +531,8 @@ Real environment validation:
 
 # 27. Next Step
 
-After approval of this specification, implement the minimum KornShell parser for the existing `IFX-HEALTH-005` mock inputs.
+Establish an environment-specific operational baseline for checkpoint duration.
 
-The implementation shall preserve the provisional integer-seconds contract without asserting that the real Informix source uses the same representation.
+Do not create a direct threshold trigger until normal checkpoint duration, workload profile and storage behavior are understood.
+
+Before production rollout, validate source compatibility, permissions and query cost on the target Informix/AIX environment.

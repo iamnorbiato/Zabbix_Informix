@@ -249,15 +249,28 @@ The Linux development topology validated the remote SQL source, protected persis
 
 **Purpose**
 
-Measure checkpoint activity.
+Measure cumulative Informix checkpoint activity.
 
-**Candidate Source**
+**Validated Source**
 
-`sysmaster` or `onstat`.
+`sysmaster:sysshmhdr.pf_numckpts`
+
+**SQL Contract**
+
+```sql
+SELECT
+    CAST(value AS INT8) AS checkpoint_count
+FROM sysshmhdr
+WHERE name = 'pf_numckpts';
+```
 
 **Collection Method**
 
-Statement or collector.
+Remote SQL collector through Informix Client SDK and Zabbix Agent active check.
+
+**Zabbix Key**
+
+`ifx.health.checkpoint_count`
 
 **Type**
 
@@ -269,15 +282,15 @@ Checkpoints.
 
 **Semantics**
 
-Accumulated counter.
+Raw cumulative checkpoint counter. A stable value is valid when no checkpoint occurs. A decrease can occur after instance restart or counter reset and must be interpreted together with `IFX-HEALTH-002 — Instance Uptime`.
 
 **Frequency**
 
-MEDIUM.
+1 minute.
 
 **Cost**
 
-LOW.
+Low in the validated Linux development topology. Target Informix/AIX runtime cost remains pending.
 
 **Discovery**
 
@@ -285,7 +298,7 @@ No.
 
 **Trigger**
 
-No direct trigger initially.
+No direct trigger initially. Use the counter for trends and derived checkpoint-rate visualizations.
 
 **Grafana**
 
@@ -298,7 +311,7 @@ Yes.
 
 **Validation Status**
 
-MOCK_VALIDATED.
+DEVELOPMENT_RUNTIME_VALIDATED.
 
 ---
 
@@ -306,35 +319,48 @@ MOCK_VALIDATED.
 
 **Purpose**
 
-Measure checkpoint execution duration.
+Measure the duration of the most recently completed Informix checkpoint.
 
-**Candidate Source**
+**Validated Source**
 
-`sysmaster` or `onstat`.
+`sysmaster:syscheckpoint.cp_time`
+
+**SQL Contract**
+
+```sql
+SELECT FIRST 1
+    cp_time AS checkpoint_duration_seconds
+FROM syscheckpoint
+ORDER BY clock_time DESC;
+```
 
 **Collection Method**
 
-Statement or collector.
+Remote SQL collector through Informix Client SDK and Zabbix Agent active check.
+
+**Zabbix Key**
+
+`ifx.health.checkpoint_duration`
 
 **Type**
 
-Gauge / historical observation.
+Gauge.
 
 **Unit**
 
-Seconds.
+Seconds, with fractional precision.
 
 **Semantics**
 
-Duration of checkpoint activity.
+`cp_time` is the elapsed duration from checkpoint pending until checkpoint completion for the most recent checkpoint record.
 
 **Frequency**
 
-MEDIUM.
+1 minute.
 
 **Cost**
 
-LOW to MEDIUM.
+Low in the validated Linux development topology. Target Informix/AIX runtime cost remains pending.
 
 **Discovery**
 
@@ -342,15 +368,21 @@ No.
 
 **Trigger**
 
-Potentially.
+No direct trigger initially. Establish an environment-specific baseline before defining a duration threshold.
 
 **Grafana**
 
 Yes.
 
+**Derived Metrics**
+
+- checkpoint-duration trend;
+- checkpoint-duration baseline deviation;
+- correlation with checkpoint count, waits and write activity.
+
 **Validation Status**
 
-MOCK_VALIDATED.
+DEVELOPMENT_RUNTIME_VALIDATED.
 
 ---
 
@@ -358,15 +390,28 @@ MOCK_VALIDATED.
 
 **Purpose**
 
-Detect sessions or engine activity waiting because of checkpoint processing.
+Measure the cumulative number of Informix thread waits for checkpoint completion.
 
-**Candidate Source**
+**Validated Source**
 
-`sysmaster` or `onstat`.
+`sysmaster:sysshmhdr.pf_ckptwts`
+
+**SQL Contract**
+
+```sql
+SELECT
+    CAST(value AS INT8) AS checkpoint_wait_count
+FROM sysshmhdr
+WHERE name = 'pf_ckptwts';
+```
 
 **Collection Method**
 
-Statement or collector.
+Remote SQL collector through Informix Client SDK and Zabbix Agent active check.
+
+**Zabbix Key**
+
+`ifx.health.checkpoint_waits`
 
 **Type**
 
@@ -378,15 +423,17 @@ Waits.
 
 **Semantics**
 
-Accumulated counter.
+Raw cumulative count of waits for checkpoint completion. A decrease can occur after an instance restart or source reset and must be interpreted with `IFX-HEALTH-002 — Instance Uptime`.
+
+`syscheckpoint.n_crit_waits` remains a different per-checkpoint diagnostic value and is not the HEALTH-006 source.
 
 **Frequency**
 
-MEDIUM.
+1 minute.
 
 **Cost**
 
-LOW.
+Low in the validated Linux development topology. Target Informix/AIX runtime cost remains pending.
 
 **Discovery**
 
@@ -394,15 +441,22 @@ No.
 
 **Trigger**
 
-Potentially based on rate or sustained activity.
+No direct trigger initially. Use the counter for trends and derived wait-rate visualizations.
 
 **Grafana**
 
 Yes.
 
+**Derived Metrics**
+
+- checkpoint waits/minute;
+- checkpoint waits/hour;
+- checkpoint waits per checkpoint;
+- correlation with checkpoint duration and write activity.
+
 **Validation Status**
 
-MOCK_VALIDATED.
+DEVELOPMENT_RUNTIME_VALIDATED.
 
 ---
 
@@ -410,15 +464,28 @@ MOCK_VALIDATED.
 
 **Purpose**
 
-Measure buffer flushing performed through the normal LRU mechanism.
+Measure cumulative buffer writes performed through the Informix LRU mechanism.
 
-**Candidate Source**
+**Validated Source**
 
-`sysmaster` or `onstat`.
+`sysmaster:sysprofile.lruwrites`
+
+**SQL Contract**
+
+```sql
+SELECT
+    CAST(value AS INT8) AS lru_write_count
+FROM sysprofile
+WHERE name = 'lruwrites';
+```
 
 **Collection Method**
 
-Statement or collector.
+Remote SQL collector through Informix Client SDK and Zabbix Agent active check.
+
+**Zabbix Key**
+
+`ifx.health.lru_writes`
 
 **Type**
 
@@ -430,15 +497,15 @@ Writes.
 
 **Semantics**
 
-Accumulated counter.
+Raw cumulative LRU-write counter. A decrease can occur after an instance restart or source reset and must be interpreted with `IFX-HEALTH-002 — Instance Uptime`.
 
 **Frequency**
 
-MEDIUM.
+1 minute.
 
 **Cost**
 
-LOW.
+Low in the validated Linux development topology. Target Informix/AIX runtime cost remains pending.
 
 **Discovery**
 
@@ -446,19 +513,22 @@ No.
 
 **Trigger**
 
-No direct threshold initially.
+No direct trigger initially. Use the counter for trends and derived write-rate visualizations.
 
 **Grafana**
 
 Yes.
 
-**Derived Metric**
+**Derived Metrics**
 
-LRU writes/second.
+- LRU writes/minute;
+- LRU writes/hour;
+- LRU writes per checkpoint;
+- correlation with foreground writes and checkpoint duration.
 
 **Validation Status**
 
-MOCK_VALIDATED.
+DEVELOPMENT_RUNTIME_VALIDATED.
 
 ---
 
@@ -466,15 +536,28 @@ MOCK_VALIDATED.
 
 **Purpose**
 
-Measure foreground buffer writes and identify possible buffer/flushing pressure.
+Measure cumulative foreground buffer writes and identify buffer-cleaning pressure.
 
-**Candidate Source**
+**Validated Source**
 
-`sysmaster` or `onstat`.
+`sysmaster:sysprofile.fgwrites`
+
+**SQL Contract**
+
+```sql
+SELECT
+    CAST(value AS INT8) AS foreground_write_count
+FROM sysprofile
+WHERE name = 'fgwrites';
+```
 
 **Collection Method**
 
-Statement or collector.
+Remote SQL collector through Informix Client SDK and Zabbix Agent active check.
+
+**Zabbix Key**
+
+`ifx.health.foreground_writes`
 
 **Type**
 
@@ -486,15 +569,17 @@ Writes.
 
 **Semantics**
 
-Accumulated counter.
+Raw cumulative foreground-write counter. A decrease can occur after an instance restart or source reset and must be interpreted with `IFX-HEALTH-002 — Instance Uptime`.
+
+Foreground writes can indicate that a session needed buffers cleaned immediately; correlate their rate with LRU writes and checkpoint activity.
 
 **Frequency**
 
-MEDIUM.
+1 minute.
 
 **Cost**
 
-LOW.
+Low in the validated Linux development topology. Target Informix/AIX runtime cost remains pending.
 
 **Discovery**
 
@@ -502,19 +587,22 @@ No.
 
 **Trigger**
 
-Potentially based on sustained rate.
+No direct trigger initially. Use the counter for trends and derived write-rate visualizations.
 
 **Grafana**
 
 Yes.
 
-**Derived Metric**
+**Derived Metrics**
 
-Foreground writes/second.
+- foreground writes/minute;
+- foreground writes/hour;
+- foreground-to-LRU write ratio;
+- correlation with checkpoint duration and checkpoint waits.
 
 **Validation Status**
 
-MOCK_VALIDATED.
+DEVELOPMENT_RUNTIME_VALIDATED.
 
 ---
 
@@ -3614,13 +3702,11 @@ after its actual source and semantics have been demonstrated.
 
 ---
 
-# 18. Next Engineering Step
+# 18. Current Engineering Status
 
-The initial Informix Instance Availability and Health metric set has completed mock validation.
+The initial Informix Instance Availability and Health metric set is:
 
-The following metrics are currently:
-
-`MOCK_VALIDATED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
 ```text
 IFX-HEALTH-001  Instance State
@@ -3633,16 +3719,17 @@ IFX-HEALTH-007  LRU Writes
 IFX-HEALTH-008  Foreground Writes
 ```
 
-Mock validation establishes the provisional collection and parser contracts.
+Development runtime validation confirms, for every metric:
 
-It does not establish authoritative Informix/AIX source semantics.
+- validated Informix source and SQL contract;
+- remote SQL collection through Informix Client SDK;
+- collector normalization and failure handling;
+- parameterized deployment launcher;
+- Zabbix Agent active-check execution;
+- Zabbix template item and exported YAML definition.
 
-The next lifecycle step for these metrics is:
+The target-environment phase remains pending.
 
-`SOURCE_VALIDATED`
+It must validate the same release against the target Informix version and topology, including Informix/AIX compatibility where applicable, monitoring-user permissions, query cost, counter reset behavior and environment-specific alert baselines.
 
-This requires manual validation against a real Informix/AIX environment, including authoritative source identification, source semantics, units, scope, reset behavior, permissions, collection cost and relevant Informix version differences.
-
-Until real source validation is available, the metrics shall remain `MOCK_VALIDATED`.
-
-No Zabbix template implementation is required before the authoritative sources are validated.
+`DEVELOPMENT_RUNTIME_VALIDATED` does not claim production acceptance or target Informix/AIX validation.

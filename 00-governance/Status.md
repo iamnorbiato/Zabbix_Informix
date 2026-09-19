@@ -9,13 +9,13 @@ Informix Health status:
 - IFX-HEALTH-001 — Instance State — DEVELOPMENT_RUNTIME_VALIDATED
 - IFX-HEALTH-002 — Instance Uptime — DEVELOPMENT_RUNTIME_VALIDATED
 - IFX-HEALTH-003 — Assert Failures — DEVELOPMENT_RUNTIME_VALIDATED
-- IFX-HEALTH-004 — Checkpoint Count — MOCK_VALIDATED
-- IFX-HEALTH-005 — Checkpoint Duration — MOCK_VALIDATED
-- IFX-HEALTH-006 — Checkpoint Waits — MOCK_VALIDATED
-- IFX-HEALTH-007 — LRU Writes — MOCK_VALIDATED
-- IFX-HEALTH-008 — Foreground Writes — MOCK_VALIDATED
+- IFX-HEALTH-004 — Checkpoint Count — DEVELOPMENT_RUNTIME_VALIDATED
+- IFX-HEALTH-005 — Checkpoint Duration — DEVELOPMENT_RUNTIME_VALIDATED
+- IFX-HEALTH-006 — Checkpoint Waits — DEVELOPMENT_RUNTIME_VALIDATED
+- IFX-HEALTH-007 — LRU Writes — DEVELOPMENT_RUNTIME_VALIDATED
+- IFX-HEALTH-008 — Foreground Writes — DEVELOPMENT_RUNTIME_VALIDATED
 
-`DEVELOPMENT_RUNTIME_VALIDATED` for IFX-HEALTH-001, IFX-HEALTH-002 and IFX-HEALTH-003 means that their remote SQL collectors, Informix Client SDK, Zabbix Agent active checks, Zabbix items and trigger configurations were validated in the Linux development topology.
+`DEVELOPMENT_RUNTIME_VALIDATED` for IFX-HEALTH-001, IFX-HEALTH-002, IFX-HEALTH-003, IFX-HEALTH-004, IFX-HEALTH-005, IFX-HEALTH-006, IFX-HEALTH-007 and IFX-HEALTH-008 means that their remote SQL collectors, Informix Client SDK, Zabbix Agent active checks, Zabbix items and applicable trigger configurations were validated in the Linux development topology. Target Informix/AIX validation remains pending.
 
 Target-environment validation remains pending. The production topology may use Informix on AIX and a separate Zabbix Server, Agent and Client SDK host.
 

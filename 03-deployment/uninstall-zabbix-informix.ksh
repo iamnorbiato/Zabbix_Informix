@@ -89,7 +89,11 @@ rm -f "${agent_config}" || fail "Unable to remove Zabbix Agent configuration."
 rm -f "${launcher_home}/ifx-health-001" || fail "Unable to remove HEALTH-001 launcher."
 rm -f "${launcher_home}/ifx-health-002" || fail "Unable to remove HEALTH-002 launcher."
 rm -f "${launcher_home}/ifx-health-003" || fail "Unable to remove HEALTH-003 launcher."
-
+rm -f "${launcher_home}/ifx-health-004" || fail "Unable to remove HEALTH-004 launcher."
+rm -f "${launcher_home}/ifx-health-005" || fail "Unable to remove HEALTH-005 launcher."
+rm -f "${launcher_home}/ifx-health-006" || fail "Unable to remove HEALTH-006 launcher."
+rm -f "${launcher_home}/ifx-health-007" || fail "Unable to remove HEALTH-007 launcher."
+rm -f "${launcher_home}/ifx-health-008" || fail "Unable to remove HEALTH-008 launcher."
 if [[ -d "${launcher_home}" ]]; then
     rmdir "${launcher_home}" 2>/dev/null || true
 fi

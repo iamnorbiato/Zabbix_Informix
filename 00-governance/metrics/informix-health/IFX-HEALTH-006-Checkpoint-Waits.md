@@ -43,27 +43,54 @@ The metric shall support:
 
 ---
 
-# 4. Candidate Source
+# 4. Validated Source
 
-Primary candidate source:
+Database:
 
 `sysmaster`
 
-The preferred architecture is to obtain checkpoint-wait information from a structured Informix monitoring source.
+Table:
 
-The exact:
+`sysshmhdr`
 
-- table or view;
-- column;
-- SQL statement;
-- native unit;
-- cumulative versus per-checkpoint semantics;
+Row selector:
 
-remain:
+`name = 'pf_ckptwts'`
 
-`PENDING SOURCE VALIDATION`
+Value column:
 
-No specific `sysmaster` object shall be treated as authoritative before validation against a real Informix environment.
+`value`
+
+Validated SQL contract:
+
+```sql
+SELECT
+    CAST(value AS INT8) AS checkpoint_wait_count
+FROM sysshmhdr
+WHERE name = 'pf_ckptwts';
+```
+
+`pf_ckptwts` is the cumulative checkpoint-wait counter selected for HEALTH-006.
+
+The validated Linux development environment returned:
+
+```text
+1
+```
+
+The implemented collector is:
+
+`05-collectors/informix/health/ifx-health-checkpoint-waits.ksh`
+
+The implemented Zabbix active-check key is:
+
+`ifx.health.checkpoint_waits`
+
+`syscheckpoint.n_crit_waits` represents a different semantic: waits associated with a single checkpoint record. It remains useful for future diagnostics but is not the source of this metric.
+
+The current development validation covers remote SQL execution, collector normalization, deployment launcher, Zabbix Agent execution and the Zabbix numeric item.
+
+Target Informix/AIX source compatibility, permissions and runtime cost remain pending validation.
 
 ---
 
@@ -517,9 +544,9 @@ Mock validation shall demonstrate that:
 
 Current lifecycle:
 
-`DEFINED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Expected progression:
+Progress achieved:
 
 ```text
 DEFINED
@@ -528,17 +555,10 @@ DEFINED
 MOCK_VALIDATED
    │
    ▼
-SOURCE_VALIDATED
-   │
-   ▼
-COLLECTION_VALIDATED
-   │
-   ▼
-IMPLEMENTED
-   │
-   ▼
-RUNTIME_VALIDATED
+DEVELOPMENT_RUNTIME_VALIDATED
 ```
+
+The historical mock phase remains documented as evidence of the original normalized-counter contract.
 
 ---
 
@@ -546,59 +566,53 @@ RUNTIME_VALIDATED
 
 Current lifecycle state:
 
-`MOCK_VALIDATED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Current source status:
+Validated source:
 
-`CANDIDATE SOURCE — sysmaster`
+`sysmaster:sysshmhdr.pf_ckptwts`
 
 Current semantic:
 
-`PROVISIONAL — CUMULATIVE CHECKPOINT-RELATED WAIT COUNT`
+`CUMULATIVE CHECKPOINT WAIT COUNT`
 
 Metric semantics:
 
-`COUNTER — PROVISIONAL`
+`COUNTER`
 
 Normalized unit:
 
-`WAITS — MOCK CONTRACT`
+`WAITS`
 
 Exact SQL source:
 
-`PENDING SOURCE VALIDATION`
+`01-statements/informix-health/IFX-HEALTH-006-Checkpoint-Waits.sql`
 
-Mock inputs:
+Collector:
 
-`AVAILABLE`
+`05-collectors/informix/health/ifx-health-checkpoint-waits.ksh`
 
-Parser implementation:
+Zabbix active-check key:
 
-`IMPLEMENTED`
+`ifx.health.checkpoint_waits`
 
-Mock validation:
+Development validation:
 
-`PASSED — 10/10`
+`PASSED`
 
-Real Informix/AIX validation:
+Target Informix/AIX validation:
 
 `PENDING`
 
 ---
 
-# 34. Exit Criteria
+# 34. Remaining Acceptance Criteria
 
-`IFX-HEALTH-006` shall complete the current mock phase when:
+Before production rollout:
 
-- provisional semantics are documented;
-- mock contract is approved;
-- mocks are created;
-- parser behavior is specified;
-- parser implementation is completed;
-- all approved mock tests pass.
-
-After that:
-
-`IFX-HEALTH-006 → MOCK_VALIDATED`
-
-The actual Informix checkpoint-wait semantic remains pending until real source validation.
+- validate `pf_ckptwts` availability and semantics on the target Informix version;
+- validate monitoring-user permissions;
+- measure query cost under target workload;
+- establish normal checkpoint-wait rate;
+- correlate counter resets with `IFX-HEALTH-002 — Instance Uptime`;
+- validate deployment on the target AIX or Linux collection host.

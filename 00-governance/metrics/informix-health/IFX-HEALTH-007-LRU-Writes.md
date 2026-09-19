@@ -43,27 +43,54 @@ The metric shall support:
 
 ---
 
-# 4. Candidate Source
+# 4. Validated Source
 
-Primary candidate source:
+Database:
 
 `sysmaster`
 
-A structured Informix monitoring source is preferred when it provides stable cumulative LRU write statistics with acceptable collection cost.
+Table:
 
-The exact:
+`sysprofile`
 
-- table or view;
-- column;
-- SQL statement;
-- counter scope;
-- reset behavior;
+Row selector:
 
-remain:
+`name = 'lruwrites'`
 
-`PENDING SOURCE VALIDATION`
+Value column:
 
-No specific `sysmaster` object shall be considered authoritative before real environment validation.
+`value`
+
+Validated SQL contract:
+
+```sql
+SELECT
+    CAST(value AS INT8) AS lru_write_count
+FROM sysprofile
+WHERE name = 'lruwrites';
+```
+
+`lruwrites` is the cumulative counter of Informix least-recently-used buffer writes.
+
+The validated Linux development environment returned:
+
+```text
+0
+```
+
+Zero is valid and means no LRU writes have been counted in the current counter lifetime.
+
+The implemented collector is:
+
+`05-collectors/informix/health/ifx-health-lru-writes.ksh`
+
+The implemented Zabbix active-check key is:
+
+`ifx.health.lru_writes`
+
+The current development validation covers remote SQL execution, collector normalization, deployment launcher, Zabbix Agent execution and the Zabbix numeric item.
+
+Target Informix/AIX source compatibility, permissions and runtime cost remain pending validation.
 
 ---
 
@@ -506,28 +533,21 @@ Mock validation shall demonstrate that:
 
 Current lifecycle:
 
-`DEFINED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Expected progression:
+Progress achieved:
 
-```text id="rj4cz4"
+```text
 DEFINED
    │
    ▼
 MOCK_VALIDATED
    │
    ▼
-SOURCE_VALIDATED
-   │
-   ▼
-COLLECTION_VALIDATED
-   │
-   ▼
-IMPLEMENTED
-   │
-   ▼
-RUNTIME_VALIDATED
+DEVELOPMENT_RUNTIME_VALIDATED
 ```
+
+The historical mock phase remains documented as evidence of the original normalized-counter contract.
 
 ---
 
@@ -535,67 +555,53 @@ RUNTIME_VALIDATED
 
 Current lifecycle state:
 
-`MOCK_VALIDATED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Current source status:
+Validated source:
 
-`CANDIDATE SOURCE — sysmaster`
-
-Alternative validation source:
-
-`CANDIDATE — onstat -F`
+`sysmaster:sysprofile.lruwrites`
 
 Current semantic:
 
-`PROVISIONAL — CUMULATIVE LRU WRITE COUNT`
+`CUMULATIVE LRU WRITE COUNT`
 
 Metric semantics:
 
-`COUNTER — PROVISIONAL`
+`COUNTER`
 
 Normalized unit:
 
-`WRITES — MOCK CONTRACT`
-
-Source scope:
-
-`PENDING SOURCE VALIDATION`
+`WRITES`
 
 Exact SQL source:
 
-`PENDING SOURCE VALIDATION`
+`01-statements/informix-health/IFX-HEALTH-007-LRU-Writes.sql`
 
-Mock inputs:
+Collector:
 
-`AVAILABLE`
+`05-collectors/informix/health/ifx-health-lru-writes.ksh`
 
-Parser implementation:
+Zabbix active-check key:
 
-`IMPLEMENTED`
+`ifx.health.lru_writes`
 
-Mock validation:
+Development validation:
 
-`PASSED — 10/10`
+`PASSED`
 
-Real Informix/AIX validation:
+Target Informix/AIX validation:
 
 `PENDING`
 
 ---
 
-# 35. Exit Criteria
+# 35. Remaining Acceptance Criteria
 
-`IFX-HEALTH-007` shall complete the current mock phase when:
+Before production rollout:
 
-- provisional semantics are documented;
-- mock contract is approved;
-- mocks are created;
-- parser behavior is specified;
-- parser implementation is completed;
-- all approved mock tests pass.
-
-After that:
-
-`IFX-HEALTH-007 → MOCK_VALIDATED`
-
-The authoritative source and instance-versus-buffer-pool scope remain pending until real Informix validation.
+- validate `sysprofile.lruwrites` availability and semantics on the target Informix version;
+- validate monitoring-user permissions;
+- measure query cost under target workload;
+- establish normal LRU-write rate;
+- correlate counter resets with `IFX-HEALTH-002 — Instance Uptime`;
+- validate deployment on the target AIX or Linux collection host.

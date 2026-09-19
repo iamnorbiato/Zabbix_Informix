@@ -1,56 +1,69 @@
 # IFX-HEALTH-008 — Parser Specification
 
+## Current Operational Status
+
+`DEVELOPMENT_RUNTIME_VALIDATED`
+
+The historical mock parser was replaced by a remote SQL collector.
+
+The current operational collector is:
+
+`05-collectors/informix/health/ifx-health-foreground-writes.ksh`
+
+It executes the approved statement against `sysmaster`, requires exactly one scalar `UNLOAD` result terminated by `|`, removes the terminal delimiter and accepts only a non-negative integer.
+
 ## 1. Purpose
 
-This document defines the parser contract for:
+This document defines the current normalized-output contract for:
 
 `IFX-HEALTH-008 — Foreground Writes`
 
-The parser normalizes the result obtained from the future approved Informix foreground-write source into a value suitable for monitoring.
+The collector exposes the cumulative Informix foreground-write counter as a non-negative integer suitable for Zabbix active collection.
 
-This specification validates the provisional mock contract only.
-
-It does not validate the actual `sysmaster` source, SQL statement, `onstat -F` representation or source scope.
+The remaining mock-parser sections are preserved as historical validation evidence. They do not describe the current operational collection path.
 
 ---
 
-# 2. Candidate Source
+# 2. Validated Source
 
-Primary candidate source:
+Database:
 
 `sysmaster`
 
-Alternative validation source:
+Table:
 
-`onstat -F`
+`sysprofile`
 
-Exact authoritative source:
+Row selector:
 
-`PENDING SOURCE VALIDATION`
+`name = 'fgwrites'`
 
-No specific source object or command-output field is authoritative at this stage.
+Approved SQL statement:
 
----
-
-# 3. Provisional Semantic
-
-For the mock phase, the parser assumes:
-
-`cumulative number of foreground writes`
-
-This semantic must be confirmed or revised during real Informix source validation.
+```sql
+SELECT
+    CAST(value AS INT8) AS foreground_write_count
+FROM sysprofile
+WHERE name = 'fgwrites';
+```
 
 ---
 
-# 4. Source Scope
+# 3. Validated Semantic
 
-The mock parser assumes that its input already represents:
+The metric represents the cumulative count of foreground writes performed by Informix.
 
-`one normalized instance-level scalar`
+A foreground write can occur when a session needs buffers cleaned immediately. The counter should be correlated with LRU writes and checkpoint activity.
 
-The parser does not aggregate per-buffer-pool values.
+A decrease is a valid numeric sample and can indicate an Informix restart or source reset. It must be interpreted with:
 
-If the authoritative source exposes multiple buffer pools, aggregation or discovery must be designed explicitly before `SOURCE_VALIDATED`.
+`IFX-HEALTH-002 — Instance Uptime`
+
+---
+
+# 4. Normalized Unit
+
+`WRITES`
 
 ---
 
@@ -454,51 +467,43 @@ Specification:
 
 `APPROVED`
 
-Primary candidate source:
+Validated source:
 
-`sysmaster`
-
-Alternative validation source:
-
-`onstat -F`
+`sysmaster:sysprofile.fgwrites`
 
 Current semantic:
 
-`PROVISIONAL — CUMULATIVE FOREGROUND WRITE COUNT`
+`CUMULATIVE FOREGROUND WRITE COUNT`
 
 Metric semantics:
 
-`COUNTER — PROVISIONAL`
+`COUNTER`
 
-Mock normalized unit:
+Normalized unit:
 
 `WRITES`
 
-Source scope:
+SQL statement:
 
-`PENDING SOURCE VALIDATION`
+`01-statements/informix-health/IFX-HEALTH-008-Foreground-Writes.sql`
 
-Exact SQL source:
+Collector implementation:
 
-`PENDING SOURCE VALIDATION`
+`05-collectors/informix/health/ifx-health-foreground-writes.ksh`
 
-Mock inputs:
+Zabbix active-check key:
 
-`AVAILABLE`
-
-Parser implementation:
-
-`IMPLEMENTED`
-
-Mock validation:
-
-`PASSED — 10/10`
+`ifx.health.foreground_writes`
 
 Metric lifecycle state:
 
-`MOCK_VALIDATED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Real environment validation:
+Development runtime validation:
+
+`PASSED`
+
+Target Informix/AIX validation:
 
 `PENDING`
 
@@ -506,6 +511,8 @@ Real environment validation:
 
 # 28. Next Step
 
-Implement the minimum KornShell parser for the existing `IFX-HEALTH-008` mock inputs.
+Use the collected counter for trends, rate derivation and correlation with LRU writes and checkpoint activity.
 
-The implementation shall validate only the normalized scalar counter contract and shall not introduce source aggregation behavior.
+Do not create a direct threshold trigger from the raw counter alone.
+
+Before production rollout, validate source compatibility, permissions and query cost on the target Informix/AIX environment.

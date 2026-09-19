@@ -1,106 +1,66 @@
-#!/usr/bin/ksh
-
+#!/usr/bin/env ksh
 # ==============================================================================
 # Author  : Norba
 # Date    : 2026-09-14
 # Script  : ifx-health-checkpoint-count.ksh
-# Purpose : Normalize and validate IBM Informix checkpoint count source output.
+# Purpose : Collect IBM Informix cumulative checkpoint count through
+#           sysmaster:sysshmhdr.
 #
 # Change Control
 # Date    : 2026-09-14
 # Author  : Norba
-# Change  : Initial version.
+# Change  : Initial onstat-based mock parser.
+# Date    : 2026-09-18
+# Author  : Norba
+# Change  : Replace the mock parser with remote SQL collection using
+#           pf_numckpts.
 # ==============================================================================
 
-#
-# IFX-HEALTH-004 — Checkpoint Count
-#
-# Input:
-#   $1 = file containing the mock source result
-#
-# Output:
-#   Non-negative integer checkpoint count.
-#
-# Exit codes:
-#   0 = parsing successful
-#   1 = collection/parsing failure
-#
+IFX_HEALTH_DIR="$(cd "$(dirname "${.sh.file}")" && pwd)"
+IFX_INFORMIX_DIR="$(cd "${IFX_HEALTH_DIR}/.." && pwd)"
+IFX_REPOSITORY_DIR="$(cd "${IFX_HEALTH_DIR}/../../.." && pwd)"
+IFX_STATEMENTS_DIR="${IFX_REPOSITORY_DIR}/01-statements/informix-health"
 
-if [ "$#" -ne 1 ]; then
-    print -u2 "usage: $0 <input-file>"
+. "${IFX_INFORMIX_DIR}/lib/informix-db.ksh" || exit 1
+
+IFX_HEALTH_004_STATEMENT_FILE="${IFX_HEALTH_004_STATEMENT_FILE:-${IFX_STATEMENTS_DIR}/IFX-HEALTH-004-Checkpoint-Count.sql}"
+
+typeset dataset
+typeset checkpoint_count
+
+fail()
+{
+    print -u2 "${1}"
     exit 1
+}
+
+if (( $# != 0 )); then
+    fail "Usage: $0"
 fi
 
-INPUT_FILE="$1"
-
-if [ ! -r "$INPUT_FILE" ]; then
-    print -u2 "input file is not readable: $INPUT_FILE"
-    exit 1
+if [[ ! -f "${IFX_HEALTH_004_STATEMENT_FILE}" ]]; then
+    fail "HEALTH-004 statement file not found: ${IFX_HEALTH_004_STATEMENT_FILE}"
 fi
 
-#
-# Detect the explicit mock execution-failure representation.
-#
-if grep -q '^EXIT_CODE=' "$INPUT_FILE" 2>/dev/null; then
+dataset="$(ifx_db_execute sysmaster "${IFX_HEALTH_004_STATEMENT_FILE}")" || {
+    fail "Unable to collect HEALTH-004 checkpoint count."
+}
 
-    EXIT_CODE="$(awk -F= '/^EXIT_CODE=/ {print $2; exit}' "$INPUT_FILE")"
-
-    case "$EXIT_CODE" in
-        ''|*[!0-9]*)
-            print -u2 "invalid execution status"
-            exit 1
-            ;;
-    esac
-
-    if [ "$EXIT_CODE" -ne 0 ]; then
-        print -u2 "source execution failed"
-        exit 1
-    fi
-fi
-
-#
-# Extract non-empty lines after trimming leading and trailing whitespace.
-#
-VALUE="$(
-    awk '
-    {
-        gsub(/^[[:space:]]+/, "", $0)
-        gsub(/[[:space:]]+$/, "", $0)
-
-        if (length($0) > 0) {
-            print $0
-        }
-    }
-    ' "$INPUT_FILE"
-)"
-
-if [ -z "$VALUE" ]; then
-    print -u2 "empty checkpoint count"
-    exit 1
-fi
-
-#
-# Exactly one normalized value is permitted.
-#
-VALUE_COUNT="$(
-    print -- "$VALUE" |
-    awk 'END {print NR}'
-)"
-
-if [ "$VALUE_COUNT" -ne 1 ]; then
-    print -u2 "multiple checkpoint count values"
-    exit 1
-fi
-
-#
-# The normalized contract permits digits only.
-#
-case "$VALUE" in
-    *[!0-9]*)
-        print -u2 "invalid checkpoint count"
-        exit 1
+case "${dataset}" in
+    *'|')
+        checkpoint_count="${dataset%"|"}"
+        ;;
+    *)
+        fail "Invalid HEALTH-004 checkpoint count dataset."
         ;;
 esac
 
-print "$VALUE"
+case "${checkpoint_count}" in
+    ''|*[!0-9]*)
+        fail "Invalid HEALTH-004 checkpoint count value."
+        ;;
+esac
+
+print -r -- "${checkpoint_count}"
+
 exit 0

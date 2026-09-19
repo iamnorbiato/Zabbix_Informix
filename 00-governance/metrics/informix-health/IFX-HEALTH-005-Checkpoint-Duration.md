@@ -43,27 +43,54 @@ The metric shall support:
 
 ---
 
-# 4. Candidate Source
+# 4. Validated Source
 
-Primary candidate source:
+Database:
 
 `sysmaster`
 
-The preferred architecture is to obtain checkpoint duration from a structured Informix monitoring source.
+Table:
 
-The exact:
+`syscheckpoint`
 
-- table or view;
-- column;
-- SQL statement;
-- unit;
-- historical semantics;
+Most-recent record rule:
 
-remain:
+`ORDER BY clock_time DESC`
 
-`PENDING SOURCE VALIDATION`
+Duration column:
 
-No specific `sysmaster` object shall be treated as authoritative until validated.
+`cp_time`
+
+Validated SQL contract:
+
+```sql
+SELECT FIRST 1
+    cp_time AS checkpoint_duration_seconds
+FROM syscheckpoint
+ORDER BY clock_time DESC;
+```
+
+`cp_time` represents the elapsed duration from checkpoint pending until checkpoint completion.
+
+The validated Linux development environment returned fractional-second values, for example:
+
+```text
+0.008315329443905282
+```
+
+The collector preserves this decimal precision and returns it as seconds to Zabbix.
+
+The implemented collector is:
+
+`05-collectors/informix/health/ifx-health-checkpoint-duration.ksh`
+
+The implemented Zabbix active-check key is:
+
+`ifx.health.checkpoint_duration`
+
+The current development validation covers remote SQL execution, decimal normalization, deployment launcher, Zabbix Agent execution and the Zabbix numeric-float item.
+
+Target Informix/AIX source compatibility, permissions and runtime cost remain pending validation.
 
 ---
 
@@ -512,28 +539,21 @@ Mock validation shall demonstrate that:
 
 Current lifecycle:
 
-`DEFINED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Expected progression:
+Progress achieved:
 
-```text id="vgzafw"
+```text
 DEFINED
    │
    ▼
 MOCK_VALIDATED
    │
    ▼
-SOURCE_VALIDATED
-   │
-   ▼
-COLLECTION_VALIDATED
-   │
-   ▼
-IMPLEMENTED
-   │
-   ▼
-RUNTIME_VALIDATED
+DEVELOPMENT_RUNTIME_VALIDATED
 ```
+
+The historical mock phase remains documented as evidence of the original parser contract. The remote SQL collector supersedes its provisional integer-only duration rule.
 
 ---
 
@@ -541,11 +561,11 @@ RUNTIME_VALIDATED
 
 Current lifecycle state:
 
-`MOCK_VALIDATED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-Current source status:
+Validated source:
 
-`CANDIDATE SOURCE — sysmaster`
+`sysmaster:syscheckpoint.cp_time`
 
 Intended semantic:
 
@@ -553,47 +573,37 @@ Intended semantic:
 
 Normalized unit:
 
-`SECONDS — MOCK CONTRACT`
+`SECONDS — DECIMAL`
 
 Exact SQL source:
 
-`PENDING SOURCE VALIDATION`
+`01-statements/informix-health/IFX-HEALTH-005-Checkpoint-Duration.sql`
 
-Source unit/precision:
+Collector:
 
-`PENDING SOURCE VALIDATION`
+`05-collectors/informix/health/ifx-health-checkpoint-duration.ksh`
 
-Mock inputs:
+Zabbix active-check key:
 
-`AVAILABLE`
+`ifx.health.checkpoint_duration`
 
-Parser implementation:
+Development validation:
 
-`IMPLEMENTED`
+`PASSED`
 
-Mock validation:
-
-`PASSED — 9/9`
-
-Real Informix/AIX validation:
+Target Informix/AIX validation:
 
 `PENDING`
 
 ---
 
-# 33. Exit Criteria
+# 33. Remaining Acceptance Criteria
 
-`IFX-HEALTH-005` shall complete the current mock phase when:
+Before production rollout:
 
-- intended duration semantics are approved;
-- normalized mock contract is approved;
-- mocks are created;
-- parser behavior is specified;
-- parser implementation is completed;
-- all approved mock tests pass.
-
-After that:
-
-`IFX-HEALTH-005 → MOCK_VALIDATED`
-
-Actual source, unit and precision remain pending until real Informix validation.
+- validate `syscheckpoint.cp_time` availability and semantics on the target Informix version;
+- validate monitoring-user permissions;
+- measure query cost under target workload;
+- establish normal checkpoint-duration baseline;
+- define any duration trigger from observed operational behavior;
+- validate deployment on the target AIX or Linux collection host.

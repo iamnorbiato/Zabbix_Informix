@@ -43,19 +43,46 @@ The metric shall support:
 
 ---
 
-# 4. Candidate Source
+# 4. Validated Source
 
-Primary candidate source:
+Database:
 
 `sysmaster`
 
-The preferred architecture is to obtain checkpoint information from an Informix structured internal monitoring interface rather than repeatedly parsing operational log history.
+Table:
 
-The exact `sysmaster` table, columns and SQL statement remain:
+`sysshmhdr`
 
-`SOURCE VALIDATION REQUIRED`
+Row selector:
 
-No table or column name shall be treated as authoritative until validated against the target Informix environment or authoritative documentation applicable to that environment.
+`name = 'pf_numckpts'`
+
+Value column:
+
+`value`
+
+Validated SQL contract:
+
+```sql
+SELECT
+    CAST(value AS INT8) AS checkpoint_count
+FROM sysshmhdr
+WHERE name = 'pf_numckpts';
+```
+
+The query returned a valid scalar checkpoint counter in the Linux development environment.
+
+The implemented collector is:
+
+`05-collectors/informix/health/ifx-health-checkpoint-count.ksh`
+
+The implemented Zabbix active-check key is:
+
+`ifx.health.checkpoint_count`
+
+The current development validation covers remote SQL execution, collector normalization, deployment launcher, Zabbix Agent execution and the Zabbix item.
+
+Target Informix/AIX source compatibility, permissions and runtime cost remain pending validation.
 
 ---
 

@@ -4,3 +4,8 @@
 UserParameter=ifx.health.instance_state,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-001
 UserParameter=ifx.health.instance_uptime,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-002
 UserParameter=ifx.health.assert_failures.raw,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-003
+UserParameter=ifx.health.checkpoint_count,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-004
+UserParameter=ifx.health.checkpoint_duration,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-005
+UserParameter=ifx.health.checkpoint_waits,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-006
+UserParameter=ifx.health.lru_writes,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-007
+UserParameter=ifx.health.foreground_writes,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-008

@@ -1,110 +1,91 @@
-#!/usr/bin/ksh
-
+#!/usr/bin/env ksh
 # ==============================================================================
 # Author  : Norba
 # Date    : 2026-09-14
 # Script  : ifx-health-checkpoint-duration.ksh
-# Purpose : Normalize and validate IBM Informix checkpoint duration source output.
+# Purpose : Collect the duration of the most recently completed IBM Informix
+#           checkpoint through sysmaster:syscheckpoint.
 #
 # Change Control
 # Date    : 2026-09-14
 # Author  : Norba
-# Change  : Initial version.
+# Change  : Initial onstat-based mock parser.
+# Date    : 2026-09-18
+# Author  : Norba
+# Change  : Replace the mock parser with remote SQL collection using
+#           syscheckpoint.cp_time.
 # ==============================================================================
 
-#
-# IFX-HEALTH-005 — Checkpoint Duration
-#
-# Input:
-#   $1 = file containing the mock source result
-#
-# Output:
-#   Non-negative integer checkpoint duration in mock-normalized seconds.
-#
-# Exit codes:
-#   0 = parsing successful
-#   1 = collection/parsing failure
-#
+IFX_HEALTH_DIR="$(cd "$(dirname "${.sh.file}")" && pwd)"
+IFX_INFORMIX_DIR="$(cd "${IFX_HEALTH_DIR}/.." && pwd)"
+IFX_REPOSITORY_DIR="$(cd "${IFX_HEALTH_DIR}/../../.." && pwd)"
+IFX_STATEMENTS_DIR="${IFX_REPOSITORY_DIR}/01-statements/informix-health"
 
-if [ "$#" -ne 1 ]; then
-    print -u2 "usage: $0 <input-file>"
+. "${IFX_INFORMIX_DIR}/lib/informix-db.ksh" || exit 1
+
+IFX_HEALTH_005_STATEMENT_FILE="${IFX_HEALTH_005_STATEMENT_FILE:-${IFX_STATEMENTS_DIR}/IFX-HEALTH-005-Checkpoint-Duration.sql}"
+
+typeset dataset
+typeset checkpoint_duration_seconds
+typeset integer_part
+typeset fractional_part
+
+fail()
+{
+    print -u2 "${1}"
     exit 1
+}
+
+if (( $# != 0 )); then
+    fail "Usage: $0"
 fi
 
-INPUT_FILE="$1"
-
-if [ ! -r "$INPUT_FILE" ]; then
-    print -u2 "input file is not readable: $INPUT_FILE"
-    exit 1
+if [[ ! -f "${IFX_HEALTH_005_STATEMENT_FILE}" ]]; then
+    fail "HEALTH-005 statement file not found: ${IFX_HEALTH_005_STATEMENT_FILE}"
 fi
 
-#
-# Detect the explicit mock execution-failure representation.
-#
-if grep -q '^EXIT_CODE=' "$INPUT_FILE" 2>/dev/null; then
+dataset="$(ifx_db_execute sysmaster "${IFX_HEALTH_005_STATEMENT_FILE}")" || {
+    fail "Unable to collect HEALTH-005 checkpoint duration."
+}
 
-    EXIT_CODE="$(awk -F= '/^EXIT_CODE=/ {print $2; exit}' "$INPUT_FILE")"
-
-    case "$EXIT_CODE" in
-        ''|*[!0-9]*)
-            print -u2 "invalid execution status"
-            exit 1
-            ;;
-    esac
-
-    if [ "$EXIT_CODE" -ne 0 ]; then
-        print -u2 "source execution failed"
-        exit 1
-    fi
-fi
-
-#
-# Extract non-empty lines after trimming surrounding whitespace.
-#
-VALUE="$(
-    awk '
-    {
-        gsub(/^[[:space:]]+/, "", $0)
-        gsub(/[[:space:]]+$/, "", $0)
-
-        if (length($0) > 0) {
-            print $0
-        }
-    }
-    ' "$INPUT_FILE"
-)"
-
-if [ -z "$VALUE" ]; then
-    print -u2 "empty checkpoint duration"
-    exit 1
-fi
-
-#
-# Exactly one normalized scalar is permitted.
-#
-VALUE_COUNT="$(
-    print -- "$VALUE" |
-    awk 'END {print NR}'
-)"
-
-if [ "$VALUE_COUNT" -ne 1 ]; then
-    print -u2 "multiple checkpoint duration values"
-    exit 1
-fi
-
-#
-# Current mock contract:
-# non-negative integer seconds only.
-#
-# Fractional precision may be introduced later if required by
-# real Informix source validation.
-#
-case "$VALUE" in
-    *[!0-9]*)
-        print -u2 "invalid checkpoint duration"
-        exit 1
+case "${dataset}" in
+    *'|')
+        checkpoint_duration_seconds="${dataset%"|"}"
+        ;;
+    *)
+        fail "Invalid HEALTH-005 checkpoint duration dataset."
         ;;
 esac
 
-print "$VALUE"
+case "${checkpoint_duration_seconds}" in
+    '')
+        fail "Invalid HEALTH-005 checkpoint duration value."
+        ;;
+esac
+
+if [[ "${checkpoint_duration_seconds}" == *.* ]]; then
+    integer_part="${checkpoint_duration_seconds%%.*}"
+    fractional_part="${checkpoint_duration_seconds#*.}"
+
+    case "${integer_part}" in
+        ''|*[!0-9]*)
+            fail "Invalid HEALTH-005 checkpoint duration value."
+            ;;
+    esac
+
+    case "${fractional_part}" in
+        ''|*[!0-9]*)
+            fail "Invalid HEALTH-005 checkpoint duration value."
+            ;;
+    esac
+else
+    case "${checkpoint_duration_seconds}" in
+        *[!0-9]*)
+            fail "Invalid HEALTH-005 checkpoint duration value."
+            ;;
+    esac
+fi
+
+print -r -- "${checkpoint_duration_seconds}"
+
 exit 0

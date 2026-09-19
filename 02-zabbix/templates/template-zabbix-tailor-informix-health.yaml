@@ -37,6 +37,31 @@ zabbix_export:
           value_type: TEXT
           trends: '0'
           timeout: 30s
+        - uuid: d24e9eed5f944a8e996af86c6408a4fe
+          name: 'HEALTH-004 — cumulative checkpoint count'
+          type: ZABBIX_ACTIVE
+          key: ifx.health.checkpoint_count
+          units: checkpoints
+          timeout: 30s
+        - uuid: c066f9e065094e3bae122599adabdf5f
+          name: 'HEALTH-005 — last checkpoint duration'
+          type: ZABBIX_ACTIVE
+          key: ifx.health.checkpoint_duration
+          value_type: FLOAT
+          units: s
+          timeout: 30s
+        - uuid: 5184cd7ebed44288b9cce4aaf5f67ec5
+          name: 'HEALTH-006 — cumulative checkpoint waits'
+          type: ZABBIX_ACTIVE
+          key: ifx.health.checkpoint_waits
+          units: waits
+          timeout: 30s
+        - uuid: bd401291796745fc8644fa4c6c05c979
+          name: 'HEALTH-008 — cumulative foreground writes'
+          type: ZABBIX_ACTIVE
+          key: ifx.health.foreground_writes
+          units: writes
+          timeout: 30s
         - uuid: aa8a9e5eac3642e6b41efd6eb8199ef1
           name: 'HEALTH-001 — instance state code'
           type: ZABBIX_ACTIVE
@@ -72,3 +97,9 @@ zabbix_export:
               tags:
                 - tag: informix
                   value: health-002
+        - uuid: 46b5b513198743a999ee04de0e1c9ec9
+          name: 'HEALTH-007 — cumulative LRU writes'
+          type: ZABBIX_ACTIVE
+          key: ifx.health.lru_writes
+          units: writes
+          timeout: 30s
