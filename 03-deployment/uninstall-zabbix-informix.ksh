@@ -94,6 +94,11 @@ rm -f "${launcher_home}/ifx-health-005" || fail "Unable to remove HEALTH-005 lau
 rm -f "${launcher_home}/ifx-health-006" || fail "Unable to remove HEALTH-006 launcher."
 rm -f "${launcher_home}/ifx-health-007" || fail "Unable to remove HEALTH-007 launcher."
 rm -f "${launcher_home}/ifx-health-008" || fail "Unable to remove HEALTH-008 launcher."
+rm -f "${launcher_home}/ifx-session-001" || fail "Unable to remove SESSION-001 launcher."
+rm -f "${launcher_home}/ifx-session-002" || fail "Unable to remove SESSION-002 launcher."
+rm -f "${launcher_home}/ifx-session-003" || fail "Unable to remove SESSION-003 launcher."
+rm -f "${launcher_home}/ifx-session-004" || fail "Unable to remove SESSION-004 launcher."
+rm -f "${launcher_home}/ifx-session-005" || fail "Unable to remove SESSION-005 launcher."
 if [[ -d "${launcher_home}" ]]; then
     rmdir "${launcher_home}" 2>/dev/null || true
 fi

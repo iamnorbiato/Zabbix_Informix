@@ -1,96 +1,66 @@
-#!/usr/bin/ksh
-
+#!/usr/bin/env ksh
 # ==============================================================================
 # Author  : Norba
-# Date    : 2026-09-15
+# Date    : 2026-09-21
 # Script  : ifx-session-waiting-total.ksh
-# Purpose : Normalize and validate IBM Informix waiting thread total output.
+# Purpose : Collect the current number of Informix client sessions with one or
+#           more documented syssessions waiting flags set.
 #
 # Change Control
 # Date    : 2026-09-15
 # Author  : Norba
-# Change  : Initial version.
+# Change  : Initial mock parser for waiting threads.
+# Date    : 2026-09-21
+# Author  : Norba
+# Change  : Replace mock parsing with remote SQL collection of waiting client
+#           sessions through sysmaster:syssessions.
 # ==============================================================================
 
-#
-# IFX-SESSION-004 — Waiting Threads Total
-#
+IFX_SESSIONS_DIR="$(cd "$(dirname "${.sh.file}")" && pwd)"
+IFX_INFORMIX_DIR="$(cd "${IFX_SESSIONS_DIR}/.." && pwd)"
+IFX_REPOSITORY_DIR="$(cd "${IFX_SESSIONS_DIR}/../../.." && pwd)"
+IFX_STATEMENTS_DIR="${IFX_REPOSITORY_DIR}/01-statements/informix-sessions"
 
-if [ "$#" -ne 1 ]; then
-    print -u2 "usage: $0 <input-file>"
+. "${IFX_INFORMIX_DIR}/lib/informix-db.ksh" || exit 1
+
+IFX_SESSION_004_STATEMENT_FILE="${IFX_SESSION_004_STATEMENT_FILE:-${IFX_STATEMENTS_DIR}/IFX-SESSION-004-Waiting-Client-Sessions-Total.sql}"
+
+typeset dataset
+typeset waiting_client_sessions
+
+fail()
+{
+    print -u2 "${1}"
     exit 1
+}
+
+if (( $# != 0 )); then
+    fail "Usage: $0"
 fi
 
-INPUT_FILE="$1"
-
-if [ ! -r "$INPUT_FILE" ]; then
-    print -u2 "input file is not readable: $INPUT_FILE"
-    exit 1
+if [[ ! -f "${IFX_SESSION_004_STATEMENT_FILE}" ]]; then
+    fail "SESSION-004 statement file not found: ${IFX_SESSION_004_STATEMENT_FILE}"
 fi
 
-#
-# Detect explicit mock source execution failure.
-#
-if grep -q '^EXIT_CODE=' "$INPUT_FILE" 2>/dev/null; then
+dataset="$(ifx_db_execute sysmaster "${IFX_SESSION_004_STATEMENT_FILE}")" || {
+    fail "Unable to collect SESSION-004 waiting client sessions."
+}
 
-    EXIT_CODE="$(awk -F= '/^EXIT_CODE=/ {print $2; exit}' "$INPUT_FILE")"
-
-    case "$EXIT_CODE" in
-        ''|*[!0-9]*)
-            print -u2 "invalid execution status"
-            exit 1
-            ;;
-    esac
-
-    if [ "$EXIT_CODE" -ne 0 ]; then
-        print -u2 "source execution failed"
-        exit 1
-    fi
-fi
-
-#
-# Extract non-empty lines after trimming surrounding whitespace.
-#
-VALUE="$(
-    awk '
-    {
-        gsub(/^[[:space:]]+/, "", $0)
-        gsub(/[[:space:]]+$/, "", $0)
-
-        if (length($0) > 0) {
-            print $0
-        }
-    }
-    ' "$INPUT_FILE"
-)"
-
-if [ -z "$VALUE" ]; then
-    print -u2 "empty waiting thread total"
-    exit 1
-fi
-
-#
-# Exactly one normalized scalar is permitted.
-#
-VALUE_COUNT="$(
-    print -- "$VALUE" |
-    awk 'END {print NR}'
-)"
-
-if [ "$VALUE_COUNT" -ne 1 ]; then
-    print -u2 "multiple waiting thread total values"
-    exit 1
-fi
-
-#
-# Current waiting-thread gauge must be a non-negative integer.
-#
-case "$VALUE" in
-    *[!0-9]*)
-        print -u2 "invalid waiting thread total"
-        exit 1
+case "${dataset}" in
+    *'|')
+        waiting_client_sessions="${dataset%"|"}"
+        ;;
+    *)
+        fail "Invalid SESSION-004 waiting client sessions dataset."
         ;;
 esac
 
-print "$VALUE"
+case "${waiting_client_sessions}" in
+    ''|*[!0-9]*)
+        fail "Invalid SESSION-004 waiting client sessions value."
+        ;;
+esac
+
+print -r -- "${waiting_client_sessions}"
+
 exit 0

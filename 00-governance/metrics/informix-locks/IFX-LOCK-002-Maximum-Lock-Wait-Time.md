@@ -361,15 +361,21 @@ No cross-metric invariant shall be enforced before real source validation.
 
 Related metric:
 
-`IFX-SESSION-005 — Waiting Threads by Reason`
+`IFX-SESSION-005 — Waiting Client Sessions by Reason`
 
-A lock-related wait reason may correlate with this metric.
+The fixed `LOCK` dimension of `IFX-SESSION-005` counts qualifying client sessions for which:
 
-No direct arithmetic relationship is currently assumed because:
+```text
+syssessions.is_wlock = 1
+```
 
-- SESSION-005 measures threads;
-- LOCK-002 measures elapsed time;
-- exact lock-reason semantics remain pending source validation.
+It can be correlated with maximum lock-wait duration, but no direct arithmetic, timing, or identity relationship is assumed.
+
+The metrics differ by purpose:
+
+- `IFX-SESSION-005` is a current client-session count;
+- `IFX-LOCK-002` is an elapsed-time metric;
+- source timing, filtering and aggregation can differ.
 
 ---
 
@@ -444,7 +450,7 @@ Grafana visualization:
 The metric supports visualization and correlation with:
 
 - sessions waiting for locks;
-- waiting threads;
+- waiting client sessions;
 - wait reasons;
 - deadlocks;
 - SQL workload;

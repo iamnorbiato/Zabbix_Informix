@@ -103,3 +103,112 @@ zabbix_export:
           key: ifx.health.lru_writes
           units: writes
           timeout: 30s
+        - uuid: fab1f82859824d9da09e5340e1c72067
+          name: 'SESSION-002 — sessions in read call'
+          type: ZABBIX_ACTIVE
+          key: ifx.session.in_read_call
+          units: sessions
+          timeout: 30s
+        - uuid: a36ee168da7f4b4e98ba8ea8b515aef4
+          name: 'SESSION-001 — total connected client sessions'
+          type: ZABBIX_ACTIVE
+          key: ifx.session.total_connected
+          units: sessions
+          timeout: 30s
+        - uuid: 31df46f8a1764cf0a34f867cae96888b
+          name: 'SESSION-004 — waiting client sessions total'
+          type: ZABBIX_ACTIVE
+          key: ifx.session.waiting_client_sessions
+          units: sessions
+          timeout: 30s
+        - uuid: b80848a050b44de7a7b9c10a653dd003
+          name: 'SESSION-005 — waiting client sessions - buffer'
+          type: DEPENDENT
+          key: ifx.session.waiting_client_sessions.buffer
+          delay: '0'
+          units: sessions
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '(?s).*BUFFER\|Waiting client sessions - buffer\|([0-9]+).*'
+                - \1
+          master_item:
+            key: ifx.session.waiting_client_sessions_by_reason.raw
+        - uuid: c61a720086434a9584f1de311d26155c
+          name: 'SESSION-005 — waiting client sessions - checkpoint'
+          type: DEPENDENT
+          key: ifx.session.waiting_client_sessions.checkpoint
+          delay: '0'
+          units: sessions
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '(?s).*CHECKPOINT\|Waiting client sessions - checkpoint\|([0-9]+).*'
+                - \1
+          master_item:
+            key: ifx.session.waiting_client_sessions_by_reason.raw
+        - uuid: 2837b5998e8c48f386c5bd6b6c3b56ca
+          name: 'SESSION-005 — waiting client sessions - latch'
+          type: DEPENDENT
+          key: ifx.session.waiting_client_sessions.latch
+          delay: '0'
+          units: sessions
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '(?s).*LATCH\|Waiting client sessions - latch\|([0-9]+).*'
+                - \1
+          master_item:
+            key: ifx.session.waiting_client_sessions_by_reason.raw
+        - uuid: 01ed310ded7d4610bd8e8647d9a7d766
+          name: 'SESSION-005 — waiting client sessions - lock'
+          type: DEPENDENT
+          key: ifx.session.waiting_client_sessions.lock
+          delay: '0'
+          units: sessions
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '(?s).*LOCK\|Waiting client sessions - lock\|([0-9]+).*'
+                - \1
+          master_item:
+            key: ifx.session.waiting_client_sessions_by_reason.raw
+        - uuid: 0c45ea081d764956b3fb3bde92c2e62a
+          name: 'SESSION-005 — waiting client sessions - log buffer'
+          type: DEPENDENT
+          key: ifx.session.waiting_client_sessions.log_buffer
+          delay: '0'
+          units: sessions
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '(?s).*LOG_BUFFER\|Waiting client sessions - log buffer\|([0-9]+).*'
+                - \1
+          master_item:
+            key: ifx.session.waiting_client_sessions_by_reason.raw
+        - uuid: 467e26b59706416584a399c1b30bec78
+          name: 'SESSION-005 — waiting client sessions - transaction'
+          type: DEPENDENT
+          key: ifx.session.waiting_client_sessions.transaction
+          delay: '0'
+          units: sessions
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '(?s).*TRANSACTION\|Waiting client sessions - transaction\|([0-9]+).*'
+                - \1
+          master_item:
+            key: ifx.session.waiting_client_sessions_by_reason.raw
+        - uuid: 68b2a4bf955c45a3bda04de021650526
+          name: 'SESSION-005 — waiting client sessions by reason — raw collector output'
+          type: ZABBIX_ACTIVE
+          key: ifx.session.waiting_client_sessions_by_reason.raw
+          value_type: TEXT
+          trends: '0'
+          timeout: 30s
+        - uuid: 5c2464524ba949bd8f19241fd9374d12
+          name: 'SESSION-003 — weekly peak concurrent physical connections'
+          type: ZABBIX_ACTIVE
+          key: ifx.session.weekly_peak_physical_connections
+          units: connections
+          timeout: 30s

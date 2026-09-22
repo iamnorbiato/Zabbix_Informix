@@ -1,107 +1,65 @@
-#!/usr/bin/ksh
-
+#!/usr/bin/env ksh
 # ==============================================================================
 # Author  : Norba
-# Date    : 2026-09-15
+# Date    : 2026-09-20
 # Script  : ifx-session-total-connected.ksh
-# Purpose : Normalize and validate IBM Informix connected session count output.
+# Purpose : Collect current Informix client sessions through sysmaster:syssessions,
+#           excluding observed internal service sessions and the collector itself.
 #
 # Change Control
 # Date    : 2026-09-15
 # Author  : Norba
-# Change  : Initial version.
+# Change  : Initial mock parser.
+# Date    : 2026-09-20
+# Author  : Norba
+# Change  : Replace mock parsing with remote SQL collection through syssessions.
 # ==============================================================================
 
-#
-# IFX-SESSION-001 — Total Connected Sessions
-#
-# Input:
-#   $1 = file containing the normalized mock source result
-#
-# Output:
-#   Non-negative integer connected session count.
-#
-# Exit codes:
-#   0 = parsing successful
-#   1 = collection/parsing failure
-#
+IFX_SESSIONS_DIR="$(cd "$(dirname "${.sh.file}")" && pwd)"
+IFX_INFORMIX_DIR="$(cd "${IFX_SESSIONS_DIR}/.." && pwd)"
+IFX_REPOSITORY_DIR="$(cd "${IFX_SESSIONS_DIR}/../../.." && pwd)"
+IFX_STATEMENTS_DIR="${IFX_REPOSITORY_DIR}/01-statements/informix-sessions"
 
-if [ "$#" -ne 1 ]; then
-    print -u2 "usage: $0 <input-file>"
+. "${IFX_INFORMIX_DIR}/lib/informix-db.ksh" || exit 1
+
+IFX_SESSION_001_STATEMENT_FILE="${IFX_SESSION_001_STATEMENT_FILE:-${IFX_STATEMENTS_DIR}/IFX-SESSION-001-Total-Connected-Sessions.sql}"
+
+typeset dataset
+typeset total_connected_sessions
+
+fail()
+{
+    print -u2 "${1}"
     exit 1
+}
+
+if (( $# != 0 )); then
+    fail "Usage: $0"
 fi
 
-INPUT_FILE="$1"
-
-if [ ! -r "$INPUT_FILE" ]; then
-    print -u2 "input file is not readable: $INPUT_FILE"
-    exit 1
+if [[ ! -f "${IFX_SESSION_001_STATEMENT_FILE}" ]]; then
+    fail "SESSION-001 statement file not found: ${IFX_SESSION_001_STATEMENT_FILE}"
 fi
 
-#
-# Detect explicit mock source execution failure.
-#
-if grep -q '^EXIT_CODE=' "$INPUT_FILE" 2>/dev/null; then
+dataset="$(ifx_db_execute sysmaster "${IFX_SESSION_001_STATEMENT_FILE}")" || {
+    fail "Unable to collect SESSION-001 total connected sessions."
+}
 
-    EXIT_CODE="$(awk -F= '/^EXIT_CODE=/ {print $2; exit}' "$INPUT_FILE")"
-
-    case "$EXIT_CODE" in
-        ''|*[!0-9]*)
-            print -u2 "invalid execution status"
-            exit 1
-            ;;
-    esac
-
-    if [ "$EXIT_CODE" -ne 0 ]; then
-        print -u2 "source execution failed"
-        exit 1
-    fi
-fi
-
-#
-# Extract non-empty lines after trimming surrounding whitespace.
-#
-VALUE="$(
-    awk '
-    {
-        gsub(/^[[:space:]]+/, "", $0)
-        gsub(/[[:space:]]+$/, "", $0)
-
-        if (length($0) > 0) {
-            print $0
-        }
-    }
-    ' "$INPUT_FILE"
-)"
-
-if [ -z "$VALUE" ]; then
-    print -u2 "empty connected session count"
-    exit 1
-fi
-
-#
-# Exactly one normalized scalar is permitted.
-#
-VALUE_COUNT="$(
-    print -- "$VALUE" |
-    awk 'END {print NR}'
-)"
-
-if [ "$VALUE_COUNT" -ne 1 ]; then
-    print -u2 "multiple connected session count values"
-    exit 1
-fi
-
-#
-# Gauge contract:
-# current connected session count must be a non-negative integer.
-#
-case "$VALUE" in
-    *[!0-9]*)
-        print -u2 "invalid connected session count"
-        exit 1
+case "${dataset}" in
+    *'|')
+        total_connected_sessions="${dataset%"|"}"
+        ;;
+    *)
+        fail "Invalid SESSION-001 total connected sessions dataset."
         ;;
 esac
 
-print "$VALUE"
+case "${total_connected_sessions}" in
+    ''|*[!0-9]*)
+        fail "Invalid SESSION-001 total connected sessions value."
+        ;;
+esac
+
+print -r -- "${total_connected_sessions}"
+
 exit 0

@@ -447,7 +447,7 @@ Before operational collection, real Informix validation must establish:
 
 Related metric:
 
-`IFX-SESSION-004 — Waiting Threads Total`
+`IFX-SESSION-004 — Waiting Client Sessions Total`
 
 No arithmetic relationship is enforced by the parser.
 
@@ -463,11 +463,17 @@ Relationship status:
 
 Related metric:
 
-`IFX-SESSION-005 — Waiting Threads by Reason`
+`IFX-SESSION-005 — Waiting Client Sessions by Reason`
 
-A future lock-related wait reason may correlate strongly with `IFX-LOCK-001`.
+The fixed `LOCK` dimension of `IFX-SESSION-005` represents qualifying client sessions for which:
 
-The parser shall not assume equivalence.
+```text
+syssessions.is_wlock = 1
+```
+
+It may correlate with `IFX-LOCK-001`, but the parser shall not assume equivalence, identity, or an arithmetic relationship.
+
+The two metrics can differ in source timing, session filtering, visibility and aggregation.
 
 Relationship status:
 

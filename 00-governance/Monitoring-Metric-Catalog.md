@@ -608,17 +608,38 @@ DEVELOPMENT_RUNTIME_VALIDATED.
 
 # 6. Connections, Sessions and Concurrency
 
-## IFX-SESSION-001 — Total Connected Sessions
+## IFX-SESSION-001 — Total Connected Client Sessions
 
 **Purpose**
 
-Measure the number of currently connected Informix sessions.
+Measure the number of currently connected Informix client sessions, excluding collector infrastructure.
 
-**Candidate Source**
+**Validated Development Source**
 
-`sysmaster`.
+`sysmaster:syssessions`
 
-Exact authoritative source and SQL remain pending real source validation.
+Approved SQL:
+
+```sql
+SELECT
+    CAST(COUNT(*) AS INT8) AS total_connected_sessions
+FROM syssessions s,
+     syssessions collector_session
+WHERE collector_session.sid = DBINFO('sessionid')
+  AND LENGTH(TRIM(s.hostname)) > 0
+  AND s.sid <> DBINFO('sessionid')
+  AND (
+      s.feprogram IS NULL
+      OR TRIM(s.feprogram) NOT MATCHES '*ontape*'
+  )
+  AND NOT (
+      TRIM(s.hostname) = TRIM(collector_session.hostname)
+      AND s.feprogram IS NOT NULL
+      AND TRIM(s.feprogram) MATCHES '*/dbaccess'
+  );
+```
+
+The metric counts client `syssessions` rows with a non-empty `hostname`, while excluding observed empty-hostname engine sessions, the collector's own connection, the internal `ontape` archive session and concurrent `dbaccess` sessions from the collector host.
 
 **Collection Method**
 
@@ -638,7 +659,7 @@ HIGH or MEDIUM.
 
 **Cost**
 
-LOW — provisional until real source validation.
+LOW — validated in the Linux development topology; target-environment validation remains pending.
 
 **Discovery**
 
@@ -654,27 +675,46 @@ Yes.
 
 **Validation Status**
 
-MOCK_VALIDATED.
+DEVELOPMENT_RUNTIME_VALIDATED.
+
+The Linux development topology validated the remote SQL source, strict collector normalization, parameterized deployment launcher, Zabbix Agent active check and Zabbix template item. The validated result was identical through collector, installed launcher and Zabbix Agent execution.
+
+Target Informix/AIX validation remains pending.
 
 ---
 
-## IFX-SESSION-002 — Active Sessions
+## IFX-SESSION-002 — Sessions in Read Call
 
 **Purpose**
 
-Measure the number of sessions currently classified as active according to the authoritative Informix source.
+Measure qualifying client sessions whose documented `sysmaster:syssessions.state` bitmask contains the `In a read call` flag.
 
-The exact operational definition of an active session remains pending real source validation.
+This metric does not measure generic active sessions, SQL statements executing, CPU consumption, or runnable threads.
 
-**Candidate Source**
+**Authoritative Development Source**
 
-`sysmaster`.
+`sysmaster:syssessions`
 
-Exact authoritative source and SQL remain pending real source validation.
+The `state` column is a bitmask. Bit `32` (`0x00000020`) means `In a read call`.
+
+**Authoritative SQL Contract**
+
+```sql
+SELECT
+    CAST(COUNT(*) AS INT8) AS sessions_in_read_call
+FROM syssessions s
+WHERE LENGTH(TRIM(s.hostname)) > 0
+  AND s.sid <> DBINFO('sessionid')
+  AND BITAND(s.state, 32) = 32
+  AND (
+      s.feprogram IS NULL
+      OR TRIM(s.feprogram) NOT MATCHES '*ontape*'
+  );
+```
 
 **Collection Method**
 
-SQL statement.
+SQL scalar collector through the common Informix query library.
 
 **Type**
 
@@ -686,11 +726,11 @@ Sessions.
 
 **Frequency**
 
-HIGH or MEDIUM.
+One minute in the development topology.
 
 **Cost**
 
-LOW to MEDIUM — provisional until real source validation.
+Low. One aggregate query against `sysmaster:syssessions`.
 
 **Discovery**
 
@@ -698,41 +738,124 @@ No.
 
 **Trigger**
 
-Normally no direct trigger.
+Normally no direct trigger. The metric is contextual until an operational baseline establishes a useful alert condition.
 
 **Grafana**
 
 Yes.
 
+**Relationship with Other Session Metrics**
+
+IFX-SESSION-002 is not equivalent to IFX-SESSION-001, IFX-SESSION-004, or IFX-SESSION-005. No cross-metric equality or ordering is a parser invariant because the metrics can be observed at different instants and use different filters.
+
 **Validation Status**
 
-MOCK_VALIDATED.
+DEVELOPMENT_RUNTIME_VALIDATED — IBM documentation confirms that `syssessions.state` bit `32` means `In a read call`. Development observation confirmed `state = 524321` for the query session, containing bit `32`, while observed idle DBeaver sessions had `state = 524289` without that bit.
+
+The Linux development topology validated the versioned SQL statement, strict scalar collector, parameterized launcher, Zabbix Agent active key `ifx.session.in_read_call`, active template item, exported template definition, and uninstall/reinstall lifecycle. The same valid value, `0`, was confirmed through DBeaver SQL, `ifx_db_execute`, repository collector, installed launcher, and Zabbix Agent. Target Informix/AIX validation remains pending.
 
 ---
 
-## IFX-SESSION-003 — Historical Session Peak
+## IFX-SESSION-003 — Weekly Peak Concurrent Physical Connections
 
 **Purpose**
 
-Measure the maximum simultaneous session count maintained by an authoritative Informix statistic since its relevant engine lifecycle, reset or statistics boundary.
+Measure the most recent Informix-maintained weekly high-water value for concurrent physical connections.
 
-The metric shall not be silently replaced by a maximum derived from Zabbix history.
+The metric is not derived from Zabbix history and is not a peak since server startup.
 
-If real source validation proves that Informix does not maintain an authoritative statistic with the required semantic, the metric returns to architectural review.
+**Authoritative Development Source**
 
-**Candidate Source**
+`sysmaster:sysfeatures.max_conns`
 
-Informix-maintained internal statistics exposed through `sysmaster` or `onstat`.
+`max_conns` is the maximum number of concurrent physical connections for a standalone server or high-availability primary server instance. Informix samples the source every 15 minutes and retains the highest value per week.
 
-Exact authoritative source remains pending real source validation.
+**Authoritative SQL Contract**
+
+```sql
+SELECT FIRST 1
+    CAST(max_conns AS INT8) AS weekly_peak_concurrent_physical_connections
+FROM sysfeatures
+WHERE max_conns IS NOT NULL
+ORDER BY
+    year DESC,
+    week DESC;
+```
 
 **Collection Method**
 
-Statement or collector against the authoritative Informix-maintained statistic.
+SQL scalar collector through the common Informix query library.
 
 **Type**
 
-Gauge / historical maximum.
+Gauge / weekly high-water value.
+
+**Unit**
+
+Connections.
+
+**Frequency**
+
+15 minutes, aligned with the Informix source sampling cadence.
+
+**Cost**
+
+Low. One ordered scalar query against `sysmaster:sysfeatures`.
+
+**Discovery**
+
+No.
+
+**Trigger**
+
+Normally no direct trigger. The metric is a capacity and trend input until an operational baseline establishes a useful alert condition.
+
+**Grafana**
+
+Yes.
+
+**Relationship with Other Session Metrics**
+
+IFX-SESSION-003 is not equivalent to IFX-SESSION-001. The source reports an Informix-maintained weekly physical-connection high-water value; IFX-SESSION-001 is a current filtered client-session observation.
+
+**Validation Status**
+
+DEVELOPMENT_RUNTIME_VALIDATED — development source query returned the newest weekly rows `2026|38|6` and `2026|37|4`. The current approved value is therefore `6`.
+
+The Linux development topology validated the versioned SQL statement, strict scalar collector, parameterized launcher, Zabbix Agent active key `ifx.session.weekly_peak_physical_connections`, active template item, exported template definition, and uninstall/reinstall lifecycle. The same valid value, `6`, was confirmed through DBeaver SQL, `ifx_db_execute`, repository collector, installed launcher, and Zabbix Agent. Target Informix/AIX validation remains pending.
+
+---
+
+## IFX-SESSION-004 — Waiting Client Sessions Total
+
+**Purpose**
+
+Measure the current number of qualifying Informix client sessions for which at least one documented `syssessions` waiting flag is set.
+
+The metric measures distinct client sessions, not engine threads and not cumulative wait events.
+
+**Authoritative Development Source**
+
+`sysmaster:syssessions`
+
+Approved flags:
+
+- `is_wlatch`;
+- `is_wlock`;
+- `is_wbuff`;
+- `is_wckpt`;
+- `is_wlogbuf`;
+- `is_wtrans`.
+
+The source includes client sessions with a non-empty `hostname`, excludes the collector session with `DBINFO('sessionid')`, and counts a session once when any approved flag is `1`.
+
+**Collection Method**
+
+SQL scalar collector.
+
+**Type**
+
+Gauge.
 
 **Unit**
 
@@ -740,11 +863,11 @@ Sessions.
 
 **Frequency**
 
-MEDIUM.
+`1m` in the Linux development topology. Target interval remains subject to collection-cost validation.
 
 **Cost**
 
-UNKNOWN.
+Pending target validation.
 
 **Discovery**
 
@@ -752,137 +875,81 @@ No.
 
 **Trigger**
 
-Potentially when approaching configured session capacity.
+Potentially after operational baselines are established.
 
 **Grafana**
 
 Yes.
+
+**Relationship with IFX-SESSION-005**
+
+`IFX-SESSION-005` exposes one count per waiting flag. Its dimensional sum shall not be assumed equal to this distinct-session total because one session can theoretically have more than one waiting flag set.
 
 **Validation Status**
 
-MOCK_VALIDATED.
+DEVELOPMENT_RUNTIME_VALIDATED.
+
+The Linux development topology validated the `sysmaster:syssessions` source, strict scalar collector normalization, parameterized launcher, Zabbix Agent key `ifx.session.waiting_client_sessions`, Zabbix active item, exported template definition, and uninstall/reinstall lifecycle.
+
+The same valid value, `0`, was confirmed through the SQL statement, repository collector, installed launcher and Zabbix Agent. Target Informix/AIX validation remains pending. Controlled exercises for the individual non-lock waiting flags remain pending.
 
 ---
 
-## IFX-SESSION-004 — Waiting Threads Total
+## IFX-SESSION-005 — Waiting Client Sessions by Reason
 
 **Purpose**
 
-Measure the current total number of Informix threads classified as waiting by the authoritative source.
+Measure qualifying Informix client sessions by a fixed set of documented `syssessions` waiting-flag conditions.
 
-The metric represents current waiting state, not a cumulative wait-event counter.
+**Authoritative Development Source**
 
-**Candidate Source**
+`sysmaster:syssessions`
 
-`sysmaster` or `onstat`.
+The fixed dimensions are `LATCH`, `LOCK`, `BUFFER`, `CHECKPOINT`, `LOG_BUFFER`, and `TRANSACTION`, mapped respectively to `is_wlatch`, `is_wlock`, `is_wbuff`, `is_wckpt`, `is_wlogbuf`, and `is_wtrans`.
 
-Exact authoritative source and waiting-state semantics remain pending real source validation.
+The dimension IDs are stable project labels for exact field conditions. They do not claim to be a complete native Informix wait-reason taxonomy.
 
 **Collection Method**
 
-Statement or collector.
+SQL collector returning an atomic fixed six-row dataset, normalized by a strict collector contract and delivered to Zabbix through one active raw master item with six dependent numeric items.
 
 **Type**
 
-Gauge.
+Six current gauges.
 
 **Unit**
 
-Threads.
+Sessions.
 
 **Frequency**
 
-HIGH or MEDIUM.
+One minute in the development topology.
 
 **Cost**
 
-UNKNOWN.
+Low. The collector executes six `COUNT(*)` aggregates against `sysmaster:syssessions`.
 
 **Discovery**
 
-No.
+No. The six dimensions are fixed by contract.
 
 **Trigger**
 
-Potentially based on sustained waiting-thread conditions after operational baselines are established.
+Potentially by dimension after operational baselines are established.
 
 **Grafana**
 
 Yes.
-
-**Validation Status**
-
-MOCK_VALIDATED.
-
----
-
-## IFX-SESSION-005 — Waiting Threads by Reason
-
-**Purpose**
-
-Measure the current number of Informix threads waiting under each authoritative native wait reason.
-
-The metric provides the dynamic diagnostic decomposition of waiting threads without inventing or silently grouping native wait reasons.
-
-**Candidate Source**
-
-`sysmaster` or `onstat`.
-
-Exact authoritative source, wait-reason identity and taxonomy remain pending real source validation.
-
-**Collection Method**
-
-Collector producing a normalized dynamic wait-reason dataset.
-
-**Type**
-
-Gauge.
-
-**Unit**
-
-Threads.
-
-**Frequency**
-
-HIGH.
-
-Final collection frequency remains subject to real collection-cost validation.
-
-**Cost**
-
-UNKNOWN.
-
-**Discovery**
-
-Yes — Zabbix Low-Level Discovery.
-
-Preferred discovery identity is an authoritative stable wait-reason identifier when Informix provides one.
-
-**Trigger**
-
-Potentially by specific wait reason after authoritative semantics and operational baselines are established.
-
-**Grafana**
-
-Yes.
-
-Dynamic wait-reason dimensions are intended for diagnostic visualization and correlation.
 
 **Relationship with IFX-SESSION-004**
 
-The relationship:
-
-`IFX-SESSION-004 = SUM(IFX-SESSION-005 reason counts)`
-
-is currently:
-
-`UNPROVEN`
-
-It shall not be assumed until real source validation establishes compatible scope, completeness, exclusivity and timing semantics.
+The sum of all six dimensions is `UNPROVEN` as an equivalent to IFX-SESSION-004. A client session can theoretically match more than one flag condition.
 
 **Validation Status**
 
-MOCK_VALIDATED.
+DEVELOPMENT_RUNTIME_VALIDATED — the `sysmaster:syssessions` six-row SQL dataset, strict fixed-dimension collector contract, parameterized deployment launcher, Zabbix Agent active check, raw master item and six numeric dependent items were validated in the Linux development topology. All six dependent items returned valid numeric value `0` without preprocessing errors.
+
+Controlled `is_wlock` behavior was validated previously. Target Informix/AIX validation and controlled exercises for the individual non-lock flags remain pending.
 
 ---
 
@@ -2323,29 +2390,69 @@ DEFINED.
 
 ---
 
-# 11. Replication and High Availability
+# 11. HDR Replication and High Availability
 
-## IFX-HA-001 — Replication Role
+This section defines monitoring of IBM Informix High-Availability Data Replication (HDR) only. RSS and SDS discovery are outside this initial scope. Runtime collection must use supported SQL sources in `sysmaster`; it must not execute or parse `onstat` output.
+
+The initial candidates are `sysdri` for local Data Replication Interface role/state and `syscluster` for peer topology and connection information. Every source field, value mapping and time/progress semantic requires validation in a real target HDR environment before implementation.
+
+## IFX-HDR-001 — Local Role and State
 
 **Purpose**
 
-Identify the role of the monitored Informix instance.
-
-Examples may include:
-
-- primary;
-- HDR secondary;
-- RSS secondary;
-- SDS secondary;
-- standalone.
+Expose the local Informix HDR/DRI role and state, distinguishing primary, secondary, standalone, transition and engine-reported failure states.
 
 **Candidate Source**
 
-Informix replication metadata or `onstat`.
+`sysmaster:sysdri`, initially using `type`, `state` and `name`.
 
 **Collection Method**
 
-Statement or collector.
+SQL master collector.
+
+**Type**
+
+State.
+
+**Frequency**
+
+MEDIUM.
+
+**Cost**
+
+LOW — pending target validation.
+
+**Discovery**
+
+No.
+
+**Trigger**
+
+Potentially for sustained validated local failure state; no trigger is approved yet.
+
+**Grafana**
+
+Yes.
+
+**Validation Status**
+
+DEFINED.
+
+---
+
+## IFX-HDR-002 — Expected HDR Configuration
+
+**Purpose**
+
+Evaluate whether the instance has the HDR relationship required by the private `IFX_HDR_REQUIRED=YES|NO` policy.
+
+**Candidate Source**
+
+Normalized HDR local role/state and discovered HDR peer count, combined with private runtime configuration.
+
+**Collection Method**
+
+Dependent item derived from the HDR master collector.
 
 **Type**
 
@@ -2361,11 +2468,11 @@ LOW.
 
 **Discovery**
 
-Potentially.
+No.
 
 **Trigger**
 
-Potentially for unexpected role changes.
+Yes. High when HDR is explicitly required but absent.
 
 **Grafana**
 
@@ -2377,19 +2484,63 @@ DEFINED.
 
 ---
 
-## IFX-HA-002 — Replication Connection State
+## IFX-HDR-003 — HDR Peer Discovery
 
 **Purpose**
 
-Determine whether configured replication relationships are operational.
+Discover HDR peers with stable identity and expose them for per-peer dependent items and triggers.
 
 **Candidate Source**
 
-Informix replication metadata or `onstat`.
+`sysmaster:syscluster`, filtered to rows whose validated node type is HDR.
 
 **Collection Method**
 
-Statement or collector.
+Dependent Zabbix low-level discovery derived from the HDR master collector.
+
+**Type**
+
+Discovery.
+
+**Frequency**
+
+MEDIUM.
+
+**Cost**
+
+LOW to MEDIUM — pending target schema validation.
+
+**Discovery**
+
+Yes.
+
+**Trigger**
+
+No direct trigger. HDR-002 evaluates absence; per-peer metrics evaluate discovered peers.
+
+**Grafana**
+
+Yes.
+
+**Validation Status**
+
+DEFINED.
+
+---
+
+## IFX-HDR-004 — HDR Peer Connectivity
+
+**Purpose**
+
+Expose engine-reported connectivity for each discovered HDR peer and alert on disconnected or failed peers when policy enables it.
+
+**Candidate Source**
+
+`sysmaster:syscluster.connection_status` for validated HDR rows.
+
+**Collection Method**
+
+Dependent item prototype derived from the HDR master collector.
 
 **Type**
 
@@ -2401,15 +2552,15 @@ HIGH or MEDIUM.
 
 **Cost**
 
-LOW to MEDIUM.
+LOW to MEDIUM — pending target validation.
 
 **Discovery**
 
-Yes where peers can be identified reliably.
+Yes, through IFX-HDR-003.
 
 **Trigger**
 
-Yes.
+Yes. High for disconnected or failed peer when `IFX_HDR_ALERT_ON_DISCONNECT=YES`.
 
 **Grafana**
 
@@ -2421,27 +2572,23 @@ DEFINED.
 
 ---
 
-## IFX-HA-003 — Replication Backlog
+## IFX-HDR-005 — HDR Peer State and Sync Mode
 
 **Purpose**
 
-Measure outstanding log data awaiting transmission or application by secondary servers.
+Expose the remote HDR role, server state and synchronization mode for each discovered peer.
 
 **Candidate Source**
 
-Informix replication metadata or `onstat`.
+`sysmaster:syscluster`, initially using validated `role`, `server_status` and `syncmode` fields.
 
 **Collection Method**
 
-Statement or collector.
+Dependent item prototypes derived from the HDR master collector.
 
 **Type**
 
-Gauge.
-
-**Unit**
-
-Pages or validated equivalent.
+State.
 
 **Frequency**
 
@@ -2449,15 +2596,15 @@ MEDIUM.
 
 **Cost**
 
-UNKNOWN.
+LOW to MEDIUM — pending target validation.
 
 **Discovery**
 
-Yes where appropriate.
+Yes, through IFX-HDR-003.
 
 **Trigger**
 
-Yes.
+Deferred. Sync-mode compliance requires an explicit desired-mode policy; peer server-state semantics require target validation.
 
 **Grafana**
 
@@ -2469,19 +2616,19 @@ DEFINED.
 
 ---
 
-## IFX-HA-004 — Replication Delay
+## IFX-HDR-006 — HDR Last Acknowledgement Age
 
 **Purpose**
 
-Provide an operational representation of replication delay.
+Measure elapsed time since a discovered HDR peer last acknowledged progress, only when a compatible timestamp source and time basis are validated.
 
 **Candidate Source**
 
-Derived from replication/log-position information where technically valid.
+Candidate `sysmaster:syscluster.ack_time` for validated HDR rows.
 
 **Collection Method**
 
-Collector or derived metric.
+Dependent item prototype derived from the HDR master collector.
 
 **Type**
 
@@ -2489,7 +2636,7 @@ Gauge.
 
 **Unit**
 
-Seconds if a reliable time-based representation can be established.
+Seconds, only after target validation confirms the timestamp contract.
 
 **Frequency**
 
@@ -2501,11 +2648,11 @@ UNKNOWN.
 
 **Discovery**
 
-Yes where appropriate.
+Yes, through IFX-HDR-003.
 
 **Trigger**
 
-Yes.
+Potentially. Thresholds are disabled until the timestamp semantics and idle-workload behavior are validated.
 
 **Grafana**
 
@@ -2513,7 +2660,55 @@ Yes.
 
 **Validation Status**
 
-DEFINED — SEMANTICS REQUIRE VALIDATION.
+DEFINED — SOURCE SEMANTICS REQUIRE VALIDATION.
+
+---
+
+## IFX-HDR-007 — HDR Log Progress and Backlog
+
+**Purpose**
+
+Expose validated per-peer log progress and optionally derive a backlog only when a correct unit and rollover-safe formula are proven.
+
+**Candidate Source**
+
+Candidate `sysmaster:syscluster` fields `logid_sent`, `logpage_sent`, `logid_acked` and `logpage_acked`.
+
+**Collection Method**
+
+Dependent item prototypes derived from the HDR master collector.
+
+**Type**
+
+Gauge.
+
+**Unit**
+
+Undefined until a validated backlog formula and unit exist.
+
+**Frequency**
+
+MEDIUM.
+
+**Cost**
+
+UNKNOWN.
+
+**Discovery**
+
+Yes, through IFX-HDR-003.
+
+**Trigger**
+
+Potentially. Thresholds are disabled until source fields, rollover behavior and a backlog unit are validated.
+
+**Grafana**
+
+Yes.
+
+**Validation Status**
+
+DEFINED — SOURCE SEMANTICS REQUIRE VALIDATION.
 
 ---
 
@@ -3717,6 +3912,14 @@ IFX-HEALTH-005  Checkpoint Duration
 IFX-HEALTH-006  Checkpoint Waits
 IFX-HEALTH-007  LRU Writes
 IFX-HEALTH-008  Foreground Writes
+```
+
+The first Informix Sessions metric is also:
+
+`DEVELOPMENT_RUNTIME_VALIDATED`
+
+```text
+IFX-SESSION-001  Total Connected Client Sessions
 ```
 
 Development runtime validation confirms, for every metric:

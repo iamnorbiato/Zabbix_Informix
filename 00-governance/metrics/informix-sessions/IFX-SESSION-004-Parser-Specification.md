@@ -1,519 +1,125 @@
-# IFX-SESSION-004 — Waiting Threads Total — Parser Specification
+# IFX-SESSION-004 — Waiting Client Sessions Total — Parser Specification
 
-## 1. Purpose
+## 1. Identity
 
-This document defines the parser contract for:
+| Field | Value |
+| --- | --- |
+| Metric ID | `IFX-SESSION-004` |
+| Input type | Scalar Informix SQL result |
+| Output type | One unsigned integer |
+| Unit | Sessions |
+| Lifecycle | `DEVELOPMENT_RUNTIME_VALIDATED` |
 
-`IFX-SESSION-004 — Waiting Threads Total`
+## 2. Source Contract
 
-The parser normalizes and validates an already classified and aggregated instance-level waiting-thread count.
+**Database: `sysmaster`**
 
-It does not determine which Informix thread states qualify as waiting.
+The statement returns exactly one value: the number of qualifying client sessions for which at least one of `is_wlatch`, `is_wlock`, `is_wbuff`, `is_wckpt`, `is_wlogbuf`, or `is_wtrans` is `1`.
 
----
+The source query must:
 
-# 2. Architectural Metric
+- exclude sessions with an empty `hostname`;
+- exclude its own Informix session with `DBINFO('sessionid')`;
+- use `CAST(COUNT(*) AS INT8)`.
 
-Metric:
+## 3. Normalized Input
 
-`Waiting Threads Total`
+The parser receives one line containing a non-negative base-10 integer, optionally followed by the Informix UNLOAD delimiter:
 
-The previous catalog concept:
-
-`Generic Thread Waits`
-
-is superseded by this current-state gauge contract.
-
----
-
-# 3. Candidate Source
-
-Candidate interfaces:
-
-`sysmaster / onstat`
-
-Exact authoritative source:
-
-`PENDING SOURCE VALIDATION`
-
-Exact SQL or command:
-
-`PENDING SOURCE VALIDATION`
-
----
-
-# 4. Provisional Semantic
-
-The normalized value represents:
-
-`CURRENT NUMBER OF INFORMIX THREADS CLASSIFIED AS WAITING BY THE AUTHORITATIVE SOURCE`
-
-The exact waiting-state classification remains pending source validation.
-
----
-
-# 5. Metric Type
-
-Metric type:
-
-`GAUGE`
-
-The value represents current state.
-
-It is not a cumulative wait-event counter.
-
----
-
-# 6. Normalized Unit
-
-Unit:
-
-`THREADS`
-
----
-
-# 7. Input Contract
-
-The parser receives one input file containing one already normalized instance-level scalar.
-
-Example:
-
-```text id="62bxf1"
-22
+```text
+0|
+17|
 ```
 
-The collection layer owns any required thread filtering, classification and aggregation.
+Leading and trailing horizontal whitespace may be removed before validation.
 
----
+## 4. Accepted Values
 
-# 8. Source Execution Failure
+Accepted value grammar:
 
-A mock containing:
-
-```text id="32t64d"
-EXIT_CODE=1
-STDOUT=
-STDERR=SQL execution failed
+```text
+0|[1-9][0-9]*
 ```
 
-represents collection failure.
+Examples of valid input:
 
-Expected result:
-
-`COLLECTION_FAILURE`
-
-No numeric value shall be emitted.
-
----
-
-# 9. Valid Value Domain
-
-Valid values are non-negative integers.
-
-Examples:
-
-```text id="nq3lj8"
-0
-1
-8
-22
-750
+```text
+0|
+4|
+120|
 ```
 
----
+Examples of invalid input:
 
-# 10. Invalid Values
+```text
 
-The following are invalid:
+4.0|
+-1|
+1e3|
+4|extra
+```
 
-- empty input;
-- non-numeric input;
-- negative integer;
-- decimal value;
-- multiple scalar values;
-- explicit source execution failure.
+## 5. Output Contract
 
----
+On success, write exactly one unsigned integer followed by one newline to standard output.
 
-# 11. Zero Semantics
+```text
+4
+```
 
-Zero is valid.
+The parser must not print Informix connection messages, diagnostics, labels, or additional rows to standard output.
 
-Input:
+## 6. Failure Contract
 
-```text id="ngywnb"
+If query execution fails, no row is returned, more than one non-empty data row is returned, or the value violates the accepted grammar:
+
+- return a non-zero exit status;
+- write a concise diagnostic to standard error;
+- write no metric value to standard output.
+
+Failure is never normalized to `0`.
+
+## 7. Semantics Boundary
+
+The parser validates serialization only. It does not:
+
+- decide whether a flag is operationally important;
+- infer a thread wait from `systhreads.th_state`;
+- sum SESSION-005 dimensions;
+- create alerts or Zabbix discovery objects.
+
+## 8. Relationship with IFX-SESSION-005
+
+The output is a distinct-session count. A qualifying session contributes once even when more than one waiting flag is `1`.
+
+Therefore the parser must not derive its output by summing dimensional values from `IFX-SESSION-005`.
+
+## 9. Required Tests
+
+- `0|` normalizes to `0`.
+- A positive integer normalizes unchanged.
+- Decimal input such as `4.0|` fails.
+- Negative, non-numeric, blank, and multi-row input fail.
+- A query failure emits no standard-output value.
+
+## 10. Development Runtime Validation
+
+The scalar collector was implemented and validated in the Linux development topology.
+
+The validation covered:
+
+- execution of the `sysmaster:syssessions` source statement;
+- strict acceptance of one non-negative integer;
+- repository collector execution;
+- installed parameterized launcher execution;
+- Zabbix Agent key `ifx.session.waiting_client_sessions`;
+- Zabbix active item and exported template definition;
+- uninstall and reinstall lifecycle.
+
+The validated runtime value was:
+
+```text
 0
 ```
 
-Expected output:
-
-```text id="wxnf87"
-0
-```
-
-It means that no threads were classified as waiting at the collection instant.
-
-Collection failure shall not become zero.
-
----
-
-# 12. Whitespace
-
-Leading and trailing whitespace around the scalar may be removed.
-
-Whitespace normalization shall not alter the numeric value.
-
----
-
-# 13. Gauge Behavior
-
-Each observation is independently valid.
-
-The value may increase or decrease:
-
-```text id="h8y1h8"
-22
-31
-8
-0
-17
-```
-
-The parser shall maintain no historical state.
-
----
-
-# 14. Output Cardinality
-
-Exactly one normalized scalar is permitted.
-
-Multiple values shall result in collection/parsing failure.
-
----
-
-# 15. Classification Boundary
-
-The parser shall not receive arbitrary thread rows and determine which are waiting.
-
-Classification belongs to the validated collection layer.
-
-Conceptually:
-
-```text id="d2nyk5"
-Informix authoritative thread state
-              ↓
-classification/filtering
-              ↓
-instance-level aggregation
-              ↓
-scalar parser
-              ↓
-22
-```
-
----
-
-# 16. Relationship with IFX-SESSION-005
-
-Dynamic wait-reason metrics belong to:
-
-`IFX-SESSION-005 — Waiting Threads by Reason`
-
-This parser shall not:
-
-- discover wait reasons;
-- classify reasons;
-- generate reason identifiers;
-- produce LLD data;
-- sum reason metrics.
-
----
-
-# 17. No Silent Sum Rule
-
-The parser shall not calculate:
-
-```text id="91s0hx"
-Waiting Threads Total =
-SUM(Waiting Threads by Reason)
-```
-
-That relationship may only be established after real source validation proves that the wait-reason dimensions are complete, mutually exclusive and equivalent in scope.
-
----
-
-# 18. Session Relationships
-
-The parser shall not enforce relationships with:
-
-`IFX-SESSION-001 — Total Connected Sessions`
-
-or:
-
-`IFX-SESSION-002 — Active Sessions`
-
-Threads and sessions shall not be assumed to have a one-to-one relationship.
-
----
-
-# 19. Parser Responsibilities
-
-The parser shall:
-
-1. validate invocation;
-2. validate input readability;
-3. detect explicit source execution failure;
-4. extract non-empty normalized content;
-5. trim surrounding whitespace;
-6. require exactly one scalar;
-7. validate a non-negative integer;
-8. emit the value unchanged.
-
----
-
-# 20. Parser Non-Responsibilities
-
-The parser shall not:
-
-- identify the final Informix source;
-- execute final SQL or command;
-- define waiting-state semantics;
-- inspect individual thread records;
-- classify thread states;
-- classify wait reasons;
-- count arbitrary input rows;
-- perform LLD;
-- derive `IFX-SESSION-005`;
-- sum `IFX-SESSION-005`;
-- compare with session metrics;
-- maintain history;
-- generate alerts;
-- convert failure into zero.
-
----
-
-# 21. Processing Order
-
-The parser shall process input in this order:
-
-```text id="ouyb4j"
-validate invocation
-        ↓
-validate input readability
-        ↓
-detect explicit execution failure
-        ↓
-extract normalized non-empty content
-        ↓
-trim surrounding whitespace
-        ↓
-require exactly one scalar
-        ↓
-validate non-negative integer
-        ↓
-emit value
-```
-
----
-
-# 22. Successful Exit Contract
-
-On success:
-
-```text id="2m10cw"
-stdout = normalized scalar
-stderr = empty
-return code = 0
-```
-
-Example:
-
-```text id="7dsvk3"
-22
-```
-
----
-
-# 23. Failure Exit Contract
-
-On failure:
-
-```text id="kg3x3w"
-stdout = empty
-stderr = diagnostic message
-return code != 0
-```
-
-The diagnostic message is not part of the metric value.
-
----
-
-# 24. Mock Dataset
-
-Mock directory:
-
-`04-mocks/informix-sessions/IFX-SESSION-004/`
-
-Expected cases:
-
-| Mock | Expected Result |
-|---|---|
-| `normal.txt` | `22` |
-| `zero.txt` | `0` |
-| `single.txt` | `1` |
-| `high.txt` | `750` |
-| `lower.txt` | `8` |
-| `empty.txt` | failure |
-| `non-numeric.txt` | failure |
-| `negative.txt` | failure |
-| `decimal.txt` | failure |
-| `execution-error.txt` | failure |
-
----
-
-# 25. Mock Acceptance Criteria
-
-Mock validation passes only when:
-
-- all five valid inputs return exactly the expected scalar;
-- all five invalid/error inputs return non-zero;
-- invalid/error inputs emit no metric value;
-- zero remains valid.
-
-Expected result:
-
-```text id="p6hhtr"
-PASS: 10
-FAIL: 0
-```
-
----
-
-# 26. Source Validation Requirements
-
-Before operational implementation, real Informix validation must establish:
-
-- authoritative thread-state source;
-- exact waiting-state semantics;
-- exact `sysmaster` object or `onstat` representation;
-- filtering rules;
-- internal/system-thread handling;
-- session/thread relationship;
-- aggregation rules;
-- exact SQL or command;
-- required permissions;
-- collection cost;
-- relevant Informix version differences.
-
----
-
-# 27. Relationship Validation with SESSION-005
-
-Real validation shall additionally establish whether:
-
-```text id="21pdcz"
-SESSION-004 =
-SUM(all SESSION-005 reason dimensions)
-```
-
-is semantically valid.
-
-This relationship shall remain:
-
-`UNPROVEN`
-
-until source validation confirms completeness and mutual exclusivity of wait reasons.
-
----
-
-# 28. Lifecycle Advancement
-
-Successful mock validation permits:
-
-```text id="xovpyq"
-DEFINED
-   ↓
-MOCK_VALIDATED
-```
-
-It does not permit:
-
-`SOURCE_VALIDATED`
-
-Real Informix/AIX validation remains mandatory.
-
----
-
-# 29. Current Status
-
-Specification:
-
-`APPROVED`
-
-Architectural metric:
-
-`Waiting Threads Total`
-
-Previous catalog concept:
-
-`Generic Thread Waits`
-
-Candidate interfaces:
-
-`sysmaster / onstat`
-
-Current semantic:
-
-`PROVISIONAL — CURRENT NUMBER OF INFORMIX THREADS CLASSIFIED AS WAITING`
-
-Metric semantics:
-
-`GAUGE`
-
-Normalized unit:
-
-`THREADS`
-
-Waiting-state definition:
-
-`PENDING SOURCE VALIDATION`
-
-Exact source:
-
-`PENDING SOURCE VALIDATION`
-
-Exact SQL/command:
-
-`PENDING SOURCE VALIDATION`
-
-Relationship with SESSION-005 sum:
-
-`UNPROVEN`
-
-Mock inputs:
-
-`AVAILABLE`
-
-Parser implementation:
-
-`IMPLEMENTED`
-
-Mock validation:
-
-`PASSED — 10/10`
-
-Metric lifecycle state:
-
-`MOCK_VALIDATED`
-
-Real environment validation:
-
-`PENDING`
-
----
-
-# 30. Next Step
-
-Implement the minimum KornShell scalar parser for the existing `IFX-SESSION-004` mock dataset.
-
-Dynamic wait-reason discovery remains outside this parser and belongs to `IFX-SESSION-005`.
+The parser continues to reject invalid, decimal, negative, blank and multi-row scalar input. Target Informix/AIX validation remains pending.

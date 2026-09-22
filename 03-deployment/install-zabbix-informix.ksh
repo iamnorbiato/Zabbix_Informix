@@ -137,6 +137,11 @@ esac
 [[ -f "${release_dir}/01-statements/informix-health/IFX-HEALTH-006-Checkpoint-Waits.sql" ]] || fail "HEALTH-006 statement is missing from the release."
 [[ -f "${release_dir}/01-statements/informix-health/IFX-HEALTH-007-LRU-Writes.sql" ]] || fail "HEALTH-007 statement is missing from the release."
 [[ -f "${release_dir}/01-statements/informix-health/IFX-HEALTH-008-Foreground-Writes.sql" ]] || fail "HEALTH-008 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sessions/IFX-SESSION-001-Total-Connected-Sessions.sql" ]] || fail "SESSION-001 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sessions/IFX-SESSION-002-Sessions-in-Read-Call.sql" ]] || fail "SESSION-002 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sessions/IFX-SESSION-003-Weekly-Peak-Concurrent-Physical-Connections.sql" ]] || fail "SESSION-003 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sessions/IFX-SESSION-004-Waiting-Client-Sessions-Total.sql" ]] || fail "SESSION-004 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sessions/IFX-SESSION-005-Waiting-Client-Sessions-by-Reason.sql" ]] || fail "SESSION-005 statement is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-state.ksh" ]] || fail "HEALTH-001 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-uptime.ksh" ]] || fail "HEALTH-002 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-assert-failures.ksh" ]] || fail "HEALTH-003 collector is missing from the release."
@@ -145,6 +150,11 @@ esac
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-checkpoint-waits.ksh" ]] || fail "HEALTH-006 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-lru-writes.ksh" ]] || fail "HEALTH-007 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-foreground-writes.ksh" ]] || fail "HEALTH-008 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sessions/ifx-session-total-connected.ksh" ]] || fail "SESSION-001 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sessions/ifx-session-in-read-call.ksh" ]] || fail "SESSION-002 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sessions/ifx-session-weekly-peak-physical-connections.ksh" ]] || fail "SESSION-003 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sessions/ifx-session-waiting-total.ksh" ]] || fail "SESSION-004 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sessions/ifx-session-waiting-by-reason.ksh" ]] || fail "SESSION-005 collector is missing from the release."
 [[ -f "${release_dir}/03-deployment/zabbix-informix.conf.template" ]] || fail "Zabbix Agent template is missing from the release."
 
 id zabbix >/dev/null 2>&1 || fail "Required operating-system user not found: zabbix"
@@ -210,6 +220,11 @@ cp "${release_dir}/03-deployment/launchers/ifx-health-005" "${launcher_home}/ifx
 cp "${release_dir}/03-deployment/launchers/ifx-health-006" "${launcher_home}/ifx-health-006" || fail "Unable to install HEALTH-006 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-health-007" "${launcher_home}/ifx-health-007" || fail "Unable to install HEALTH-007 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-health-008" "${launcher_home}/ifx-health-008" || fail "Unable to install HEALTH-008 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-session-001" "${launcher_home}/ifx-session-001" || fail "Unable to install SESSION-001 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-session-002" "${launcher_home}/ifx-session-002" || fail "Unable to install SESSION-002 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-session-003" "${launcher_home}/ifx-session-003" || fail "Unable to install SESSION-003 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-session-004" "${launcher_home}/ifx-session-004" || fail "Unable to install SESSION-004 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-session-005" "${launcher_home}/ifx-session-005" || fail "Unable to install SESSION-005 launcher."
 
 chown root:zabbix \
     "${launcher_home}/ifx-health-001" \
@@ -219,7 +234,12 @@ chown root:zabbix \
     "${launcher_home}/ifx-health-005" \
     "${launcher_home}/ifx-health-006" \
     "${launcher_home}/ifx-health-007" \
-    "${launcher_home}/ifx-health-008" || fail "Unable to set launcher ownership."
+    "${launcher_home}/ifx-health-008" \
+    "${launcher_home}/ifx-session-001" \
+    "${launcher_home}/ifx-session-002" \
+    "${launcher_home}/ifx-session-003" \
+    "${launcher_home}/ifx-session-004" \
+    "${launcher_home}/ifx-session-005" || fail "Unable to set launcher ownership."
 
 chmod 750 \
     "${launcher_home}/ifx-health-001" \
@@ -229,7 +249,12 @@ chmod 750 \
     "${launcher_home}/ifx-health-005" \
     "${launcher_home}/ifx-health-006" \
     "${launcher_home}/ifx-health-007" \
-    "${launcher_home}/ifx-health-008"  || fail "Unable to protect launchers."
+    "${launcher_home}/ifx-health-008" \
+    "${launcher_home}/ifx-session-001" \
+    "${launcher_home}/ifx-session-002" \
+    "${launcher_home}/ifx-session-003" \
+    "${launcher_home}/ifx-session-004" \
+    "${launcher_home}/ifx-session-005" || fail "Unable to protect launchers."
 
 sed \
     -e "s|@RUNTIME_ENV@|${runtime_env}|g" \

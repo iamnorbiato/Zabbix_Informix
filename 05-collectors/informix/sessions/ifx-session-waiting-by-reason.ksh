@@ -1,132 +1,116 @@
-#!/usr/bin/ksh
-
+#!/usr/bin/env ksh
 # ==============================================================================
 # Author  : Norba
-# Date    : 2026-09-15
+# Date    : 2026-09-21
 # Script  : ifx-session-waiting-by-reason.ksh
-# Purpose : Normalize and validate IBM Informix waiting threads by reason dataset.
+# Purpose : Collect and strictly normalize the fixed Informix client-session
+#           waiting dataset from sysmaster:syssessions.
 #
 # Change Control
 # Date    : 2026-09-15
 # Author  : Norba
-# Change  : Initial version.
+# Change  : Initial mock parser for dynamic waiting threads by reason.
+# Date    : 2026-09-21
+# Author  : Norba
+# Change  : Replace mock parsing with remote SQL collection of fixed waiting
+#           client-session dimensions.
 # ==============================================================================
 
-#
-# IFX-SESSION-005 — Waiting Threads by Reason
-#
+IFX_SESSIONS_DIR="$(cd "$(dirname "${.sh.file}")" && pwd)"
+IFX_INFORMIX_DIR="$(cd "${IFX_SESSIONS_DIR}/.." && pwd)"
+IFX_REPOSITORY_DIR="$(cd "${IFX_SESSIONS_DIR}/../../.." && pwd)"
+IFX_STATEMENTS_DIR="${IFX_REPOSITORY_DIR}/01-statements/informix-sessions"
 
-if [ "$#" -ne 1 ]; then
-    print -u2 "usage: $0 <input-file>"
+. "${IFX_INFORMIX_DIR}/lib/informix-db.ksh" || exit 1
+
+IFX_SESSION_005_STATEMENT_FILE="${IFX_SESSION_005_STATEMENT_FILE:-${IFX_STATEMENTS_DIR}/IFX-SESSION-005-Waiting-Client-Sessions-by-Reason.sql}"
+
+typeset dataset
+typeset normalized_dataset
+
+fail()
+{
+    print -u2 "${1}"
     exit 1
+}
+
+if (( $# != 0 )); then
+    fail "Usage: $0"
 fi
 
-INPUT_FILE="$1"
-
-if [ ! -r "$INPUT_FILE" ]; then
-    print -u2 "input file is not readable: $INPUT_FILE"
-    exit 1
+if [[ ! -f "${IFX_SESSION_005_STATEMENT_FILE}" ]]; then
+    fail "SESSION-005 statement file not found: ${IFX_SESSION_005_STATEMENT_FILE}"
 fi
 
-#
-# Detect explicit mock source execution failure.
-#
-if grep -q '^EXIT_CODE=' "$INPUT_FILE" 2>/dev/null; then
+dataset="$(ifx_db_execute sysmaster "${IFX_SESSION_005_STATEMENT_FILE}")" || {
+    fail "Unable to collect SESSION-005 waiting client sessions by reason."
+}
 
-    EXIT_CODE="$(awk -F= '/^EXIT_CODE=/ {print $2; exit}' "$INPUT_FILE")"
-
-    case "$EXIT_CODE" in
-        ''|*[!0-9]*)
-            print -u2 "invalid execution status"
-            exit 1
-            ;;
-    esac
-
-    if [ "$EXIT_CODE" -ne 0 ]; then
-        print -u2 "source execution failed"
-        exit 1
-    fi
-fi
-
-#
-# Empty file is a valid successful dataset containing zero wait reasons.
-#
-if [ ! -s "$INPUT_FILE" ]; then
-    exit 0
-fi
-
-#
-# Validate the complete dataset before emitting anything.
-#
-NORMALIZED="$(
-    awk -F'|' '
+normalized_dataset="$(
+    print -r -- "${dataset}" |
+    awk -F '|' '
     function trim(value) {
-        sub(/^[[:space:]]+/, "", value)
-        sub(/[[:space:]]+$/, "", value)
+        gsub(/^[[:space:]]+/, "", value)
+        gsub(/[[:space:]]+$/, "", value)
         return value
     }
 
     BEGIN {
-        failed = 0
+        expected_name["LATCH"] = "Waiting client sessions - latch"
+        expected_name["LOCK"] = "Waiting client sessions - lock"
+        expected_name["BUFFER"] = "Waiting client sessions - buffer"
+        expected_name["CHECKPOINT"] = "Waiting client sessions - checkpoint"
+        expected_name["LOG_BUFFER"] = "Waiting client sessions - log buffer"
+        expected_name["TRANSACTION"] = "Waiting client sessions - transaction"
+
+        ordered_id[1] = "LATCH"
+        ordered_id[2] = "LOCK"
+        ordered_id[3] = "BUFFER"
+        ordered_id[4] = "CHECKPOINT"
+        ordered_id[5] = "LOG_BUFFER"
+        ordered_id[6] = "TRANSACTION"
     }
 
     {
-        if (NF != 3) {
-            failed = 1
+        dimension_id = trim($1)
+        dimension_name = trim($2)
+        dimension_count = trim($3)
+        unload_terminator = trim($4)
+
+        if (NF != 4 ||
+            unload_terminator != "" ||
+            !(dimension_id in expected_name) ||
+            dimension_name != expected_name[dimension_id] ||
+            dimension_count !~ /^(0|[1-9][0-9]*)$/ ||
+            seen[dimension_id]++) {
+            invalid = 1
             next
         }
 
-        reason_id = trim($1)
-        reason_name = trim($2)
-        count = trim($3)
-
-        if (reason_id == "") {
-            failed = 1
-            next
-        }
-
-        if (reason_name == "") {
-            failed = 1
-            next
-        }
-
-        if (count !~ /^[0-9]+$/) {
-            failed = 1
-            next
-        }
-
-        if (seen[reason_id]++) {
-            failed = 1
-            next
-        }
-
-        rows[++row_count] = reason_id "|" reason_name "|" count
+        value[dimension_id] = dimension_count
+        row_count++
     }
 
     END {
-        if (failed) {
+        if (invalid || row_count != 6) {
             exit 1
         }
 
-        for (i = 1; i <= row_count; i++) {
-            print rows[i]
+        for (sequence = 1; sequence <= 6; sequence++) {
+            dimension_id = ordered_id[sequence]
+
+            if (!(dimension_id in value)) {
+                exit 1
+            }
+
+            print dimension_id "|" expected_name[dimension_id] "|" value[dimension_id]
         }
     }
-    ' "$INPUT_FILE"
-)"
+    '
+)" || {
+    fail "Invalid SESSION-005 waiting client sessions dataset."
+}
 
-PARSE_RC=$?
-
-if [ "$PARSE_RC" -ne 0 ]; then
-    print -u2 "invalid waiting threads by reason dataset"
-    exit 1
-fi
-
-#
-# Emit only after complete dataset validation succeeds.
-#
-if [ -n "$NORMALIZED" ]; then
-    print -- "$NORMALIZED"
-fi
+print -r -- "${normalized_dataset}"
 
 exit 0

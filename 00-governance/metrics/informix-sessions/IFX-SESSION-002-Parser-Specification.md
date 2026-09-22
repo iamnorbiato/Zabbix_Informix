@@ -1,471 +1,142 @@
-# IFX-SESSION-002 — Parser Specification
+# IFX-SESSION-002 — Sessions in Read Call — Parser Specification
 
 ## 1. Purpose
 
-This document defines the parser contract for:
+This document defines the runtime normalization contract for:
 
-`IFX-SESSION-002 — Active Sessions`
+`IFX-SESSION-002 — Sessions in Read Call`
 
-The parser normalizes an already classified and aggregated active-session count into a value suitable for monitoring.
+The collector executes the approved `sysmaster:syssessions` SQL statement and
+emits one normalized session count.
 
-This specification validates the provisional mock contract only.
-
-It does not define what constitutes an active Informix session.
-
----
-
-# 2. Candidate Source
-
-Primary candidate source:
-
-`sysmaster`
-
-Exact authoritative source:
-
-`PENDING SOURCE VALIDATION`
-
-Exact SQL:
-
-`PENDING SOURCE VALIDATION`
+Lifecycle: `DEVELOPMENT_RUNTIME_VALIDATED`
 
 ---
 
-# 3. Provisional Semantic
+## 2. Source Contract
 
-For the mock phase, the parser assumes:
+Database: `sysmaster`
 
-`current number of sessions classified as active by an already normalized source result`
+Table: `syssessions`
 
-The classification of active sessions remains outside the parser contract.
+The SQL source counts qualifying client sessions where:
 
----
+```sql
+BITAND(state, 32) = 32
+```
 
-# 4. Source Scope
-
-Expected input:
-
-`one normalized instance-level scalar`
-
-Session classification, filtering, session/thread correlation and aggregation belong to the future authoritative source query or collector.
+Bit `32` is the documented `In a read call` flag. The collector must not
+reinterpret this as active SQL execution or generic session activity.
 
 ---
 
-# 5. Metric Type
+## 3. Input Contract
 
-Type:
+`ifx_db_execute` unloads one scalar, using the project standard trailing field
+delimiter:
 
-`GAUGE`
+```text
+0|
+```
 
-Each successful observation represents the current active-session count.
+The collector accepts exactly one record with exactly two fields split by `|`:
+
+1. a non-negative integer value;
+2. an empty unload terminator field.
+
+Examples of valid source output:
+
+```text
+0|
+18|
+```
 
 ---
 
-# 6. Normalized Unit
+## 4. Output Contract
 
-Normalized unit:
+Successful normalized output is exactly one non-negative integer followed by a
+newline:
 
-`SESSIONS`
-
-Example:
-
-```text id="s8ny4n"
+```text
 18
 ```
 
----
-
-# 7. Input Contract
-
-The parser receives one file containing the normalized scalar source result.
-
-Example:
-
-```text id="y04pnq"
-18
-```
-
-Expected output:
-
-```text id="04qtbf"
-18
-```
+The collector must not emit Informix connection messages, labels, blank lines,
+diagnostic text, or a trailing delimiter to standard output.
 
 ---
 
-# 8. Execution Failure Contract
+## 5. Validity Rules
 
-The mock:
+The collector must reject:
 
-`execution-error.txt`
+- command failure from `ifx_db_execute`;
+- empty output;
+- more than one record;
+- a missing or non-empty unload terminator;
+- decimal, signed, alphabetic, or whitespace-padded scalar values;
+- more than one value field.
 
-represents source execution failure.
-
-It shall produce:
-
-`COLLECTION_FAILURE`
-
-with no numeric metric value.
-
----
-
-# 9. Valid Value Domain
-
-Valid values are non-negative integers.
-
-Examples:
-
-```text id="n2e33w"
-0
-1
-18
-750
-```
+`0` is valid and means no qualifying client session was observed in a read
+call.
 
 ---
 
-# 10. Zero Semantics
+## 6. Failure Contract
 
-Input:
+Any invalid input must:
 
-```text id="5z6kfn"
-0
-```
+1. write a concise diagnostic to standard error;
+2. return non-zero;
+3. emit no numeric value to standard output.
 
-shall successfully produce:
-
-```text id="6rlzk4"
-0
-```
-
-Collection failure shall never be converted into zero.
+Collection failure must never be normalized to `0`.
 
 ---
 
-# 11. Gauge Behavior
+## 7. Collector Responsibilities
 
-Observations may increase or decrease.
+The collector shall:
 
-Example:
+1. source the common Informix database library;
+2. execute the versioned statement against `sysmaster`;
+3. validate the strict one-scalar unload contract;
+4. emit the normalized integer;
+5. preserve a meaningful non-zero failure status.
 
-```text id="2h8ag5"
-18
-27
-6
-```
+The collector shall not:
 
-All are valid independent observations.
-
-No reset semantics apply.
-
----
-
-# 12. Empty Input
-
-Empty input shall produce:
-
-`COLLECTION_FAILURE`
+- classify thread states;
+- inspect individual session rows;
+- change the SQL definition of `In a read call`;
+- calculate a rate, total, peak, or alert threshold;
+- convert errors into zero.
 
 ---
 
-# 13. Non-Numeric Input
+## 8. Zabbix Contract
 
-Input:
+Key: `ifx.session.in_read_call`
 
-```text id="r4uv81"
-active
-```
+Type: Zabbix Agent (active)
 
-shall produce:
+Value type: Numeric (unsigned)
 
-`COLLECTION_FAILURE`
+Units: `sessions`
 
----
+Update interval: `1m`
 
-# 14. Negative Input
+Timeout: `30s`
 
-Input:
-
-```text id="l2k19d"
--1
-```
-
-shall produce:
-
-`COLLECTION_FAILURE`
+The launcher must obtain all environment and connection settings from the
+portable deployment runtime environment. No source-checkout path is permitted
+at runtime.
 
 ---
 
-# 15. Decimal Input
+## 9. Validation Lifecycle
 
-Input:
+`DEVELOPMENT_RUNTIME_VALIDATED` records successful SQL statement, strict scalar collector, installed launcher, Zabbix Agent active key, template item, exported template, and uninstall/reinstall lifecycle validation in the Linux development topology.
 
-```text id="1vjwwh"
-4.5
-```
-
-shall produce:
-
-`COLLECTION_FAILURE`
-
-Session count must be an integer.
-
----
-
-# 16. Multiple Values
-
-Exactly one scalar is permitted.
-
-Example:
-
-```text id="nh3k3c"
-10
-8
-```
-
-shall produce:
-
-`COLLECTION_FAILURE`
-
-No aggregation shall be performed by the parser.
-
----
-
-# 17. Whitespace
-
-Leading and trailing whitespace may be ignored.
-
-Example:
-
-```text id="o2jyj2"
-   18
-```
-
-may normalize to:
-
-```text id="w81twc"
-18
-```
-
----
-
-# 18. Cross-Metric Validation
-
-The parser shall not compare its value with:
-
-`IFX-SESSION-001 — Total Connected Sessions`
-
-In particular, it shall not enforce:
-
-```text id="xgzkou"
-active <= connected
-```
-
-Cross-metric relationships belong to later monitoring and correlation logic.
-
----
-
-# 19. Parser Responsibilities
-
-The parser shall:
-
-1. detect explicit source execution failure;
-2. obtain the normalized scalar;
-3. trim permitted surrounding whitespace;
-4. require exactly one value;
-5. validate a non-negative integer;
-6. emit the normalized active-session count.
-
----
-
-# 20. Parser Non-Responsibilities
-
-The parser shall not:
-
-- execute final SQL;
-- define active-session semantics;
-- inspect thread states;
-- classify sessions;
-- filter internal sessions;
-- aggregate source rows;
-- compare active and connected counts;
-- calculate historical values;
-- determine alert severity;
-- convert collection failure into zero.
-
----
-
-# 21. Processing Order
-
-```text id="0stq6a"
-input
-  │
-  ▼
-source execution successful?
-  │
-  ├── NO ──> COLLECTION_FAILURE
-  │
-  ▼
-scalar result present?
-  │
-  ├── NO ──> COLLECTION_FAILURE
-  │
-  ▼
-exactly one value?
-  │
-  ├── NO ──> COLLECTION_FAILURE
-  │
-  ▼
-valid non-negative integer?
-  │
-  ├── NO ──> COLLECTION_FAILURE
-  │
-  ▼
-emit active session count
-```
-
----
-
-# 22. Process Exit Contract
-
-Successful parsing:
-
-```text id="uob6b4"
-stdout = normalized active session count
-exit   = 0
-```
-
-Failure:
-
-```text id="62jhrz"
-stdout = no metric value
-exit   = non-zero
-```
-
----
-
-# 23. Mock Inputs
-
-Current mocks:
-
-```text id="gqzw2l"
-normal.txt
-zero.txt
-single.txt
-high.txt
-lower.txt
-empty.txt
-non-numeric.txt
-negative.txt
-decimal.txt
-execution-error.txt
-```
-
-Expected results:
-
-| Mock | Expected |
-|---|---:|
-| `normal.txt` | `18` |
-| `zero.txt` | `0` |
-| `single.txt` | `1` |
-| `high.txt` | `750` |
-| `lower.txt` | `6` |
-| `empty.txt` | `COLLECTION_FAILURE` |
-| `non-numeric.txt` | `COLLECTION_FAILURE` |
-| `negative.txt` | `COLLECTION_FAILURE` |
-| `decimal.txt` | `COLLECTION_FAILURE` |
-| `execution-error.txt` | `COLLECTION_FAILURE` |
-
----
-
-# 24. Mock Acceptance Criteria
-
-Mock validation passes only if:
-
-- all five valid inputs return their exact expected values;
-- all five invalid/error inputs fail;
-- failures emit no metric value;
-- collection failure never becomes numeric zero.
-
----
-
-# 25. Source Validation Impact
-
-Real source validation must establish:
-
-- authoritative definition of active session;
-- authoritative `sysmaster` source;
-- session/thread relationship;
-- waiting-session semantics;
-- idle-session semantics;
-- internal-session treatment;
-- duplicate prevention;
-- exact SQL;
-- permissions;
-- collection cost;
-- relevant Informix version differences.
-
-These semantics shall not be hidden inside the normalization parser.
-
----
-
-# 26. Current Status
-
-Specification:
-
-`APPROVED`
-
-Primary candidate source:
-
-`sysmaster`
-
-Current semantic:
-
-`PROVISIONAL — CURRENT ACTIVE SESSION COUNT`
-
-Metric semantics:
-
-`GAUGE`
-
-Normalized unit:
-
-`SESSIONS`
-
-Active-session definition:
-
-`PENDING SOURCE VALIDATION`
-
-Session/thread relationship:
-
-`PENDING SOURCE VALIDATION`
-
-Exact SQL:
-
-`PENDING SOURCE VALIDATION`
-
-Mock inputs:
-
-`AVAILABLE`
-
-Parser implementation:
-
-`IMPLEMENTED`
-
-Mock validation:
-
-`PASSED — 10/10`
-
-Metric lifecycle state:
-
-`MOCK_VALIDATED`
-
-Real environment validation:
-
-`PENDING`
-
----
-
-# 27. Next Step
-
-Implement the minimum KornShell parser for the existing `IFX-SESSION-002` mock inputs.
-
-The implementation shall validate only the normalized scalar active-session gauge contract.
+Target Informix/AIX validation remains pending.

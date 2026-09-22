@@ -1,457 +1,120 @@
-# IFX-SESSION-003 — Historical Session Peak — Parser Specification
+# IFX-SESSION-003 — Weekly Peak Concurrent Physical Connections — Parser Specification
 
 ## 1. Purpose
 
-This document defines the parser contract for:
+This document defines the runtime normalization contract for:
 
-`IFX-SESSION-003 — Historical Session Peak`
+`IFX-SESSION-003 — Weekly Peak Concurrent Physical Connections`
 
-The parser normalizes and validates an already collected authoritative Informix historical session peak value.
+The collector executes the approved `sysmaster:sysfeatures` statement and
+normalizes the newest weekly `max_conns` high-water value.
 
-It does not calculate the historical maximum.
-
----
-
-# 2. Architectural Constraint
-
-The input shall ultimately originate from:
-
-`AUTHORITATIVE INFORMIX-MAINTAINED HISTORICAL MAXIMUM`
-
-The parser shall not calculate a maximum from:
-
-- `IFX-SESSION-001`;
-- Zabbix history;
-- repeated session samples;
-- local collector state.
+Lifecycle: `DEVELOPMENT_RUNTIME_VALIDATED`
 
 ---
 
-# 3. Candidate Source
+## 2. Source Contract
 
-Candidate interfaces:
+Database: `sysmaster`
 
-`sysmaster / onstat`
+View: `sysfeatures`
 
-Exact authoritative source:
+Column: `max_conns`
 
-`PENDING SOURCE VALIDATION`
+The statement selects exactly one most-recent non-null weekly value, ordered by
+`year DESC, week DESC`.
 
-Exact SQL or command:
-
-`PENDING SOURCE VALIDATION`
-
----
-
-# 4. Provisional Semantic
-
-The normalized value represents:
-
-`MAXIMUM SIMULTANEOUS SESSION COUNT SINCE THE AUTHORITATIVE STARTUP/RESET BOUNDARY`
-
-The exact Informix lifecycle/reset behavior remains pending source validation.
+The collector must not calculate a peak from its own historical executions or
+from Zabbix history.
 
 ---
 
-# 5. Metric Type
+## 3. Input Contract
 
-Metric type:
+`ifx_db_execute` unloads exactly one scalar with the project trailing field
+delimiter:
 
-`GAUGE / HISTORICAL MAXIMUM`
-
-The value represents a maximum state maintained by Informix.
-
-It is not treated as a cumulative event counter.
-
----
-
-# 6. Normalized Unit
-
-Unit:
-
-`SESSIONS`
-
----
-
-# 7. Input Contract
-
-The parser receives one input file.
-
-For successful collection, the file shall contain one normalized scalar.
-
-Example:
-
-```text id="gj3zue"
-375
+```text
+6|
 ```
 
+The collector accepts exactly one record with:
+
+1. one non-negative integer value;
+2. one empty unload terminator field.
+
 ---
 
-# 8. Source Execution Failure
+## 4. Output Contract
 
-A mock containing:
+The normalized output is exactly one non-negative integer followed by a
+newline:
 
-```text id="d6aq9n"
-EXIT_CODE=1
-STDOUT=
-STDERR=SQL execution failed
+```text
+6
 ```
 
-represents collection failure.
-
-Expected result:
-
-`COLLECTION_FAILURE`
-
-No numeric value shall be emitted.
+No labels, dates, weeks, delimiters, Informix connection messages, or blank
+lines may appear on standard output.
 
 ---
 
-# 9. Valid Value Domain
+## 5. Validity and Failure Rules
 
-Valid values are non-negative integers.
+The collector must fail, without numeric output, on:
 
-Examples:
+- `ifx_db_execute` failure;
+- no row returned by `sysfeatures`;
+- empty output;
+- more than one record;
+- missing or non-empty unload terminator;
+- signed, decimal, alphabetic, or whitespace-padded values.
 
-```text id="gj0qz1"
-0
-1
-12
-375
-5000
-```
-
----
-
-# 10. Invalid Values
-
-The following are invalid:
-
-- empty input;
-- non-numeric input;
-- negative integer;
-- decimal value;
-- multiple scalar values;
-- explicit source execution failure.
+Failure must never become `0`.
 
 ---
 
-# 11. Zero Semantics
+## 6. Collector Responsibilities
 
-Zero is syntactically valid.
+The collector shall:
 
-Input:
+1. source the common Informix database library;
+2. execute the versioned statement against `sysmaster`;
+3. validate the strict scalar unload contract;
+4. output the normalized integer;
+5. return non-zero on failure.
 
-```text id="e9i67o"
-0
-```
+The collector shall not:
 
-Expected output:
-
-```text id="rlfzlg"
-0
-```
-
-Collection failure shall not become zero.
-
----
-
-# 12. Whitespace
-
-Leading and trailing whitespace around the scalar may be removed.
-
-Whitespace normalization shall not alter the numeric meaning.
-
----
-
-# 13. Historical Behavior
-
-Within one authoritative lifecycle boundary, the metric is expected to remain unchanged or increase.
-
-However, the parser shall not maintain previous state.
-
-Therefore it shall not enforce monotonic behavior.
-
----
-
-# 14. Post-Reset Lower Value
-
-A lower value after an Informix startup or authoritative statistics reset is valid.
-
-Example:
-
-```text id="y8t8vl"
-12
-```
-
-shall be accepted independently of any previously observed value.
-
-The parser does not determine whether a reset occurred.
-
----
-
-# 15. Cross-Metric Validation
-
-The parser shall not enforce:
-
-```text id="49ej5b"
-Historical Session Peak >= Total Connected Sessions
-```
-
-or any relationship with:
-
-`IFX-SESSION-002 — Active Sessions`
-
-Cross-metric validation belongs to the monitoring layer.
-
----
-
-# 16. Parser Responsibilities
-
-The parser shall:
-
-1. validate invocation;
-2. validate input readability;
-3. detect explicit source execution failure;
-4. extract non-empty normalized content;
-5. trim surrounding whitespace;
-6. require exactly one scalar;
-7. validate a non-negative integer;
-8. emit the value unchanged.
-
----
-
-# 17. Parser Non-Responsibilities
-
-The parser shall not:
-
-- identify the final Informix source;
-- execute the final SQL or command;
-- calculate a historical maximum;
-- derive a maximum from Zabbix history;
-- maintain state between executions;
-- detect engine startup;
-- detect statistics reset;
-- enforce monotonic behavior;
-- compare against current connected sessions;
-- compare against active sessions;
-- determine capacity headroom;
-- generate alerts;
+- derive a maximum from collector history;
+- reinterpret `max_conns` as client-session count;
+- use `max_sec_conns`;
+- calculate an alert threshold;
 - convert failure into zero.
 
 ---
 
-# 18. Processing Order
+## 7. Zabbix Contract
 
-The parser shall process input in this order:
+Key: `ifx.session.weekly_peak_physical_connections`
 
-```text id="hd54gm"
-validate invocation
-        ↓
-validate input readability
-        ↓
-detect explicit execution failure
-        ↓
-extract normalized non-empty content
-        ↓
-trim surrounding whitespace
-        ↓
-require exactly one scalar
-        ↓
-validate non-negative integer
-        ↓
-emit value
-```
+Type: Zabbix Agent (active)
+
+Value type: Numeric (unsigned)
+
+Units: `connections`
+
+Update interval: `15m`
+
+Timeout: `30s`
+
+The runtime launcher must obtain configuration only from the portable
+deployment runtime environment.
 
 ---
 
-# 19. Successful Exit Contract
+## 8. Validation Lifecycle
 
-On success:
+`DEVELOPMENT_RUNTIME_VALIDATED` records successful SQL statement, strict scalar collector, installed launcher, Zabbix Agent active key, template item, exported template, and uninstall/reinstall lifecycle validation in the Linux development topology.
 
-```text id="ypg1ug"
-stdout = normalized scalar
-stderr = empty
-return code = 0
-```
-
-Example:
-
-```text id="sf6y2f"
-375
-```
-
----
-
-# 20. Failure Exit Contract
-
-On failure:
-
-```text id="c6ohdd"
-stdout = empty
-stderr = diagnostic message
-return code != 0
-```
-
-The diagnostic message is operational information and is not part of the metric value.
-
----
-
-# 21. Mock Dataset
-
-Mock directory:
-
-`04-mocks/informix-sessions/IFX-SESSION-003/`
-
-Expected cases:
-
-| Mock | Expected Result |
-|---|---|
-| `normal.txt` | `375` |
-| `zero.txt` | `0` |
-| `single.txt` | `1` |
-| `high.txt` | `5000` |
-| `post-reset.txt` | `12` |
-| `empty.txt` | failure |
-| `non-numeric.txt` | failure |
-| `negative.txt` | failure |
-| `decimal.txt` | failure |
-| `execution-error.txt` | failure |
-
----
-
-# 22. Mock Acceptance Criteria
-
-Mock validation passes only when:
-
-- all five valid inputs return exactly the expected scalar;
-- all five invalid/error inputs return non-zero;
-- invalid/error inputs emit no metric value;
-- zero remains a valid value;
-- `post-reset.txt` is accepted without historical comparison.
-
-Expected result:
-
-```text id="dp6dkm"
-PASS: 10
-FAIL: 0
-```
-
----
-
-# 23. Source Validation Requirements
-
-Before operational implementation, real Informix validation must establish:
-
-- existence of the authoritative historical maximum;
-- exact `sysmaster` object or `onstat` representation;
-- exact session semantic;
-- instance scope;
-- lifecycle boundary;
-- startup reset behavior;
-- independent statistics reset behavior, if any;
-- internal-session inclusion behavior;
-- exact SQL or command;
-- required permissions;
-- collection cost;
-- relevant Informix version differences.
-
----
-
-# 24. Source Absence Rule
-
-If real validation establishes that Informix does not provide an authoritative engine-maintained historical session maximum, this parser contract shall not automatically be repurposed for a Zabbix-derived maximum.
-
-Instead:
-
-`IFX-SESSION-003`
-
-shall return to architectural review.
-
----
-
-# 25. Lifecycle Advancement
-
-Successful mock validation permits:
-
-```text id="2qynlp"
-DEFINED
-   ↓
-MOCK_VALIDATED
-```
-
-It does not permit:
-
-```text id="b83t22"
-SOURCE_VALIDATED
-```
-
-Real Informix/AIX validation remains mandatory.
-
----
-
-# 26. Current Status
-
-Specification:
-
-`APPROVED`
-
-Architectural source requirement:
-
-`AUTHORITATIVE INFORMIX-MAINTAINED HISTORICAL MAXIMUM`
-
-Candidate interfaces:
-
-`sysmaster / onstat`
-
-Current semantic:
-
-`PROVISIONAL — MAXIMUM SIMULTANEOUS SESSION COUNT SINCE AUTHORITATIVE STARTUP/RESET BOUNDARY`
-
-Metric semantics:
-
-`GAUGE / HISTORICAL MAXIMUM`
-
-Normalized unit:
-
-`SESSIONS`
-
-Lifecycle/reset behavior:
-
-`PENDING SOURCE VALIDATION`
-
-Exact source:
-
-`PENDING SOURCE VALIDATION`
-
-Exact SQL/command:
-
-`PENDING SOURCE VALIDATION`
-
-Mock inputs:
-
-`AVAILABLE`
-
-Parser implementation:
-
-`IMPLEMENTED`
-
-Mock validation:
-
-`PASSED — 10/10`
-
-Metric lifecycle state:
-
-`MOCK_VALIDATED`
-
-Real environment validation:
-
-`PENDING`
-
----
-
-# 27. Next Step
-
-Implement the minimum KornShell parser for the existing mock dataset.
-
-The parser shall validate only the normalized scalar contract and shall contain no historical-state or maximum-calculation logic.
+Target Informix/AIX validation remains pending.

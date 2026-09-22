@@ -513,11 +513,17 @@ Relationship status:
 
 Related metric:
 
-`IFX-SESSION-005 — Waiting Threads by Reason`
+`IFX-SESSION-005 — Waiting Client Sessions by Reason`
 
-Lock-related wait dimensions may correlate with the maximum lock-wait duration.
+The fixed `LOCK` dimension of `IFX-SESSION-005` represents qualifying client sessions for which:
 
-The parser shall not assume an arithmetic or identity relationship.
+```text
+syssessions.is_wlock = 1
+```
+
+It can be correlated with maximum lock-wait duration, but the parser shall not assume an arithmetic, timing, or identity relationship.
+
+The metrics have different scopes: SESSION-005 is a current client-session count, while LOCK-002 is an elapsed-time metric.
 
 Relationship status:
 

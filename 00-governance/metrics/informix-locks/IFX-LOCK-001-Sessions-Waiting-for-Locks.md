@@ -262,34 +262,19 @@ unless source validation explicitly proves that relationship.
 
 Related metric:
 
-`IFX-SESSION-005 — Waiting Threads by Reason`
+`IFX-SESSION-005 — Waiting Client Sessions by Reason`
 
-A lock-related wait reason may eventually appear among the dynamic dimensions of `IFX-SESSION-005`.
-
-However:
+The fixed `LOCK` dimension of `IFX-SESSION-005` counts qualifying client sessions for which:
 
 ```text
-IFX-LOCK-001
+syssessions.is_wlock = 1
 ```
 
-and a possible lock-related dimension of:
+It can be correlated with `IFX-LOCK-001`, which identifies sessions waiting for locks through lock metadata.
 
-```text
-IFX-SESSION-005
-```
+However, the metrics are not declared equivalent. Their source timing, visibility, filtering and aggregation can differ.
 
-shall not be assumed equivalent.
-
-Reasons include possible differences in:
-
-- entity type;
-- scope;
-- thread/session relationship;
-- wait classification;
-- aggregation;
-- timing.
-
-Any relationship must be established through real source validation.
+No arithmetic or identity relationship is assumed.
 
 ---
 
@@ -297,11 +282,17 @@ Any relationship must be established through real source validation.
 
 Related metric:
 
-`IFX-SESSION-004 — Waiting Threads Total`
+`IFX-SESSION-004 — Waiting Client Sessions Total`
 
-Conceptually, lock waits may form part of the overall waiting-thread population.
+`IFX-SESSION-004` counts distinct qualifying client sessions with one or more documented `syssessions` waiting flags set.
 
-No arithmetic relationship is currently assumed.
+A lock-waiting session identified by `IFX-LOCK-001` can also contribute to `IFX-SESSION-004` through:
+
+```text
+syssessions.is_wlock = 1
+```
+
+No arithmetic relationship is assumed.
 
 In particular:
 
@@ -309,7 +300,7 @@ In particular:
 IFX-LOCK-001 <= IFX-SESSION-004
 ```
 
-is not an approved invariant because the metrics may represent different entity types.
+is not an approved invariant because the metrics can differ in source timing, filtering, visibility and aggregation.
 
 ---
 
@@ -391,7 +382,7 @@ The metric can support visualization and correlation with:
 - deadlocks;
 - connected sessions;
 - active sessions;
-- waiting threads;
+- waiting client sessions;
 - wait reasons;
 - SQL workload;
 - CPU;
@@ -476,7 +467,7 @@ Real Informix validation must answer at least:
 2. Which `sysmaster` objects are involved?
 3. Is `onstat` required for supporting validation?
 4. What entity represents a lock waiter?
-5. Can one session have multiple waiting threads?
+5. Can one session have more than one applicable `syssessions` waiting flag?
 6. Can one session produce multiple lock-wait rows?
 7. Can one transaction produce multiple wait records?
 8. What identifies the blocked session?
