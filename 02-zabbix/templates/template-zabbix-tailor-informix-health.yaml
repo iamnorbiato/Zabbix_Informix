@@ -103,6 +103,20 @@ zabbix_export:
           key: ifx.health.lru_writes
           units: writes
           timeout: 30s
+        - uuid: 14bf256b8c31431599b0f3d3ca818982
+          name: 'LOCK-001 — sessions waiting for locks'
+          type: ZABBIX_ACTIVE
+          key: ifx.lock.sessions_waiting
+          units: sessions
+          timeout: 30s
+          triggers:
+            - uuid: b540e61cbe154f43a64f08105b7753d6
+              expression: 'last(/Template Zabbix Tailor Informix Health/ifx.lock.sessions_waiting)>0'
+              name: 'Informix LOCK-001: session(s) waiting for locks detected'
+              priority: HIGH
+              tags:
+                - tag: informix
+                  value: lock-001
         - uuid: fab1f82859824d9da09e5340e1c72067
           name: 'SESSION-002 — sessions in read call'
           type: ZABBIX_ACTIVE

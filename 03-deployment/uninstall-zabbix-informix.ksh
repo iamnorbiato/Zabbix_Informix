@@ -99,6 +99,7 @@ rm -f "${launcher_home}/ifx-session-002" || fail "Unable to remove SESSION-002 l
 rm -f "${launcher_home}/ifx-session-003" || fail "Unable to remove SESSION-003 launcher."
 rm -f "${launcher_home}/ifx-session-004" || fail "Unable to remove SESSION-004 launcher."
 rm -f "${launcher_home}/ifx-session-005" || fail "Unable to remove SESSION-005 launcher."
+rm -f "${launcher_home}/ifx-lock-001" || fail "Unable to remove LOCK-001 launcher."
 if [[ -d "${launcher_home}" ]]; then
     rmdir "${launcher_home}" 2>/dev/null || true
 fi

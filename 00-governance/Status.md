@@ -37,6 +37,11 @@ Informix Sessions and Concurrency status:
 - IFX-SESSION-004 — Waiting Client Sessions Total — DEVELOPMENT_RUNTIME_VALIDATED — controlled `is_wlock` client-session validation completed; individual non-lock flag exercises remain pending
 - IFX-SESSION-005 — Waiting Client Sessions by Reason — **DEVELOPMENT_RUNTIME_VALIDATED** — SQL dataset, strict six-dimension collector contract, installed launcher, active Agent item, raw master item and six dependent numeric items validated; controlled exercises for individual non-lock waiting flags remain pending
 
+Informix Locks and Contention status:
+
+- IFX-LOCK-001 — Sessions Waiting for Locks — DEVELOPMENT_RUNTIME_VALIDATED — controlled lock detection, active Agent item, red `HIGH` trigger, recovery to `RESOLVED`, exported template, and uninstall/reinstall lifecycle validated
+- IFX-LOCK-002 — Maximum Lock Wait Time — DEFINED
+
 Informix HDR status:
 
 - IFX-HDR-001 — Local Role and State — DEFINED

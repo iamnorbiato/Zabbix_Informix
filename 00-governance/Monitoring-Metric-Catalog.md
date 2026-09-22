@@ -959,15 +959,30 @@ Controlled `is_wlock` behavior was validated previously. Target Informix/AIX val
 
 **Purpose**
 
-Measure sessions currently blocked waiting for locks.
+Measure qualifying Informix client sessions currently blocked waiting for locks.
 
-**Candidate Source**
+**Authoritative Development Source**
 
-`sysmaster`.
+`sysmaster:syslocks.waiter`, joined to `sysmaster:syssessions.sid`.
+
+The `waiter` value identifies the waiting session. `COUNT(DISTINCT waiter)` preserves session cardinality when one waiting session appears in multiple lock rows.
+
+**Authoritative SQL Contract**
+
+```sql
+SELECT
+    CAST(COUNT(DISTINCT l.waiter) AS INT8) AS sessions_waiting_for_locks
+FROM syslocks l
+INNER JOIN syssessions s
+    ON s.sid = l.waiter
+WHERE l.waiter > 0
+  AND s.sid <> DBINFO('sessionid')
+  AND LENGTH(TRIM(s.hostname)) > 0;
+```
 
 **Collection Method**
 
-SQL statement.
+SQL scalar collector through the common Informix query library.
 
 **Type**
 
@@ -979,11 +994,11 @@ Sessions.
 
 **Frequency**
 
-HIGH.
+One minute in the development topology.
 
 **Cost**
 
-LOW to MEDIUM.
+Low to medium. The query reads current lock metadata and joins each distinct waiter to its client session.
 
 **Discovery**
 
@@ -991,7 +1006,7 @@ No.
 
 **Trigger**
 
-Yes.
+Yes. A positive value opens the configured `HIGH` alert `Informix LOCK-001: session(s) waiting for locks detected`. The event resolves automatically when the next valid value is `0`.
 
 **Grafana**
 
@@ -999,7 +1014,9 @@ Yes.
 
 **Validation Status**
 
-DEFINED.
+DEVELOPMENT_RUNTIME_VALIDATED — a controlled lock wait correlated `syslocks.waiter = 14544` with a qualifying client session and `syssessions.is_wlock = 1`. The approved distinct-waiter query returned `1` while the wait existed and `0` after release.
+
+The Linux development topology validated the versioned SQL statement, strict scalar collector, installed launcher, Zabbix Agent active key, active template item, exported YAML definition, `HIGH` trigger, transition to `RESOLVED`, and uninstall/reinstall lifecycle. Target Informix/AIX validation remains pending.
 
 ---
 

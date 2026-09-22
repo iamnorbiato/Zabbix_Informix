@@ -14,3 +14,4 @@ UserParameter=ifx.session.in_read_call,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@
 UserParameter=ifx.session.weekly_peak_physical_connections,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-003
 UserParameter=ifx.session.waiting_client_sessions,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-004
 UserParameter=ifx.session.waiting_client_sessions_by_reason.raw,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-005
+UserParameter=ifx.lock.sessions_waiting,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-001

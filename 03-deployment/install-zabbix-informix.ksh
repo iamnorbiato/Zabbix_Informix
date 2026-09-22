@@ -142,6 +142,9 @@ esac
 [[ -f "${release_dir}/01-statements/informix-sessions/IFX-SESSION-003-Weekly-Peak-Concurrent-Physical-Connections.sql" ]] || fail "SESSION-003 statement is missing from the release."
 [[ -f "${release_dir}/01-statements/informix-sessions/IFX-SESSION-004-Waiting-Client-Sessions-Total.sql" ]] || fail "SESSION-004 statement is missing from the release."
 [[ -f "${release_dir}/01-statements/informix-sessions/IFX-SESSION-005-Waiting-Client-Sessions-by-Reason.sql" ]] || fail "SESSION-005 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-locks/IFX-LOCK-001-Sessions-Waiting-for-Locks.sql" ]] || fail "LOCK-001 statement is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sessions/ifx-session-waiting-by-reason.ksh" ]] || fail "SESSION-005 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/locks/ifx-lock-sessions-waiting.ksh" ]] || fail "LOCK-001 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-state.ksh" ]] || fail "HEALTH-001 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-uptime.ksh" ]] || fail "HEALTH-002 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-assert-failures.ksh" ]] || fail "HEALTH-003 collector is missing from the release."
@@ -225,6 +228,7 @@ cp "${release_dir}/03-deployment/launchers/ifx-session-002" "${launcher_home}/if
 cp "${release_dir}/03-deployment/launchers/ifx-session-003" "${launcher_home}/ifx-session-003" || fail "Unable to install SESSION-003 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-session-004" "${launcher_home}/ifx-session-004" || fail "Unable to install SESSION-004 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-session-005" "${launcher_home}/ifx-session-005" || fail "Unable to install SESSION-005 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-lock-001" "${launcher_home}/ifx-lock-001" || fail "Unable to install LOCK-001 launcher."
 
 chown root:zabbix \
     "${launcher_home}/ifx-health-001" \
@@ -239,7 +243,8 @@ chown root:zabbix \
     "${launcher_home}/ifx-session-002" \
     "${launcher_home}/ifx-session-003" \
     "${launcher_home}/ifx-session-004" \
-    "${launcher_home}/ifx-session-005" || fail "Unable to set launcher ownership."
+    "${launcher_home}/ifx-session-005" \
+    "${launcher_home}/ifx-lock-001" || fail "Unable to set launcher ownership."
 
 chmod 750 \
     "${launcher_home}/ifx-health-001" \
@@ -254,7 +259,8 @@ chmod 750 \
     "${launcher_home}/ifx-session-002" \
     "${launcher_home}/ifx-session-003" \
     "${launcher_home}/ifx-session-004" \
-    "${launcher_home}/ifx-session-005" || fail "Unable to protect launchers."
+    "${launcher_home}/ifx-session-005" \
+    "${launcher_home}/ifx-lock-001" || fail "Unable to protect launchers."
 
 sed \
     -e "s|@RUNTIME_ENV@|${runtime_env}|g" \

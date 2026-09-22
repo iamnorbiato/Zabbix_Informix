@@ -6,615 +6,128 @@ This document defines the engineering contract for:
 
 `IFX-LOCK-001 — Sessions Waiting for Locks`
 
-The metric represents the current number of Informix sessions blocked while waiting for a lock.
+The metric counts qualifying Informix client sessions currently represented as lock waiters in `sysmaster:syslocks`.
 
-The metric belongs to the lock contention domain and represents current blocking state rather than historical lock activity.
-
----
-
-# 2. Monitoring Domain
-
-Domain:
-
-`Locks, Deadlocks and Contention`
-
-Metric ID:
-
-`IFX-LOCK-001`
-
-Metric name:
-
-`Sessions Waiting for Locks`
+Lifecycle: `DEVELOPMENT_RUNTIME_VALIDATED`
 
 ---
 
-# 3. Architectural Objective
+## 2. Monitoring Domain
 
-The metric shall answer:
+Domain: `Locks, Deadlocks and Contention`
 
-`HOW MANY INFORMIX SESSIONS ARE CURRENTLY BLOCKED WAITING FOR A LOCK?`
+Metric type: `GAUGE`
 
-It provides an instance-level indication of current lock contention.
+Unit: `SESSIONS`
 
----
-
-# 4. Provisional Semantic
-
-For mock validation:
-
-`CURRENT NUMBER OF INFORMIX SESSIONS BLOCKED WAITING FOR A LOCK`
-
-This semantic is provisional until validated against an authoritative Informix source.
+Scope: one Informix instance.
 
 ---
 
-# 5. Critical Entity Question
+## 3. Authoritative Development Source
 
-The catalog currently defines the monitored entity as:
+Database: `sysmaster`
 
-`SESSION`
+Primary table: `syslocks`
 
-This must be validated.
+Supporting table: `syssessions`
 
-Informix may expose lock wait information primarily through:
+`syslocks.waiter` identifies a session waiting for a lock. The join to `syssessions.sid` preserves the monitored entity as a session and permits the client-session filter.
 
-- sessions;
-- threads;
-- lock waiters;
-- transaction structures;
-- another internal representation.
+---
 
-The monitoring architecture shall not silently treat:
+## 4. Controlled Validation Evidence
+
+A controlled lock scenario used two independent client transactions against `tailor.zbx_ifx_session_test_lock`.
+
+The validation returned:
 
 ```text
-session
-thread
-waiter
-transaction
+owner_sid   = 12941
+waiter_sid  = 14544
+is_wlock    = 1
 ```
 
-as equivalent entities.
+The waiter session had a client hostname and DBeaver program identity. The approved aggregate query returned `1` while the wait existed and `0` after the blocking transaction was released.
 
 ---
 
-# 6. Entity Preservation Rule
+## 5. Approved SQL Contract
 
-If real source validation proves that the authoritative primitive is not a session, the metric must return to architectural review before becoming `SOURCE_VALIDATED`.
+```sql
+SELECT
+    CAST(COUNT(DISTINCT l.waiter) AS INT8) AS sessions_waiting_for_locks
+FROM syslocks l
+INNER JOIN syssessions s
+    ON s.sid = l.waiter
+WHERE l.waiter > 0
+  AND s.sid <> DBINFO('sessionid')
+  AND LENGTH(TRIM(s.hostname)) > 0;
+```
 
-The implementation shall not merely count threads or lock-wait structures and label the result as sessions without proving the relationship.
-
----
-
-# 7. Candidate Source
-
-Candidate interface:
-
-`sysmaster`
-
-Alternative supporting interface:
-
-`onstat`
-
-Exact authoritative source:
-
-`PENDING SOURCE VALIDATION`
-
-Exact SQL or command:
-
-`PENDING SOURCE VALIDATION`
+`COUNT(DISTINCT l.waiter)` is required because one waiting session can appear in more than one `syslocks` row.
 
 ---
 
-# 8. Source Preference
+## 6. Scope and Zero Semantics
 
-`sysmaster` is preferred if it exposes the required relationship using structured, stable and sufficiently low-cost data.
+The metric includes lock waiters with a non-empty client hostname and excludes the collector session.
 
-`onstat` may be used if it provides semantics unavailable or unsuitable through `sysmaster`.
+`0` is a valid successful observation: no qualifying client session is currently waiting for a lock.
 
-The final choice requires real Informix validation.
-
----
-
-# 9. Metric Type
-
-Type:
-
-`GAUGE`
-
-The value represents current state at collection time.
-
-It is not a cumulative lock-wait counter.
+No row, malformed output, connection failure, query failure, or permission failure is not zero and must fail collection.
 
 ---
 
-# 10. Normalized Unit
+## 7. Relationship with Session Metrics
 
-Provisional normalized unit:
+IFX-SESSION-005 exposes a `LOCK` dimension sourced from `syssessions.is_wlock`. The controlled test showed both sources identify the same waiting client session.
 
-`SESSIONS`
-
-This unit remains subject to authoritative entity validation.
+The metrics are not declared equivalent as a permanent arithmetic invariant: `syslocks` and `syssessions` have distinct source timing and aggregation behavior.
 
 ---
 
-# 11. Cardinality
+## 8. Collection and Zabbix Contract
 
-Cardinality:
+Collection method: SQL scalar statement through the common Informix query library.
 
-`ONE VALUE PER INFORMIX INSTANCE`
+Zabbix key: `ifx.lock.sessions_waiting`
 
-The metric produces a single scalar count.
+Zabbix type: active Agent item.
 
-No resource dimension is currently required.
+Value type: Numeric (unsigned).
 
----
+Unit: `sessions`.
 
-# 12. Zabbix Discovery
+Development interval: one minute.
 
-Zabbix Low-Level Discovery:
+Discovery: No.
 
-`NO`
+Trigger: `Informix LOCK-001: session(s) waiting for locks detected`.
 
-This metric represents an instance-level aggregate.
-
-Detailed lock waiter discovery, blocker relationships or lock objects would belong to separate diagnostic metrics if later governed.
-
----
-
-# 13. Value Domain
-
-The normalized value must be a non-negative integer.
-
-Valid examples:
+Expression:
 
 ```text
-0
-1
-7
-25
-500
+last(/Template Zabbix Tailor Informix Health/ifx.lock.sessions_waiting)>0
 ```
 
-Invalid examples:
+Severity: `HIGH`.
 
-```text
--1
-2.5
-sessions
-```
+A value greater than `0` opens the configured high-severity alert. The event resolves automatically when the next valid value is `0`.
 
 ---
 
-# 14. Zero Semantics
-
-Value:
-
-```text
-0
-```
-
-means:
-
-`NO SESSIONS CURRENTLY OBSERVED AS BLOCKED WAITING FOR A LOCK`
-
-Zero is a valid monitoring value.
-
-It must not represent collection failure.
-
----
-
-# 15. Collection Failure
-
-Collection failure is different from zero.
-
-Examples of collection failure include:
-
-- Informix connection failure;
-- SQL execution failure;
-- command execution failure;
-- permission failure;
-- malformed result;
-- unavailable authoritative source.
-
-Collection failure shall not be normalized to:
-
-```text
-0
-```
-
----
-
-# 16. Collection Method
-
-Expected collection method:
-
-`SQL statement or collector against authoritative Informix lock-wait information`
-
-The source query or collection layer owns:
-
-- identifying lock waits;
-- determining the authoritative monitored entity;
-- applying validated filtering;
-- eliminating duplicates where semantically required;
-- producing the final aggregate count.
-
-The scalar parser shall not infer lock relationships from arbitrary source rows.
-
----
-
-# 17. Aggregation Ownership
-
-If the authoritative source exposes multiple rows per session, thread, transaction or lock object, aggregation must occur according to validated source semantics before the scalar parser.
-
-For example, the parser shall not independently assume that:
-
-```text
-number of source rows
-=
-number of waiting sessions
-```
-
-unless source validation explicitly proves that relationship.
-
----
-
-# 18. Relationship with IFX-SESSION-005
-
-Related metric:
-
-`IFX-SESSION-005 — Waiting Client Sessions by Reason`
-
-The fixed `LOCK` dimension of `IFX-SESSION-005` counts qualifying client sessions for which:
-
-```text
-syssessions.is_wlock = 1
-```
-
-It can be correlated with `IFX-LOCK-001`, which identifies sessions waiting for locks through lock metadata.
-
-However, the metrics are not declared equivalent. Their source timing, visibility, filtering and aggregation can differ.
-
-No arithmetic or identity relationship is assumed.
-
----
-
-# 19. Relationship with IFX-SESSION-004
-
-Related metric:
-
-`IFX-SESSION-004 — Waiting Client Sessions Total`
-
-`IFX-SESSION-004` counts distinct qualifying client sessions with one or more documented `syssessions` waiting flags set.
-
-A lock-waiting session identified by `IFX-LOCK-001` can also contribute to `IFX-SESSION-004` through:
-
-```text
-syssessions.is_wlock = 1
-```
-
-No arithmetic relationship is assumed.
-
-In particular:
-
-```text
-IFX-LOCK-001 <= IFX-SESSION-004
-```
-
-is not an approved invariant because the metrics can differ in source timing, filtering, visibility and aggregation.
-
----
-
-# 20. Relationship with Lock Wait Duration
-
-Related future metric:
-
-`IFX-LOCK-002 — Maximum Lock Wait Time`
-
-`IFX-LOCK-001` represents:
-
-`HOW MANY`
-
-while `IFX-LOCK-002` represents:
-
-`HOW LONG`
-
-Together they may distinguish situations such as:
-
-```text
-many short lock waits
-few long lock waits
-many long lock waits
-```
-
-No trigger thresholds are defined at this stage.
-
----
-
-# 21. Collection Frequency
-
-Recommended frequency:
-
-`HIGH`
-
-Lock waits may be transient and operationally significant.
-
-The final interval must balance detection resolution against collection overhead.
-
----
-
-# 22. Collection Cost
-
-Current classification:
-
-`LOW TO MEDIUM — PROVISIONAL`
-
-Real source validation must establish actual collection cost.
-
-Monitoring overhead remains a first-class acceptance criterion.
-
----
-
-# 23. Trigger Potential
-
-Trigger potential:
-
-`YES`
-
-Possible future conditions include:
-
-- waiting session count above an operational threshold;
-- sustained non-zero lock waiting;
-- correlation with maximum lock wait duration.
-
-Exact thresholds require runtime baseline validation.
-
----
-
-# 24. Grafana
-
-Grafana visualization:
-
-`YES`
-
-The metric can support visualization and correlation with:
-
-- maximum lock wait time;
-- deadlocks;
-- connected sessions;
-- active sessions;
-- waiting client sessions;
-- wait reasons;
-- SQL workload;
-- CPU;
-- I/O.
-
----
-
-# 25. Parser Contract
-
-The normalized parser input shall be a single scalar value.
-
-Example:
-
-```text
-12
-```
-
-The parser validates the normalized collection contract.
-
-It does not perform lock-state discovery or source aggregation.
-
----
-
-# 26. Parser Responsibilities
-
-The future scalar parser shall:
-
-- detect explicit collection failure;
-- accept one normalized scalar value;
-- trim permitted surrounding whitespace;
-- validate a non-negative integer;
-- preserve zero;
-- emit the normalized value.
-
----
-
-# 27. Parser Non-Responsibilities
-
-The parser shall not:
-
-- query Informix;
-- identify lock waiters;
-- determine blocker relationships;
-- count arbitrary source rows;
-- deduplicate sessions;
-- convert threads into sessions;
-- classify wait reasons;
-- derive lock duration;
-- generate alerts;
-- convert collection failure into zero.
-
----
-
-# 28. Mock Strategy
-
-Mock validation shall validate only the normalized scalar contract.
-
-It shall not simulate or invent Informix lock internals.
-
-Planned scenarios:
-
-```text
-normal
-zero
-single
-high
-lower
-empty
-nonnumeric
-negative
-decimal
-execution-error
-```
-
----
-
-# 29. Source Validation Questions
-
-Real Informix validation must answer at least:
-
-1. Which authoritative source exposes current lock waits?
-2. Which `sysmaster` objects are involved?
-3. Is `onstat` required for supporting validation?
-4. What entity represents a lock waiter?
-5. Can one session have more than one applicable `syssessions` waiting flag?
-6. Can one session produce multiple lock-wait rows?
-7. Can one transaction produce multiple wait records?
-8. What identifies the blocked session?
-9. What identifies the blocker?
-10. Are internal/system sessions represented?
-11. Should any entities be excluded?
-12. Is the count naturally available or must it be aggregated?
-13. What deduplication semantics are required?
-14. What permissions are required?
-15. What is the collection cost?
-16. How does cost scale with sessions and locks?
-17. Are there relevant Informix-version differences?
-18. Can this metric be authoritatively represented in units of sessions?
-19. What relationship exists with `IFX-SESSION-005` lock-related wait reasons?
-20. What relationship exists with `IFX-SESSION-004`?
-
----
-
-# 30. Source Validation Acceptance Criteria
-
-The metric may become:
-
-`SOURCE_VALIDATED`
-
-only after:
-
-- authoritative source is identified;
-- monitored entity is proven;
-- session semantics are established;
-- lock-wait semantics are established;
-- aggregation rules are documented;
-- deduplication rules are documented;
-- scope is established;
-- exact SQL/command is documented;
-- permissions are known;
-- collection cost is acceptable;
-- relevant version behavior is documented.
-
-If the authoritative entity cannot be proven to represent sessions, the metric returns to architectural review before lifecycle advancement.
-
----
-
-# 31. Mock Validation Acceptance Criteria
-
-The metric may become:
-
-`MOCK_VALIDATED`
-
-when:
-
-- normalized scalar contract is approved;
-- mock inputs exist;
-- parser specification exists;
-- parser is implemented;
-- valid non-negative integers are accepted;
-- zero is preserved;
-- malformed values fail;
-- collection failure remains distinct from zero.
-
-Mock validation does not establish real Informix lock semantics.
-
----
-
-# 32. Current Status
-
-Current lifecycle state:
-
-`MOCK_VALIDATED`
-
-Architectural metric:
-
-`Sessions Waiting for Locks`
-
-Current semantic:
-
-`PROVISIONAL — CURRENT NUMBER OF INFORMIX SESSIONS BLOCKED WAITING FOR A LOCK`
-
-Metric semantics:
-
-`GAUGE`
-
-Normalized unit:
-
-`SESSIONS — PROVISIONAL`
-
-Cardinality:
-
-`ONE VALUE PER INFORMIX INSTANCE`
-
-Zabbix LLD:
-
-`NO`
-
-Candidate source:
-
-`sysmaster`
-
-Alternative supporting interface:
-
-`onstat`
-
-Authoritative monitored entity:
-
-`PENDING SOURCE VALIDATION`
-
-Exact Informix source:
-
-`PENDING SOURCE VALIDATION`
-
-Exact SQL/command:
-
-`PENDING SOURCE VALIDATION`
-
-Relationship with SESSION-004:
-
-`UNPROVEN`
-
-Relationship with SESSION-005:
-
-`UNPROVEN`
-
-Mock inputs:
-
-`AVAILABLE`
-
-Parser implementation:
-
-`IMPLEMENTED`
-
-Mock validation:
-
-`PASSED — 10/10`
-
-Real Informix/AIX validation:
-
-`PENDING`
-
----
-
-# 33. Next Step
-
-Validate `IFX-LOCK-001` against the real Informix/AIX environment when it becomes available.
-
-Real source validation must establish the authoritative lock-wait source, prove the monitored entity, define aggregation and deduplication semantics, determine collection cost and establish the relationships with `IFX-SESSION-004` and `IFX-SESSION-005`.
-
-Until then, the metric remains:
-
-`MOCK_VALIDATED`
-
----
+## 9. Runtime Validation Evidence
+
+The Linux development topology validated all of the following:
+
+1. the versioned `sysmaster` SQL statement returned `0` with no lock wait;
+2. the same statement returned `1` during a controlled lock wait;
+3. the repository collector, installed launcher running as `zabbix`, and Zabbix Agent active key each returned the expected value;
+4. the active template item received `1` and later `0`;
+5. the exported template contains the active item and the `HIGH` trigger;
+6. the controlled wait opened a visible red `High` problem in Zabbix;
+7. after the blocking transaction was committed, the value returned to `0` and the Zabbix problem became `RESOLVED`;
+8. uninstall removed the launcher and Agent integration, and reinstall restored the Agent key with a valid value of `0`.
+
+Target Informix/AIX validation remains separate.

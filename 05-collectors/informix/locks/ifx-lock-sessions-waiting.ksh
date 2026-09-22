@@ -1,114 +1,65 @@
-#!/usr/bin/ksh
-
+#!/usr/bin/env ksh
 # ==============================================================================
 # Author  : Norba
-# Date    : 2026-09-15
+# Date    : 2026-09-22
 # Script  : ifx-lock-sessions-waiting.ksh
-# Purpose : Normalize and validate the Informix sessions waiting for locks metric.
+# Purpose : Collect qualifying Informix client sessions currently waiting for
+#           locks through sysmaster:syslocks and sysmaster:syssessions.
 #
 # Change Control
 # Date    : 2026-09-15
 # Author  : Norba
-# Change  : Initial version.
+# Change  : Initial mock parser.
+# Date    : 2026-09-22
+# Author  : Norba
+# Change  : Replace mock parsing with remote SQL collection through syslocks.
 # ==============================================================================
 
-#
-# IFX-LOCK-001 — Sessions Waiting for Locks
-#
+IFX_LOCKS_DIR="$(cd "$(dirname "${.sh.file}")" && pwd)"
+IFX_INFORMIX_DIR="$(cd "${IFX_LOCKS_DIR}/.." && pwd)"
+IFX_REPOSITORY_DIR="$(cd "${IFX_LOCKS_DIR}/../../.." && pwd)"
+IFX_STATEMENTS_DIR="${IFX_REPOSITORY_DIR}/01-statements/informix-locks"
 
-if [ "$#" -ne 1 ]; then
-    print -u2 "usage: $0 <input-file>"
+. "${IFX_INFORMIX_DIR}/lib/informix-db.ksh" || exit 1
+
+IFX_LOCK_001_STATEMENT_FILE="${IFX_LOCK_001_STATEMENT_FILE:-${IFX_STATEMENTS_DIR}/IFX-LOCK-001-Sessions-Waiting-for-Locks.sql}"
+
+typeset dataset
+typeset sessions_waiting_for_locks
+
+fail()
+{
+    print -u2 "${1}"
     exit 1
+}
+
+if (( $# != 0 )); then
+    fail "Usage: $0"
 fi
 
-INPUT_FILE="$1"
-
-if [ ! -r "$INPUT_FILE" ]; then
-    print -u2 "input file is not readable: $INPUT_FILE"
-    exit 1
+if [[ ! -f "${IFX_LOCK_001_STATEMENT_FILE}" ]]; then
+    fail "LOCK-001 statement file not found: ${IFX_LOCK_001_STATEMENT_FILE}"
 fi
 
-#
-# Detect explicit mock source execution failure.
-#
-if grep -q '^EXIT_CODE=' "$INPUT_FILE" 2>/dev/null; then
+dataset="$(ifx_db_execute sysmaster "${IFX_LOCK_001_STATEMENT_FILE}")" || {
+    fail "Unable to collect LOCK-001 sessions waiting for locks."
+}
 
-    EXIT_CODE="$(awk -F= '/^EXIT_CODE=/ {print $2; exit}' "$INPUT_FILE")"
+case "${dataset}" in
+    *'|')
+        sessions_waiting_for_locks="${dataset%"|"}"
+        ;;
+    *)
+        fail "Invalid LOCK-001 sessions waiting for locks dataset."
+        ;;
+esac
 
-    case "$EXIT_CODE" in
-        ''|*[!0-9]*)
-            print -u2 "invalid execution status"
-            exit 1
-            ;;
-    esac
+case "${sessions_waiting_for_locks}" in
+    ''|*[!0-9]*)
+        fail "Invalid LOCK-001 sessions waiting for locks value."
+        ;;
+esac
 
-    if [ "$EXIT_CODE" -ne 0 ]; then
-        print -u2 "source execution failed"
-        exit 1
-    fi
-fi
-
-#
-# A successful scalar collection must contain one value.
-#
-if [ ! -s "$INPUT_FILE" ]; then
-    print -u2 "empty sessions waiting for locks result"
-    exit 1
-fi
-
-NORMALIZED="$(
-    awk '
-    function trim(value) {
-        sub(/^[[:space:]]+/, "", value)
-        sub(/[[:space:]]+$/, "", value)
-        return value
-    }
-
-    BEGIN {
-        count = 0
-        failed = 0
-    }
-
-    {
-        value = trim($0)
-
-        if (value == "") {
-            failed = 1
-            next
-        }
-
-        count++
-
-        if (count > 1) {
-            failed = 1
-            next
-        }
-
-        if (value !~ /^[0-9]+$/) {
-            failed = 1
-            next
-        }
-
-        normalized = value
-    }
-
-    END {
-        if (failed || count != 1) {
-            exit 1
-        }
-
-        print normalized
-    }
-    ' "$INPUT_FILE"
-)"
-
-PARSE_RC=$?
-
-if [ "$PARSE_RC" -ne 0 ]; then
-    print -u2 "invalid sessions waiting for locks result"
-    exit 1
-fi
-
-print -- "$NORMALIZED"
+print -r -- "${sessions_waiting_for_locks}"
 
 exit 0
