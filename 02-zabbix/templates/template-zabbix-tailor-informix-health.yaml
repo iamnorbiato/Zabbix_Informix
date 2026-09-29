@@ -313,6 +313,14 @@ zabbix_export:
               value_type: TEXT
               trends: '0'
               timeout: 30s
+              trigger_prototypes:
+                - uuid: 69516806b0f94cd0b85b6376045e6f1a
+                  expression: 'last(/Template Zabbix Tailor Informix Health/ifx.hdr.peer.connection[{#IFX_HDR_PEER}])<>"Connected"'
+                  name: 'HDR-004: {#IFX_HDR_PEER} connection is not Connected'
+                  priority: HIGH
+                  tags:
+                    - tag: informix
+                      value: hdr-004
             - uuid: 5bc3367034bd4f8a8d70cc0a7c9270b1
               name: 'HDR-005 — {#IFX_HDR_PEER} — server state'
               type: ZABBIX_ACTIVE
@@ -320,4 +328,12 @@ zabbix_export:
               value_type: TEXT
               trends: '0'
               timeout: 30s
+              trigger_prototypes:
+                - uuid: 7791989e83ef41b2a010f7ebbc1ba536
+                  expression: 'last(/Template Zabbix Tailor Informix Health/ifx.hdr.peer.server_state[{#IFX_HDR_PEER}])<>"on"'
+                  name: 'HDR-005: {#IFX_HDR_PEER} server state is not on'
+                  priority: HIGH
+                  tags:
+                    - tag: informix
+                      value: hdr-005
           timeout: 30s
