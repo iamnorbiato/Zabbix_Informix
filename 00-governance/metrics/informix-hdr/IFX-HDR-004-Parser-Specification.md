@@ -1,22 +1,14 @@
 # IFX-HDR-004 — Parser Specification
 
-## Current Operational Status
+**Status:** `DEFINED`; real remote connection values pending.
 
-`DEFINED`
+## 1. Input
 
-No HDR connectivity parser, dependent prototype, or trigger exists yet.
+Receive one **proven remote HDR** peer record for `{#IFX_HDR_PEER}`, including raw `syscluster.connection_status`. The standalone local `syscluster` row is never an input to this peer parser. Preserve raw status for diagnosis.
 
-## 1. Purpose
+## 2. Proposed normalized output
 
-Define normalization of a discovered peer's engine-reported HDR connection state.
-
-## 2. Input Contract
-
-One peer object identified by `{#IFX_HDR_PEER}` with `peer_connection_status` from the validated HDR master payload.
-
-## 3. Output Domain
-
-| Numeric output | Normalized state |
+| Value | State |
 |---:|---|
 | `0` | `UNKNOWN` |
 | `1` | `CONNECTED` |
@@ -24,25 +16,10 @@ One peer object identified by `{#IFX_HDR_PEER}` with `peer_connection_status` fr
 | `3` | `DISCONNECTED` |
 | `4` | `FAILED` |
 
-## 4. Normalization Rules
+Exact source-string mappings require observation on a real HDR pair. Blank, missing, or unrecognized remote status cannot map to `CONNECTED`. Malformed payload, wrong peer identity, or unsupported schema version fails the dependent item or emits explicit unknown according to the final parser contract.
 
-Known target engine values map only after real-HDR evidence. Absent or unrecognized values map to `UNKNOWN`; they must never become `CONNECTED`.
+## 3. Policy and acceptance
 
-## 5. Invalid Input
+The parser reports state; it does not suppress an alert. On required HDR, values `2`–`4` are High at the first observed sample, and `0` requires monitoring-integrity handling. `IFX_HDR_ALERT_ON_DISCONNECT=NO` is invalid when HDR is required. A disappeared peer is reported by instance-level HDR-002, not silently resolved through prototype deletion.
 
-Malformed payload, absent peer identity, missing connection-status property, or unsupported schema version must fail the parser/item rather than publish a healthy state.
-
-## 6. Policy Boundary
-
-The parser reports state only. `IFX_HDR_ALERT_ON_DISCONNECT` controls trigger behavior and must not change the normalized value.
-
-## 7. Mock Validation
-
-Validate connected, connecting, disconnected, failed and unknown fixtures. Confirm that state transitions resolve only after the same peer is `CONNECTED` again.
-
-## 8. Acceptance Criteria
-
-- Target state strings are mapped with evidence.
-- `UNKNOWN` remains distinguishable from a disconnected peer.
-- Trigger configuration consumes numeric output, not free-form text.
-
+Validate connected, connecting, disconnected, failed, disappearance, and recovery from real primary and secondary SQL output before source mappings or triggers are approved. No mock HDR transition is accepted as proof.

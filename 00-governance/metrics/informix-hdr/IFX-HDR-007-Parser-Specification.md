@@ -33,9 +33,9 @@ logpage_sent - logpage_acked
 
 Missing field, malformed value, unsupported schema, rollback/inconsistency without defined semantics, or an unproven rollover condition must produce unknown/failure rather than negative or zero backlog.
 
-## 6. Mock Validation
+## 6. Real Source Validation
 
-After a formula is approved, validate equal progress, normal lag, warning/high backlog, rollover, inconsistent source values and disconnected-peer gating.
+Validate raw log progress on a real HDR pair through active/idle workload, log rollover, interruption, and recovery. Until units and ordering are proven, no derived backlog or threshold is approved.
 
 ## 7. Acceptance Criteria
 

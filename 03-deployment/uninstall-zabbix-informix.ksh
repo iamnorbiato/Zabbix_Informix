@@ -100,6 +100,16 @@ rm -f "${launcher_home}/ifx-session-003" || fail "Unable to remove SESSION-003 l
 rm -f "${launcher_home}/ifx-session-004" || fail "Unable to remove SESSION-004 launcher."
 rm -f "${launcher_home}/ifx-session-005" || fail "Unable to remove SESSION-005 launcher."
 rm -f "${launcher_home}/ifx-lock-001" || fail "Unable to remove LOCK-001 launcher."
+rm -f "${launcher_home}/ifx-lock-002" || fail "Unable to remove LOCK-002 launcher."
+rm -f "${launcher_home}/ifx-lock-003" || fail "Unable to remove LOCK-003 launcher."
+rm -f "${launcher_home}/ifx-lock-004" || fail "Unable to remove LOCK-004 launcher."
+rm -f "${launcher_home}/ifx-lock-005" || fail "Unable to remove LOCK-005 launcher."
+rm -f "${launcher_home}/ifx-hdr-001" || fail "Unable to remove HDR-001 launcher."
+rm -f "${launcher_home}/ifx-hdr-002" || fail "Unable to remove HDR-002 launcher."
+rm -f "${launcher_home}/ifx-hdr-003" || fail "Unable to remove HDR-003 launcher."
+rm -f "${launcher_home}/ifx-hdr-004" || fail "Unable to remove HDR-004 launcher."
+rm -f "${launcher_home}/ifx-hdr-005" || fail "Unable to remove HDR-005 launcher."
+
 if [[ -d "${launcher_home}" ]]; then
     rmdir "${launcher_home}" 2>/dev/null || true
 fi

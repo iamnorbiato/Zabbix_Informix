@@ -1,218 +1,70 @@
 # IFX-HDR — Monitoring Architecture
 
+**Status:** `DEFINED`; standalone source evidence recorded, real HDR behavior pending.
+**Implementation status:** Documentation only.
+
 ## 1. Purpose
 
-This document defines the intended monitoring architecture for IBM Informix
-High-Availability Data Replication (HDR) in Zabbix.
+Monitor the local Informix HDR role/state, intended partner, connection, peer operational state, and—only after source validation—acknowledgement and log progress. An intentionally standalone instance must not alert. A required HDR pair must alert if its configuration, partner identity, connection, or operational state becomes abnormal.
 
-It is a design specification only. No HDR SQL statement, collector, Zabbix
-template, launcher, deployment artifact or trigger is approved for
-implementation until the related metric specifications and mock-validation plan
-are approved.
+## 2. Scope and topology
 
-Current status:
+Each Informix instance is an independent Zabbix host and is queried through its own `sysmaster` database, whether the collector runs locally or through Informix Client SDK on another host. A primary and its secondary must not share a single collection identity.
 
-`DEFINED`
+This domain covers HDR, not Enterprise Replication, RSS, SDS, automatic promotion, or repair. RSS/SDS rows may be retained as cluster context but must not satisfy an HDR requirement.
 
----
+## 3. SQL-only sources
 
-## 2. Scope
-
-The HDR monitoring domain answers the following operational questions:
-
-- Is the local Informix instance an HDR primary, HDR secondary or standard server?
-- Is HDR enabled and in the expected state?
-- Which remote Informix server is the configured HDR peer?
-- Is every discovered HDR peer connected?
-- Is the remote peer operational and using the expected synchronization mode?
-- Is acknowledgement activity recent?
-- Is log transmission or acknowledgement falling behind?
-
-The domain complements, but does not replace, `IFX-HEALTH-001` through
-`IFX-HEALTH-008`.
-
----
-
-## 3. Explicit Non-Goals
-
-This initial HDR domain does not monitor:
-
-- Enterprise Replication;
-- replication topology managed solely by an external product;
-- RSS or SDS health as if it were HDR health;
-- automated failover or promotion;
-- configuration changes to Informix;
-- replication repair or resynchronization.
-
-RSS and SDS peers can be discovered as cluster context, but HDR-specific
-triggers shall apply only to peers whose node type is HDR.
-
----
-
-## 4. SQL-Only Collection Principle
-
-The normal runtime design shall use SQL against the `sysmaster` database.
-
-The preferred System-Monitoring Interface sources are:
-
-| Source | Intended use |
-|---|---|
-| `sysdri` | Local HDR role, state, configured peer and DR parameters |
-| `syscluster` | Per-peer node type, connection state, server state, log progress and acknowledgement time |
-
-`onstat` output is not a production collection dependency for this domain.
-
-`syscdr*` tables are excluded because they describe Enterprise Replication, not
-HDR.
-
-Undocumented shared-memory fields shall not be used as the authoritative HDR
-interface.
-
----
-
-## 5. Topology Model
-
-Each Informix instance is monitored as an independent Zabbix host.
-
-```text
-Informix primary host                 Informix HDR secondary host
-        |                                        |
-        | SQL to local sysmaster                  | SQL to local sysmaster
-        v                                        v
-Zabbix collection identity                Zabbix collection identity
-        |                                        |
-        +---------------- Zabbix Server ---------+
-```
-
-The collection host can be colocated with the Informix engine or can connect by
-Informix Client SDK, provided it is able to query the correct local `sysmaster`
-instance for each Zabbix host.
-
-The primary and secondary must never be represented as one Zabbix host merely
-because they form one HDR pair.
-
----
-
-## 6. Expected-Topology Parameters
-
-HDR alerting shall be controlled by explicit runtime parameters.
-
-| Parameter | Allowed values | Meaning |
+| Source | Purpose | Evidence status |
 |---|---|---|
-| `IFX_HDR_ALERT_ON_DISCONNECT` | `YES`, `NO` | Enables or suppresses alerts for discovered disconnected HDR peers |
-| `IFX_HDR_REQUIRED` | `YES`, `NO` | Declares whether this instance is expected to participate in HDR |
+| `sysmaster:sysdri` | Local DRI/HDR role, state, partner name, DR parameters | Table, schema, and standalone values observed on development Informix. |
+| `sysmaster:syscluster` | Cluster rows and candidate peer connection/server state, sync mode, acknowledgement, and log progress | Table, schema, and a **local** standalone row observed. Remote HDR row semantics remain unvalidated. |
 
-The parameters express monitoring intent. They do not enable, disable or alter
-HDR in Informix.
+Production collection must not run or parse `onstat`. No undocumented `sysha_*` or `sysrephdr` table is assumed. SQL failures cannot be converted into an empty healthy topology.
 
-Expected behavior:
+## 4. Real standalone baseline
 
-| HDR discovered | Peer connected | Required | Result |
-|---|---|---|---|
-| No | N/A | `NO` | Normal, HDR not applicable |
-| No | N/A | `YES` | Problem, required HDR is absent |
-| Yes | Yes | Either | Normal |
-| Yes | No | Either, alerting enabled | Problem, HDR peer disconnected |
+On development instance `ol_informix1210`, a successful `sysmaster` query returned `sysdri.type=Not Initialized`, `sysdri.state=Off`, and an empty `sysdri.name`. `syscluster` returned one row named `ol_informix1210` with `role=P`, `nodetype=PRIMARY`, `server_status=Active`, and an empty `connection_status`.
 
----
+Therefore, `syscluster` row count is **not** a peer count. The observed local row must not be discovered as a remote HDR partner, and its blank connection field is not an HDR disconnect. This evidence does not establish the values or row shape that a real HDR pair will produce.
 
-## 7. Discovery Model
+## 5. Required topology policy
 
-`sysdri` describes the local relationship. `syscluster` can return one row per
-remote high-availability peer.
+The canonical policy is [IFX-HDR-Configuration-and-Alerting.md](IFX-HDR-Configuration-and-Alerting.md):
 
-The HDR collector shall produce a discovery dataset containing only peers whose
-node type is HDR. An environment without HDR shall return an empty discovery
-dataset, not a collection failure.
-
-Each discovered peer shall have a stable logical identity based on its Informix
-server name. Display names must not be used as identifiers.
-
----
-
-## 8. Proposed Metric Set
-
-| Metric ID | Name | Scope |
+| Parameter | Standalone | Required HDR |
 |---|---|---|
-| `IFX-HDR-001` | Local Role and State | Instance |
-| `IFX-HDR-002` | Expected HDR Configuration | Instance |
-| `IFX-HDR-003` | HDR Peer Discovery | Discovery |
-| `IFX-HDR-004` | HDR Peer Connectivity | Peer |
-| `IFX-HDR-005` | HDR Peer State and Sync Mode | Peer |
-| `IFX-HDR-006` | HDR Last Acknowledgement Age | Peer |
-| `IFX-HDR-007` | HDR Log Progress and Backlog | Peer |
+| `IFX_HDR_REQUIRED` | `NO` | `YES` on both primary and secondary hosts |
+| `IFX_HDR_ALERT_ON_DISCONNECT` | `NO` | `YES`; suppression is not permitted |
+| `IFX_HDR_EXPECTED_PEER` | empty | Exact intended remote Informix server name |
 
-No individual metric is approved until its own specification is approved.
+`IFX_HDR_EXPECTED_PEER` is an independent expected-state input. Learning the expectation only from currently observed discovery cannot guarantee detection of a missing or substituted peer.
 
----
+## 6. Metric architecture
 
-## 9. Alerting Principles
-
-Alerts shall distinguish configuration expectations from observed transport
-state.
-
-- Missing HDR is a problem only when `IFX_HDR_REQUIRED=YES`.
-- A disconnected discovered HDR peer is a problem only when
-  `IFX_HDR_ALERT_ON_DISCONNECT=YES`.
-- A raw log-position difference is not sufficient by itself to represent lag.
-- Log IDs rotate; log positions, acknowledgement time and backlog require
-  source-specific interpretation.
-- Thresholds for backlog and acknowledgement age require target-environment
-  baselines.
-
-Alerts shall include the discovered peer name and node type.
-
----
-
-## 10. Mock Validation Strategy
-
-No HDR environment exists in the development laboratory. Before implementation,
-fixtures shall model the SQL-normalized data contract for these scenarios:
-
-| Fixture | Required result |
+| Metric | Responsibility |
 |---|---|
-| `standalone` | No HDR discovery; normal when HDR is not required |
-| `primary-hdr-connected` | One connected HDR peer; no connectivity problem |
-| `primary-hdr-disconnected` | One HDR peer; connectivity problem when alerting is enabled |
-| `secondary-hdr-connected` | Local secondary with connected primary peer |
-| `primary-hdr-and-rss` | HDR discovery includes HDR only; RSS remains context only |
-| `hdr-required-but-absent` | Required-HDR problem |
+| `IFX-HDR-001` | Local role and state from `sysdri`. |
+| `IFX-HDR-002` | Instance-level expected-HDR compliance, including absent or wrong partner; remains evaluable when discovery is empty. |
+| `IFX-HDR-003` | Remote HDR peer discovery after local-row and node-type rules are proven. |
+| `IFX-HDR-004` | Connection state of a proven remote HDR peer. |
+| `IFX-HDR-005` | Peer operational state, role, and synchronization mode. |
+| `IFX-HDR-006` | Acknowledgement age; deferred pending real-HDR timestamp semantics. |
+| `IFX-HDR-007` | Log progress/backlog; deferred pending real-HDR unit and rollover semantics. |
 
-Fixtures shall be test-only inputs. They shall not be installed or enabled in a
-production runtime configuration.
+The instance-level HDR-002 item prevents a vanished peer from resolving its own discovery-based problem. A separate monitoring-integrity trigger must cover collection failure or missing samples when HDR is required.
 
----
+## 7. Alert and recovery principles
 
-## 11. Security and Deployment Principles
+- No HDR observed and `IFX_HDR_REQUIRED=NO`: normal, no HDR alert.
+- Required HDR absent, or observed partner differs from `IFX_HDR_EXPECTED_PEER`: High problem.
+- Required partner observed but not in validated healthy connection and operational states: High problem at the first successful abnormal sample; no implicit grace period.
+- Unknown status, missing required source fields, or failed collection: never report healthy. Expose monitoring-integrity failure separately.
+- Recovery requires a successful sample proving the intended partner and validated healthy role, connection, and server states. A disappeared peer or stale value cannot resolve a problem.
+- Periodic SQL polling cannot guarantee observation of a disturbance that begins and ends between samples.
 
-- SQL access shall be read-only.
-- HDR parameters contain no Informix password.
-- Credentials remain in the existing protected connection file.
-- The collector must not require shell access to the Informix engine host solely
-  to run `onstat`.
-- The release must support installation, ordinary uninstallation and explicit
-  purge through the existing parameterized deployment lifecycle.
+## 8. Validation gates
 
----
+The local no-HDR baseline is real-source validated. Real primary and secondary must still establish exact `sysdri`/`syscluster` row behavior, role and connection values, partner identity, transition/disconnect/recovery semantics, and collection cost. HDR-006/007 remain deferred until their source semantics are proven. See [IFX-HDR-Real-Source-Validation-Plan.md](IFX-HDR-Real-Source-Validation-Plan.md).
 
-## 12. Target-Environment Validation
-
-Before HDR monitoring can become runtime validated, a real HDR environment must
-confirm:
-
-- availability and exact column set of `sysdri` and `syscluster`;
-- SQL permissions of the monitoring identity;
-- meaning of role, state and peer-status values in the deployed Informix version;
-- behavior during connect, disconnect, failover and recovery;
-- log progress, acknowledgement and backlog semantics;
-- collection cost under production workload;
-- expected primary/secondary topology and alert parameters.
-
----
-
-## 13. Acceptance Boundary
-
-Completion of this document approves only the architectural direction.
-
-It does not approve implementation or assert that HDR was validated in the
-development environment.
+No mock or fabricated HDR dataset can establish production acceptance. Documentation approval is not runtime validation.

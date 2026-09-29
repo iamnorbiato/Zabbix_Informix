@@ -1,190 +1,81 @@
 # IFX-HDR — Discovery and Data Contract
 
-**Status:** `DEFINED`  
-**Implementation status:** Documentation only. No SQL statement, collector, Zabbix low-level discovery rule, item prototype, or trigger prototype is implemented by this document.
+**Status:** `DEFINED`; standalone source evidence recorded, remote HDR mapping pending.
+**Implementation status:** Documentation only; no SQL statement, collector, Zabbix discovery rule, or trigger is implemented here.
 
-## 1. Purpose
+## 1. Sources and observed baseline
 
-Define the SQL sources, normalized HDR peer record, discovery behavior, and compatibility boundary for future HDR monitoring.
+Query each monitored instance's own `sysmaster` database through the existing read-only SQL collector path. Use `sysdri` for local role/state/partner and `syscluster` for candidate cluster and peer fields. Do not use `onstat`, fabricated HDR data, or unverified `sysha_*`/`sysrephdr` objects.
 
-The design is SQL-only at runtime. It does not execute `onstat` or parse `onstat` output.
+On development instance `ol_informix1210`, `sysdri` returned `Not Initialized`, `Off`, and an empty partner name. `syscluster` returned **one local row** named `ol_informix1210`, with `role=P`, `nodetype=PRIMARY`, `server_status=Active`, and blank `connection_status`. Accordingly, a successful one-row `syscluster` result can still mean **zero remote HDR peers**.
 
-## 2. Authoritative Runtime Sources
+## 2. Local record
 
-The initial source design uses the following documented System Monitoring Interface tables in `sysmaster`:
-
-| Source | Intended use |
-|---|---|
-| `sysmaster:sysdri` | Local Data Replication Interface role, state, peer name, interval, and timeout. |
-| `sysmaster:syscluster` | Per-peer high-availability topology, role, node type, synchronization mode, connection status, and where available log-progress and acknowledgement fields. |
-
-The future SQL statements must execute with the existing collector isolation policy and explicitly select only required fields.
-
-The design must not depend on unverified objects such as `sysha_hdr`, `sysrephdr`, `sysha_node`, or `sysha_rss`. Their availability and field definitions were not confirmed as supported runtime sources for the target Informix versions.
-
-`syscdr*` tables are not an HDR source. They describe Enterprise Replication and must not be interpreted as HDR health.
-
-## 3. Local Instance Record
-
-The collector must obtain one normalized local record before attempting peer discovery.
-
-| Normalized field | Initial source | Meaning |
+| Normalized field | Source | Requirement |
 |---|---|---|
-| `local_role` | `sysdri.type` | Local role such as primary, secondary, standard, or not initialized. |
-| `local_state` | `sysdri.state` | Local DRI/HDR state such as on, off, connecting, failure, or read-only. |
-| `configured_peer_name` | `sysdri.name` | Engine-reported configured peer DB server name, if present. |
-| `dr_interval` | `sysdri.intvl` | Replication interval, if exposed and meaningful for the target configuration. |
-| `dr_timeout` | `sysdri.timeout` | Replication timeout, if exposed and meaningful for the target configuration. |
+| `local_server_name` | Explicit monitored `INFORMIXSERVER` identity | Required to identify the queried instance independently of cluster row order. |
+| `local_role_raw` | `sysdri.type` | Preserve source spelling and normalize only validated values. |
+| `local_state_raw` | `sysdri.state` | Preserve source spelling and normalize only validated values. |
+| `configured_peer_name_raw` | `sysdri.name` | May be empty on proven standalone instance. |
+| `dr_interval`, `dr_timeout` | `sysdri.intvl`, `sysdri.timeout` | Diagnostic values; do not infer health from them alone. |
 
-The future parser must retain the source value and a normalized value when their spelling or case differs.
+Source query failure, missing required columns, or an unexpected number of local `sysdri` rows is not a standalone result.
 
-## 4. HDR Peer Discovery Scope
+## 3. Classifying `syscluster` rows
 
-`syscluster` can expose several high-availability technologies. The discovery process must retain only rows whose node type is HDR.
+Do **not** treat every row as a remote peer. Classify each row as local, candidate remote HDR, other HA technology, or unknown. The observed row named exactly as the queried `INFORMIXSERVER` is local and must be excluded from remote-peer discovery.
 
-RSS and SDS rows must not be reported as HDR peers. They may become separate monitoring scope in the future.
+For remote HDR, require a validated node-type value and a non-local server name. `sysdri.name` and the independently configured `IFX_HDR_EXPECTED_PEER` must be evaluated alongside candidate `syscluster` rows. The exact remote-row predicate, `nodetype` values, and primary/secondary asymmetry must be confirmed on a real HDR pair before enabling peer discovery. A blank or unrecognized field on a candidate remote row must remain unknown, not healthy.
 
-The discovery key must be stable and safe for Zabbix use. The initial proposed identity is:
+RSS and SDS rows must not satisfy an HDR requirement. Duplicate or ambiguous remote identities are collection/normalization errors, not healthy discoveries.
 
-```text
-{#IFX_HDR_PEER}
-```
+## 4. Candidate peer fields
 
-Its value is the peer server name exactly as normalized by the collector. If the target version permits duplicate names, the implementation must extend the identity using a documented stable peer identifier before Zabbix discovery is introduced.
+| Field | Candidate source | Status |
+|---|---|---|
+| `peer_name` | `syscluster.name` | Identity rule pending real HDR validation. |
+| `peer_node_type` | `syscluster.nodetype` | HDR-vs-local/RSS/SDS mapping pending. |
+| `peer_role` | `syscluster.role` | Meaning pending on both primary and secondary. |
+| `peer_connection_status` | `syscluster.connection_status` | Healthy and unhealthy source strings pending. |
+| `peer_server_status` | `syscluster.server_status` | Healthy and unhealthy source strings pending. |
+| `sync_mode` | `syscluster.syncmode` | Collect raw value; policy semantics pending. |
+| `ack_time` | `syscluster.ack_time` | Deferred until timestamp meaning is proven. |
+| sent/acked/applied log IDs and pages | `syscluster` progress columns | Deferred until units, ordering, and rollover are proven. |
 
-## 5. Normalized HDR Peer Record
+Preserve raw strings in diagnostics. Normalized values are not allowed to invent a healthy state for an unknown source string.
 
-For every discovered HDR peer, the collector must produce the following logical record:
+## 5. Proposed collection and discovery contract
 
-| Field | Required before implementation | Initial source candidate | Notes |
-|---|---:|---|---|
-| `peer_name` | Yes | `syscluster.name` | Unique discovery identity after normalization. |
-| `peer_node_type` | Yes | `syscluster.nodetype` | Must normalize to `HDR` for this metric family. |
-| `peer_role` | Yes | `syscluster.role` | Remote role as exposed by engine. |
-| `peer_connection_status` | Yes | `syscluster.connection_status` | Normalized connectivity state. |
-| `peer_server_status` | Yes | `syscluster.server_status` | Remote operational state where exposed. |
-| `sync_mode` | Yes | `syscluster.syncmode` | Synchronization policy/mode. |
-| `delayed_apply` | No | `syscluster.delayed_apply` | Future visibility field; validation required. |
-| `stop_apply` | No | `syscluster.stop_apply` | Future visibility field; validation required. |
-| `logid_sent` | No | `syscluster.logid_sent` | Candidate log-progress component; validation required. |
-| `logpage_sent` | No | `syscluster.logpage_sent` | Candidate log-progress component; validation required. |
-| `logid_acked` | No | `syscluster.logid_acked` | Candidate acknowledgement component; validation required. |
-| `logpage_acked` | No | `syscluster.logpage_acked` | Candidate acknowledgement component; validation required. |
-| `ack_time` | No | `syscluster.ack_time` | Candidate acknowledgement timestamp; unit/semantics require validation. |
-
-The implementation must not assume that optional fields exist, have the same type, or retain the same semantics in every supported Informix release.
-
-## 6. Connectivity Normalization
-
-Source values vary by engine version and operating state. The parser must normalize known values to these logical states:
-
-| Normalized state | Meaning |
-|---|---|
-| `CONNECTED` | The HDR peer relationship is operationally connected. |
-| `CONNECTING` | A peer relationship exists but is being established. |
-| `DISCONNECTED` | A peer relationship exists but is not connected. |
-| `FAILED` | The engine reports failure for the relationship. |
-| `UNKNOWN` | The source value is absent, unsupported, or not recognized by the parser. |
-
-Unknown source values must be preserved in the raw data and reported as `UNKNOWN`; they must not be coerced to `CONNECTED` or `DISCONNECTED`.
-
-## 7. Proposed Discovery Payload
-
-The future master discovery collector will emit one compact JSON document to standard output. The final schema may evolve only with a documented compatibility update.
-
-Illustrative connected-peer payload:
+The future master collector must represent local state independently of peer discovery. A successful, proven standalone result has an empty remote HDR peer list, even though `syscluster` has a local row. This is a proposed schema illustration of the **observed standalone** condition, not a fabricated HDR sample:
 
 ```json
 {
   "schema_version": 1,
   "local": {
-    "role": "PRIMARY",
-    "state": "ON",
-    "configured_peer_name": "ifx_hdr_secondary"
-  },
-  "hdr_peers": [
-    {
-      "peer_name": "ifx_hdr_secondary",
-      "peer_node_type": "HDR",
-      "peer_role": "SECONDARY",
-      "peer_connection_status": "CONNECTED",
-      "peer_server_status": "ACTIVE",
-      "sync_mode": "SYNC"
-    }
-  ]
-}
-```
-
-Illustrative standalone payload:
-
-```json
-{
-  "schema_version": 1,
-  "local": {
-    "role": "STANDARD",
-    "state": "OFF",
-    "configured_peer_name": ""
+    "server_name": "ol_informix1210",
+    "role_raw": "Not Initialized",
+    "state_raw": "Off",
+    "configured_peer_name_raw": ""
   },
   "hdr_peers": []
 }
 ```
 
-The payload is a collection contract, not a Zabbix alert decision. Alert decisions remain governed by `IFX-HDR-Configuration-and-Alerting.md`.
+An empty peer list is a valid collection result only after the required source queries succeed. It is normal only under `IFX_HDR_REQUIRED=NO`. With `IFX_HDR_REQUIRED=YES`, the instance-level HDR-002 item must signal required HDR absent even when no peer item exists.
 
-## 8. No-Peer Behavior
+The future discovery key `{#IFX_HDR_PEER}` is based on a proven stable remote server name. Do not enable peer prototypes until real HDR establishes uniqueness and lifecycle behavior. Discovery alone must not own the disappearance alert.
 
-An empty `hdr_peers` array is a valid SQL collection result. It means no HDR peer was discovered, not that the collector failed.
+## 6. Failure and compatibility contract
 
-The expected-HDR metric evaluates whether the empty discovery result is acceptable according to `IFX_HDR_REQUIRED`.
-
-## 9. Version Compatibility Gate
-
-Before coding against a target Informix environment, perform the following read-only validation in **Database: `sysmaster`**:
-
-```sql
-SELECT
-    tabname
-FROM systables
-WHERE tabname IN ('sysdri', 'syscluster')
-ORDER BY tabname;
-```
-
-Then inspect the available columns:
-
-```sql
-SELECT
-    t.tabname,
-    c.colname,
-    c.coltype,
-    c.collength
-FROM systables AS t
-JOIN syscolumns AS c
-    ON c.tabid = t.tabid
-WHERE t.tabname IN ('sysdri', 'syscluster')
-ORDER BY
-    t.tabname,
-    c.colno;
-```
-
-The target validation record must capture the Informix version, the returned schemas, representative safe output, and any field-name or semantic differences.
-
-## 10. Failure Contract
-
-| Condition | Collector result |
+| Condition | Required behavior |
 |---|---|
-| SQL connection or statement execution fails | Non-zero exit; precise standard-error message; no synthetic healthy payload. |
-| Required table or column is absent | Non-zero exit; identify the unavailable source; no fallback to unverified SQL. |
-| SQL returns no `sysdri` local row where one is expected | Non-zero exit or explicit `UNKNOWN`, finalized after real HDR validation. |
-| SQL succeeds and no HDR peer exists | Zero exit with `hdr_peers: []`. |
-| Source status is unrecognized | Zero exit only if record collection succeeds; normalize status to `UNKNOWN`. |
+| SQL connection or statement failure | Non-zero collector result; no synthetic empty/healthy payload. |
+| Required table or column absent | Clear unsupported/source error; no guessed fallback. |
+| Valid standalone source observation | Empty remote HDR list; evaluate `IFX_HDR_REQUIRED`. |
+| Remote candidate with missing/unknown identity or state | Unknown/error; never `CONNECTED`. |
+| Expected partner absent or different | Instance-level High problem under `IFX_HDR_REQUIRED=YES`. |
+| Source stops reporting after a previous good sample | Monitoring-integrity problem; stale data cannot prove recovery. |
 
-## 11. Acceptance Criteria
+## 7. Real-source validation gate
 
-This data contract is ready for implementation only after:
-
-- `sysdri` and `syscluster` structures are captured from a real target HDR environment;
-- the mapping of source connectivity values to normalized states is evidenced;
-- unique peer identity is confirmed;
-- optional lag fields are either validated with their units or deferred;
-- mock fixtures conform exactly to the approved JSON schema.
-
+The development instance validates the existence/schema of both tables and the standalone row pattern only. Before remote discovery or connection normalization is implemented, capture read-only `sysdri` and `syscluster` output on both members of a real HDR pair in healthy, disrupted, and recovered states. Record exact version, names, types, values, query identity, and collection timestamps. No mock or fixture output substitutes for these observations.

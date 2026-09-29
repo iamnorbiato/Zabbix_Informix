@@ -21,7 +21,7 @@ This metric complements HDR-004. A peer can be connected while still operating i
 
 ## 3. Source Contract
 
-Initial source: `sysmaster:syscluster` for rows classified as HDR.
+Initial source: `sysmaster:syscluster` for rows proven to be **remote** HDR peers. The development instance's sole `PRIMARY` row is local, not a healthy remote peer.
 
 Candidate fields:
 
@@ -104,16 +104,9 @@ The implementation should favor numeric values for trigger-capable operational s
 
 ## 7. Alert Policy
 
-The initial HDR documentation does not define an alert for sync mode drift. Synchronization policy is an operational design choice and requires an explicit desired-mode parameter before it can become a compliance condition.
+For `IFX_HDR_REQUIRED=YES`, a validated abnormal peer `server_status` is a High problem at the first successfully observed sample. No implicit grace period is approved. Exact healthy and abnormal strings must first be captured from a real HDR pair. Unknown values are never healthy.
 
-Candidate future alerts, deferred pending target validation:
-
-| Condition | Candidate severity | Decision gate |
-|---|---|---|
-| Peer server state is `FAILED` | High | Confirm source semantics and avoid duplicate HDR-004 alerts. |
-| Peer server state is `INACTIVE` | High or Warning | Confirm relationship to connectivity source. |
-| Peer state is `RECOVERING` beyond a grace period | Warning | Agree expected recovery duration. |
-| Sync mode differs from configured expected mode | Warning | Add explicit desired-mode configuration first. |
+Synchronization mode is collected for visibility; mode drift becomes an alert only after an explicit expected-mode parameter is approved. Correlate peer-state problems with HDR-002/004 without hiding the underlying abnormal state.
 
 ## 8. Role Consistency
 
@@ -124,7 +117,7 @@ On a normal HDR relationship, observed local and peer roles should be complement
 | `PRIMARY` | `SECONDARY` |
 | `SECONDARY` | `PRIMARY` |
 
-Role inconsistency is a diagnostic signal. It must not immediately create an automatic trigger until actual source behavior during failover and role transition is documented.
+Role inconsistency is an abnormal condition on required HDR once actual source behavior during steady state and failover/role transition is documented. Its High trigger must not be implemented from an unverified role assumption.
 
 ## 9. Failure Behavior
 
@@ -135,15 +128,9 @@ Role inconsistency is a diagnostic signal. It must not immediately create an aut
 | Source value unknown | Normalize to `UNKNOWN`, retaining raw evidence. |
 | Peer not discovered | No peer prototype item; HDR-002 and HDR-003 govern absence. |
 
-## 10. Mock Validation
+## 10. Real Source Validation
 
-| Fixture | Expected observation |
-|---|---|
-| `primary-hdr-connected` | Peer role `SECONDARY`, server state `ACTIVE`, sync mode fixture value. |
-| `secondary-hdr-connected` | Peer role `PRIMARY`, server state `ACTIVE`. |
-| `primary-hdr-connecting` | Validate transitional peer server state if fixture defines it. |
-| `primary-hdr-failed` | Failed or non-operational peer state remains visible. |
-| `unknown-peer-status` | Unknown values are preserved and not coerced. |
+Record exact remote `role`, `server_status`, and `syncmode` values on a real HDR primary and secondary through healthy, disrupted, and recovered states. Do not infer remote healthy values from the development instance's local `PRIMARY` row.
 
 ## 11. Acceptance Criteria
 

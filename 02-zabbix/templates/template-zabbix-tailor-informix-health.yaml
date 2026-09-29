@@ -10,6 +10,40 @@ zabbix_export:
       groups:
         - name: Templates
       items:
+        - uuid: d74b9f0e1b2b45438f1af8b3c7026645
+          name: 'HDR-002 — expected HDR configuration'
+          type: ZABBIX_ACTIVE
+          key: ifx.hdr.expected_configuration
+          timeout: 30s
+          triggers:
+            - uuid: b5966dec75b14b6eacb0c86d668acf49
+              expression: 'nodata(/Template Zabbix Tailor Informix Health/ifx.hdr.expected_configuration,3m)=1'
+              name: 'HDR-002: HDR compliance collection has stopped'
+              priority: HIGH
+              tags:
+                - tag: informix
+                  value: hdr-002
+            - uuid: fccfac78a45543378a9ba95e9fb1a466
+              expression: 'last(/Template Zabbix Tailor Informix Health/ifx.hdr.expected_configuration)=3'
+              name: 'HDR-002: HDR configuration or topology cannot be verified'
+              priority: HIGH
+              tags:
+                - tag: informix
+                  value: hdr-002
+            - uuid: 810a09dd34494d5482b7f7bd48fae781
+              expression: 'last(/Template Zabbix Tailor Informix Health/ifx.hdr.expected_configuration)=2'
+              name: 'HDR-002: required HDR relationship is absent or wrong'
+              priority: HIGH
+              tags:
+                - tag: informix
+                  value: hdr-002
+        - uuid: 3e8df7956c314bb595a84bfacea52691
+          name: 'HDR-001 — local role and state — raw collector output'
+          type: ZABBIX_ACTIVE
+          key: ifx.hdr.local_state.raw
+          value_type: TEXT
+          trends: '0'
+          timeout: 30s
         - uuid: b25cae27e5064d64ae9434b3784f4500
           name: 'HEALTH-003 — assertion failures count'
           type: DEPENDENT
@@ -103,6 +137,20 @@ zabbix_export:
           key: ifx.health.lru_writes
           units: writes
           timeout: 30s
+        - uuid: b246e6a3da1449fdaf9125ea0ea62cc1
+          name: 'LOCK-004 — deadlocks'
+          type: ZABBIX_ACTIVE
+          key: ifx.lock.deadlocks
+          units: deadlocks
+          timeout: 30s
+          triggers:
+            - uuid: 6841b7b4ce1d4326be8ae4b6de758408
+              expression: 'change(/Template Zabbix Tailor Informix Health/ifx.lock.deadlocks)>0'
+              name: 'LOCK-004: new Informix deadlock(s) detected'
+              priority: HIGH
+              tags:
+                - tag: informix
+                  value: lock-004
         - uuid: 14bf256b8c31431599b0f3d3ca818982
           name: 'LOCK-001 — sessions waiting for locks'
           type: ZABBIX_ACTIVE
@@ -111,12 +159,38 @@ zabbix_export:
           timeout: 30s
           triggers:
             - uuid: b540e61cbe154f43a64f08105b7753d6
-              expression: 'last(/Template Zabbix Tailor Informix Health/ifx.lock.sessions_waiting)>0'
+              expression: 'min(/Template Zabbix Tailor Informix Health/ifx.lock.sessions_waiting,90s)>0'
               name: 'Informix LOCK-001: session(s) waiting for locks detected'
               priority: HIGH
               tags:
                 - tag: informix
                   value: lock-001
+        - uuid: 65f0e829040d4075931f16376e6f785a
+          name: 'LOCK-005 — lock table exhaustion attempts'
+          type: ZABBIX_ACTIVE
+          key: ifx.lock.table_exhaustion_attempts
+          units: attempts
+          timeout: 30s
+          triggers:
+            - uuid: ce7c3bbe16e94c2082be0b78fe8c174b
+              expression: 'change(/Template Zabbix Tailor Informix Health/ifx.lock.table_exhaustion_attempts)>0'
+              name: 'LOCK-005: Informix lock table exhaustion attempt(s) detected'
+              priority: HIGH
+              tags:
+                - tag: informix
+                  value: lock-005
+        - uuid: d979412456db4688952183660525d12b
+          name: 'LOCK-003 — lock timeouts'
+          type: ZABBIX_ACTIVE
+          key: ifx.lock.timeouts
+          units: timeouts
+          timeout: 30s
+        - uuid: 0e15570cbe0048daa5c19f55ad30fc9b
+          name: 'LOCK-002 — lock waits'
+          type: ZABBIX_ACTIVE
+          key: ifx.lock.waits
+          units: waits
+          timeout: 30s
         - uuid: fab1f82859824d9da09e5340e1c72067
           name: 'SESSION-002 — sessions in read call'
           type: ZABBIX_ACTIVE
@@ -225,4 +299,25 @@ zabbix_export:
           type: ZABBIX_ACTIVE
           key: ifx.session.weekly_peak_physical_connections
           units: connections
+          timeout: 30s
+      discovery_rules:
+        - uuid: 51ee77f5496f45cdae4fc36bdd5983d1
+          name: 'HDR-003 — HDR peer discovery'
+          type: ZABBIX_ACTIVE
+          key: ifx.hdr.peer.discovery
+          item_prototypes:
+            - uuid: 2d544f1df3ef4396a3841de5f9189a4c
+              name: 'HDR-004 — {#IFX_HDR_PEER} — connection state'
+              type: ZABBIX_ACTIVE
+              key: 'ifx.hdr.peer.connection[{#IFX_HDR_PEER}]'
+              value_type: TEXT
+              trends: '0'
+              timeout: 30s
+            - uuid: 5bc3367034bd4f8a8d70cc0a7c9270b1
+              name: 'HDR-005 — {#IFX_HDR_PEER} — server state'
+              type: ZABBIX_ACTIVE
+              key: 'ifx.hdr.peer.server_state[{#IFX_HDR_PEER}]'
+              value_type: TEXT
+              trends: '0'
+              timeout: 30s
           timeout: 30s

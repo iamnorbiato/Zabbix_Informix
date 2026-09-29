@@ -34,9 +34,9 @@ Missing required fields, malformed JSON and unsupported schema fail clearly. Unr
 
 `delayed_apply` and `stop_apply` are not parser inputs until their target availability and semantics are validated.
 
-## 7. Mock Validation
+## 7. Real Source Validation
 
-Validate complementary primary/secondary roles, active peer state, sync/async values and unknown values without coercion.
+Record exact remote `role`, `server_status`, and `syncmode` values on a real HDR primary and secondary through healthy, disrupted, and recovered states. Do not infer remote healthy values from the development instance's local `PRIMARY` row.
 
 ## 8. Acceptance Criteria
 

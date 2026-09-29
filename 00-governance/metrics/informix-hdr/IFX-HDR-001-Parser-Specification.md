@@ -2,29 +2,31 @@
 
 ## Current Operational Status
 
-`DEFINED`
+`DEVELOPMENT_RUNTIME_VALIDATED`
 
-No HDR SQL statement, collector, parser, launcher, Zabbix item, or template definition exists yet.
+The real sysdri SQL statement, strict pipe-delimited collector, parameterized launcher, Zabbix Agent active check, raw Zabbix item, and exported template definition were validated in the standalone Linux development topology. Real HDR-pair role and state mappings remain pending.
 
 ## 1. Purpose
 
-Define the future normalized-output contract for `IFX-HDR-001 — Local Role and State`.
+Define and document the validated pipe-delimited output contract for `IFX-HDR-001 — Local Role and State`.
 
-## 2. Candidate Input Contract
+## 2. Implemented Source and Output Contract
 
-The approved HDR master payload will contain one `local` object:
+The proposed HDR master payload will contain one `local` object. The following normalized standalone values derive from the observed real `sysdri` output; the JSON envelope remains a design proposal:
 
-```json
-{
-  "schema_version": 1,
-  "local": {
-    "role": "PRIMARY",
-    "state": "ON",
-    "configured_peer_name": "ifx_hdr_secondary"
-  },
-  "hdr_peers": []
-}
+The implemented SQL source is `sysmaster:sysdri`. The collector validates exactly one row and emits:
+
+```text
+<type>|<state>|<name>
 ```
+
+For the real standalone development instance, the validated output is:
+
+```text
+Not Initialized|Off|
+```
+
+An empty `name` is emitted as an empty final field. The collector does not normalize unvalidated HDR-pair values and does not claim that a standalone row represents a remote peer.
 
 The future parser extracts `role`, `state`, and `configured_peer_name`. It does not independently query Informix.
 
@@ -58,9 +60,9 @@ ifx.hdr.local.configured_peer
 
 `UNKNOWN` is a valid explicit normalized value. It is not equivalent to an absent payload or collection failure.
 
-## 6. Mock Validation
+## 6. Real Source Validation
 
-Validate `standalone`, `primary-hdr-connected`, `secondary-hdr-connected`, and `primary-hdr-failed` fixtures. Each must yield its stated normalized local role/state without coercion.
+Standalone `sysdri` values (`Not Initialized`, `Off`, empty partner) were observed on real development Informix. Capture `sysdri` on both members of a real HDR pair during healthy, disrupted, and recovered states before approving other role/state mappings. Do not use fabricated HDR input as source proof.
 
 ## 7. Acceptance Criteria
 

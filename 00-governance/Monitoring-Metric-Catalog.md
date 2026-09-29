@@ -965,258 +965,159 @@ Measure qualifying Informix client sessions currently blocked waiting for locks.
 
 `sysmaster:syslocks.waiter`, joined to `sysmaster:syssessions.sid`.
 
-The `waiter` value identifies the waiting session. `COUNT(DISTINCT waiter)` preserves session cardinality when one waiting session appears in multiple lock rows.
-
-**Authoritative SQL Contract**
-
-```sql
-SELECT
-    CAST(COUNT(DISTINCT l.waiter) AS INT8) AS sessions_waiting_for_locks
-FROM syslocks l
-INNER JOIN syssessions s
-    ON s.sid = l.waiter
-WHERE l.waiter > 0
-  AND s.sid <> DBINFO('sessionid')
-  AND LENGTH(TRIM(s.hostname)) > 0;
-```
-
 **Collection Method**
 
-SQL scalar collector through the common Informix query library.
+SQL scalar collector.
 
-**Type**
+**Type / Unit**
 
-Gauge.
-
-**Unit**
-
-Sessions.
-
-**Frequency**
-
-One minute in the development topology.
-
-**Cost**
-
-Low to medium. The query reads current lock metadata and joins each distinct waiter to its client session.
-
-**Discovery**
-
-No.
+Gauge / sessions.
 
 **Trigger**
 
-Yes. A positive value opens the configured `HIGH` alert `Informix LOCK-001: session(s) waiting for locks detected`. The event resolves automatically when the next valid value is `0`.
-
-**Grafana**
-
-Yes.
+`min(/Template Zabbix Tailor Informix Health/ifx.lock.sessions_waiting,90s)>0`, severity `High`.
 
 **Validation Status**
 
-DEVELOPMENT_RUNTIME_VALIDATED — a controlled lock wait correlated `syslocks.waiter = 14544` with a qualifying client session and `syssessions.is_wlock = 1`. The approved distinct-waiter query returned `1` while the wait existed and `0` after release.
-
-The Linux development topology validated the versioned SQL statement, strict scalar collector, installed launcher, Zabbix Agent active key, active template item, exported YAML definition, `HIGH` trigger, transition to `RESOLVED`, and uninstall/reinstall lifecycle. Target Informix/AIX validation remains pending.
+`DEVELOPMENT_RUNTIME_VALIDATED` — controlled wait detected, resolved after release, and complete Zabbix/deployment lifecycle validated.
 
 ---
 
-## IFX-LOCK-002 — Maximum Lock Wait Time
+## IFX-LOCK-002 — Lock Waits
 
 **Purpose**
 
-Measure the age of the longest currently blocked lock wait.
+Measure accumulated lock-wait events recorded by currently open table profiles.
 
-**Candidate Source**
+**Authoritative Development Source**
 
-`sysmaster`.
+`sysmaster:sysptprof.lockwts`.
 
 **Collection Method**
 
-SQL statement.
+SQL scalar aggregate: `CAST(COALESCE(SUM(p.lockwts), 0) AS INT8)`.
 
-**Type**
+**Type / Unit**
 
-Gauge.
-
-**Unit**
-
-Seconds.
-
-**Frequency**
-
-HIGH.
-
-**Cost**
-
-MEDIUM.
-
-**Discovery**
-
-No.
+Counter / waits.
 
 **Trigger**
 
-Yes.
-
-**Grafana**
-
-Yes.
+None. A wait is not automatically an incident; any alert requires a rate baseline.
 
 **Validation Status**
 
-DEFINED.
+`DEVELOPMENT_RUNTIME_VALIDATED` — controlled wait increased the source from `2` to `3`; collector, launcher, Agent key, item, export and lifecycle validated.
 
 ---
 
-## IFX-LOCK-003 — Deadlocks
+## IFX-LOCK-003 — Lock Timeouts
 
 **Purpose**
 
-Measure deadlocks detected by the Informix engine.
+Measure accumulated lock timeouts recorded by currently open table profiles.
 
-**Candidate Source**
+**Authoritative Development Source**
 
-`sysmaster` or `onstat`.
+`sysmaster:sysptprof.lktouts`.
 
 **Collection Method**
 
-Statement or collector.
+SQL scalar aggregate: `CAST(COALESCE(SUM(p.lktouts), 0) AS INT8)`.
 
-**Type**
+**Type / Unit**
 
-Counter.
-
-**Unit**
-
-Deadlocks.
-
-**Frequency**
-
-MEDIUM.
-
-**Cost**
-
-LOW.
-
-**Discovery**
-
-No.
+Counter / timeouts.
 
 **Trigger**
 
-Yes, preferably using change or rate.
-
-**Grafana**
-
-Yes.
-
-**Derived Metrics**
-
-- deadlocks/second;
-- deadlocks/minute.
+None. A rate/increment policy remains an operational decision.
 
 **Validation Status**
 
-DEFINED.
+`DEVELOPMENT_RUNTIME_VALIDATED` — source, collector, launcher, Agent key, item, export and lifecycle validated with baseline `0`. A safely controlled positive timeout remains pending.
 
 ---
 
-## IFX-LOCK-004 — Latch Waits
+## IFX-LOCK-004 — Deadlocks
 
 **Purpose**
 
-Identify internal contention involving Informix shared-memory synchronization structures.
+Measure accumulated deadlocks recorded by currently open table profiles.
 
-**Candidate Source**
+**Authoritative Development Source**
 
-`sysmaster` or `onstat`.
+`sysmaster:sysptprof.deadlks`.
 
 **Collection Method**
 
-Statement or collector.
+SQL scalar aggregate: `CAST(COALESCE(SUM(p.deadlks), 0) AS INT8)`.
 
-**Type**
+**Type / Unit**
 
-Counter or gauge depending on validated source.
-
-**Unit**
-
-Waits.
-
-**Frequency**
-
-MEDIUM.
-
-**Cost**
-
-UNKNOWN.
-
-**Discovery**
-
-Potentially no.
+Counter / deadlocks.
 
 **Trigger**
 
-Potentially after baseline validation.
-
-**Grafana**
-
-Yes.
+`change(/Template Zabbix Tailor Informix Health/ifx.lock.deadlocks)>0`, severity `High`, tag `informix: lock-004`.
 
 **Validation Status**
 
-DEFINED.
+`DEVELOPMENT_RUNTIME_VALIDATED` — source, collector, launcher, Agent key, item, trigger export and lifecycle validated with baseline `0`. A safely controlled positive deadlock remains pending.
 
 ---
 
-## IFX-LOCK-005 — Buffer Waits
+## IFX-LOCK-005 — Lock Table Exhaustion Attempts
 
 **Purpose**
 
-Measure contention or waits involving buffer pool access.
+Measure attempts to exceed the configured Informix per-session lock limit.
 
-**Candidate Source**
+**Authoritative Development Source**
 
-`sysmaster` or `onstat`.
+`sysmaster:sysprofile` entry `ovlock`.
 
 **Collection Method**
 
-Statement or collector.
+SQL scalar statement selecting the `ovlock` profile value.
 
-**Type**
+**Type / Unit**
 
-Counter.
-
-**Unit**
-
-Waits.
-
-**Frequency**
-
-MEDIUM.
-
-**Cost**
-
-LOW.
-
-**Discovery**
-
-No.
+Counter / attempts.
 
 **Trigger**
 
-Potentially based on rate and baseline.
-
-**Grafana**
-
-Yes.
+`change(/Template Zabbix Tailor Informix Health/ifx.lock.table_exhaustion_attempts)>0`, severity `High`, tag `informix: lock-005`.
 
 **Validation Status**
 
-DEFINED.
+`DEVELOPMENT_RUNTIME_VALIDATED` — source shape, collector, launcher, Agent key, item, trigger export and lifecycle validated with baseline `0`. Deliberately exhausting locks is excluded from development validation.
 
 ---
 
+## IFX-LOCK-006 — Maximum Lock Wait Duration
+
+**Purpose**
+
+Measure the maximum duration of a qualifying lock wait.
+
+**Validation Status**
+
+`SOURCE_REJECTED` — a session-correlated controlled wait showed that `sysrstcb.lkwaittime` does not provide documented current elapsed-wait semantics. No SQL statement, collector, launcher, Agent key, item or trigger is approved.
+
+---
+
+## IFX-LOCK-007 — Lock Escalation
+
+**Purpose**
+
+Detect or measure Informix lock-escalation events.
+
+**Validation Status**
+
+`SOURCE_REJECTED` — neither the current `sysmaster` SMI catalog nor `sysprofile` exposed a SQL-visible escalation source. `onstat -k` cannot distinguish an escalation-derived table lock from an application-requested table lock. No SQL statement, collector, launcher, Agent key, item or trigger is approved.
+
+---
 # 8. SQL and Query Performance
 
 ## IFX-SQL-001 — Long Running SQL Count
@@ -2411,7 +2312,7 @@ DEFINED.
 
 This section defines monitoring of IBM Informix High-Availability Data Replication (HDR) only. RSS and SDS discovery are outside this initial scope. Runtime collection must use supported SQL sources in `sysmaster`; it must not execute or parse `onstat` output.
 
-The initial candidates are `sysdri` for local Data Replication Interface role/state and `syscluster` for peer topology and connection information. Every source field, value mapping and time/progress semantic requires validation in a real target HDR environment before implementation.
+The documented sources are `sysdri` for local Data Replication Interface role/state and `syscluster` for cluster rows and candidate peer information. On the real standalone development instance, `sysdri` returned `Not Initialized`/`Off` with no partner, while `syscluster` returned one **local** `PRIMARY` row with blank connection status. A `syscluster` row is not by itself evidence of a remote HDR peer. Real connected/disconnected HDR semantics still require validation on a primary and secondary. Required HDR uses `IFX_HDR_REQUIRED=YES` and an explicit `IFX_HDR_EXPECTED_PEER`; an intentionally standalone instance uses `IFX_HDR_REQUIRED=NO` and must not alert. No mock HDR source data is accepted.
 
 ## IFX-HDR-001 — Local Role and State
 
@@ -2445,7 +2346,7 @@ No.
 
 **Trigger**
 
-Potentially for sustained validated local failure state; no trigger is approved yet.
+On required HDR, an abnormal local role/state is a High condition once real source mappings are proven. No implicit grace period is approved; coordinate with HDR-002 to avoid duplicate incidents.
 
 **Grafana**
 
@@ -2461,11 +2362,11 @@ DEFINED.
 
 **Purpose**
 
-Evaluate whether the instance has the HDR relationship required by the private `IFX_HDR_REQUIRED=YES|NO` policy.
+Evaluate whether the instance has the exact HDR relationship required by private `IFX_HDR_REQUIRED=YES|NO` and `IFX_HDR_EXPECTED_PEER` policy, independently of peer discovery lifecycle.
 
 **Candidate Source**
 
-Normalized HDR local role/state and discovered HDR peer count, combined with private runtime configuration.
+Normalized local `sysdri` role/state and correctly classified remote HDR identity from `syscluster`, compared with the private expected peer. Total `syscluster` row count is not peer count.
 
 **Collection Method**
 
@@ -2489,7 +2390,7 @@ No.
 
 **Trigger**
 
-Yes. High when HDR is explicitly required but absent.
+Yes. High when required HDR or the exact expected peer is absent or different; the instance-level item remains evaluable when discovery is empty.
 
 **Grafana**
 
@@ -2509,7 +2410,7 @@ Discover HDR peers with stable identity and expose them for per-peer dependent i
 
 **Candidate Source**
 
-`sysmaster:syscluster`, filtered to rows whose validated node type is HDR.
+`sysmaster:syscluster`, excluding the observed local row and retaining only remote rows whose HDR node type and identity are proven on a real pair.
 
 **Collection Method**
 
@@ -2549,7 +2450,7 @@ DEFINED.
 
 **Purpose**
 
-Expose engine-reported connectivity for each discovered HDR peer and alert on disconnected or failed peers when policy enables it.
+Expose engine-reported connectivity for each proven remote HDR peer and alert on any observed non-healthy connection state when HDR is required.
 
 **Candidate Source**
 
@@ -2577,7 +2478,7 @@ Yes, through IFX-HDR-003.
 
 **Trigger**
 
-Yes. High for disconnected or failed peer when `IFX_HDR_ALERT_ON_DISCONNECT=YES`.
+Yes. High on the first observed connecting, disconnected, failed, or otherwise unconfirmed connection state for a required HDR peer. `IFX_HDR_ALERT_ON_DISCONNECT=NO` is invalid with `IFX_HDR_REQUIRED=YES`.
 
 **Grafana**
 
@@ -2621,7 +2522,7 @@ Yes, through IFX-HDR-003.
 
 **Trigger**
 
-Deferred. Sync-mode compliance requires an explicit desired-mode policy; peer server-state semantics require target validation.
+High for a validated abnormal peer server state on required HDR, after real source mappings are proven. Sync-mode drift remains deferred until an explicit desired-mode policy exists.
 
 **Grafana**
 

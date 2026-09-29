@@ -32,9 +32,9 @@ Negative output, guessed epoch conversion, null-to-zero conversion and calculati
 
 Missing/null acknowledgement time for a connected peer, malformed value, unsupported schema and incompatible time basis produce unknown or collection failure according to the approved implementation contract; none may produce `0` seconds.
 
-## 6. Mock Validation
+## 6. Real Source Validation
 
-After target validation, test below-warning, above-warning, above-high, missing timestamp and disconnected-peer cases. Lag threshold evaluation must be gated by connectivity.
+Validate `ack_time` on a real HDR pair during active, idle, disconnected, and recovered states. Until representation, clock basis, and update semantics are proven, no age calculation or threshold is approved.
 
 ## 7. Acceptance Criteria
 

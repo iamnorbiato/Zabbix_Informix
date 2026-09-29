@@ -1,56 +1,24 @@
 # IFX-HDR-002 — Parser Specification
 
-## Current Operational Status
+**Status:** `DEFINED`; standalone source evidence recorded, real HDR mapping pending.
 
-`DEFINED`
+## 1. Inputs
 
-No HDR parser or Zabbix dependent item exists yet.
+Receive validated `IFX_HDR_REQUIRED`, `IFX_HDR_ALERT_ON_DISCONNECT`, and `IFX_HDR_EXPECTED_PEER` policy values; a fresh local `sysdri` record; and classified remote HDR candidates from `syscluster`. The parser must exclude the local row and must not equate total `syscluster` row count with peer count.
 
-## 1. Purpose
+`IFX_HDR_EXPECTED_PEER` is mandatory when `IFX_HDR_REQUIRED=YES`. `IFX_HDR_ALERT_ON_DISCONNECT` must then be `YES`. Invalid combinations fail configuration validation and never generate a healthy value.
 
-Define the future normalization of HDR configuration compliance for `IFX-HDR-002 — Expected HDR Configuration`.
+## 2. Output domain
 
-## 2. Input Contract
-
-The evaluator receives:
-
-- valid `IFX_HDR_REQUIRED` value: `YES` or `NO`;
-- normalized `local.role`;
-- normalized `local.state`;
-- count of discovered HDR peers.
-
-It does not parse unstructured Informix output.
-
-## 3. Output Domain
-
-| Numeric output | Meaning |
+| Numeric value | Meaning |
 |---:|---|
-| `0` | `NOT_REQUIRED` |
-| `1` | `COMPLIANT` |
-| `2` | `REQUIRED_BUT_ABSENT` |
-| `3` | `UNKNOWN` |
+| `0` | `NOT_REQUIRED`: proven standalone and policy `NO`. |
+| `1` | `EXPECTED_RELATIONSHIP_PRESENT`: required role and exact expected partner observed; connectivity/operational state evaluated separately. |
+| `2` | `REQUIRED_BUT_ABSENT_OR_WRONG`: required relationship/partner missing or different. |
+| `3` | `UNKNOWN`: a required source field or row classification is untrusted. |
 
-## 4. Evaluation Contract
+SQL/collector failure yields no synthetic output. A currently observed HDR relationship under an intentionally standalone policy is a configuration mismatch, not `NOT_REQUIRED`.
 
-`IFX_HDR_REQUIRED=NO` with a standalone/no-peer result produces `0`.
+## 3. Evidence and acceptance
 
-`IFX_HDR_REQUIRED=YES` with a primary or secondary role and at least one HDR peer produces `1`.
-
-`IFX_HDR_REQUIRED=YES` without the required HDR relationship produces `2`.
-
-Missing or unrecognized source fields produce `3`, never `0` or `1`.
-
-## 5. Invalid Input
-
-The evaluator fails for an invalid policy value, negative/non-numeric peer count, malformed master payload, or unsupported schema version.
-
-## 6. Mock Validation
-
-Validate `standalone` with policy `NO` => `0`; `hdr-required-but-absent` with `YES` => `2`; connected primary/secondary with `YES` => `1`.
-
-## 7. Acceptance Criteria
-
-- Policy configuration is validated strictly.
-- Absence, unknown and collection failure remain distinct.
-- The output supports deterministic Zabbix trigger evaluation.
-
+On the real standalone development instance, `sysdri=Not Initialized/Off` and the sole `syscluster` row is local; with `IFX_HDR_REQUIRED=NO`, the expected result is `0`. The same real SQL evidence under an isolated `YES` policy with an explicit expected partner should yield `2`. A real HDR pair is needed to prove `1`, disappearance, wrong partner, and recovery. No mock HDR fixture substitutes for this evidence.

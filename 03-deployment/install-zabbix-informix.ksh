@@ -11,6 +11,9 @@ usage()
     print -u2 "  --informix-server <server-name> \\"
     print -u2 "  --informix-sqlhosts <absolute-path> \\"
     print -u2 "  --connection-file <absolute-path> \\"
+    print -u2 "  --hdr-required <YES|NO> \\"
+    print -u2 "  --hdr-alert-on-disconnect <YES|NO> \\"
+    print -u2 "  --hdr-expected-peer <server-name-or-empty> \\"
     print -u2 "  [--state-source <absolute-path>]"
     exit 1
 }
@@ -54,6 +57,9 @@ informix_server=
 informix_sqlhosts=
 connection_source=
 state_source=
+hdr_required=
+hdr_alert_on_disconnect=
+hdr_expected_peer=
 
 while (( $# > 0 )); do
     case "$1" in
@@ -93,6 +99,18 @@ while (( $# > 0 )); do
             state_source="$2"
             shift 2
             ;;
+        --hdr-required)
+            hdr_required="$2"
+            shift 2
+            ;;
+        --hdr-alert-on-disconnect)
+            hdr_alert_on_disconnect="$2"
+            shift 2
+            ;;
+        --hdr-expected-peer)
+            hdr_expected_peer="$2"
+            shift 2
+            ;;
         *)
             usage
             ;;
@@ -107,6 +125,29 @@ done
 [[ -n "${informix_server}" ]] || usage
 [[ -n "${informix_sqlhosts}" ]] || usage
 [[ -n "${connection_source}" ]] || usage
+[[ -n "${hdr_required}" ]] || usage
+[[ -n "${hdr_alert_on_disconnect}" ]] || usage
+
+case "${hdr_required}:${hdr_alert_on_disconnect}" in
+    NO:NO|YES:YES)
+        ;;
+    *)
+        fail "HDR policy requires NO/NO or YES/YES."
+        ;;
+esac
+
+case "${hdr_required}" in
+    YES)
+        case "${hdr_expected_peer}" in
+            ''|*[!A-Za-z0-9_.-]*)
+                fail "HDR expected peer must be a nonempty Informix server name."
+                ;;
+        esac
+        ;;
+    NO)
+        [[ -z "${hdr_expected_peer}" ]] || fail "HDR expected peer must be empty when HDR is not required."
+        ;;
+esac
 
 require_absolute_path "INSTALL_HOME" "${install_home}"
 require_absolute_path "CONFIG_HOME" "${config_home}"
@@ -143,8 +184,27 @@ esac
 [[ -f "${release_dir}/01-statements/informix-sessions/IFX-SESSION-004-Waiting-Client-Sessions-Total.sql" ]] || fail "SESSION-004 statement is missing from the release."
 [[ -f "${release_dir}/01-statements/informix-sessions/IFX-SESSION-005-Waiting-Client-Sessions-by-Reason.sql" ]] || fail "SESSION-005 statement is missing from the release."
 [[ -f "${release_dir}/01-statements/informix-locks/IFX-LOCK-001-Sessions-Waiting-for-Locks.sql" ]] || fail "LOCK-001 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-locks/IFX-LOCK-002-Lock-Waits.sql" ]] || fail "LOCK-002 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-locks/IFX-LOCK-003-Lock-Timeouts.sql" ]] || fail "LOCK-003 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-locks/IFX-LOCK-004-Deadlocks.sql" ]] || fail "LOCK-004 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-locks/IFX-LOCK-005-Lock-Table-Exhaustion.sql" ]] || fail "LOCK-005 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-hdr/IFX-HDR-001-Local-Role-and-State.sql" ]] || fail "HDR-001 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-hdr/IFX-HDR-003-Cluster-Rows.sql" ]] || fail "HDR-003 cluster statement is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/sessions/ifx-session-waiting-by-reason.ksh" ]] || fail "SESSION-005 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/locks/ifx-lock-sessions-waiting.ksh" ]] || fail "LOCK-001 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/locks/ifx-lock-waits.ksh" ]] || fail "LOCK-002 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/locks/ifx-lock-timeouts.ksh" ]] || fail "LOCK-003 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/locks/ifx-lock-deadlocks.ksh" ]] || fail "LOCK-004 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/locks/ifx-lock-table-exhaustion.ksh" ]] || fail "LOCK-005 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/hdr/ifx-hdr-local-state.ksh" ]] || fail "HDR-001 collector is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-hdr-001" ]] || fail "HDR-001 launcher is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/hdr/ifx-hdr-expected-configuration.ksh" ]] || fail "HDR-002 collector is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-hdr-002" ]] || fail "HDR-002 launcher is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/hdr/ifx-hdr-peer-discovery.ksh" ]] || fail "HDR-003 collector is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-hdr-003" ]] || fail "HDR-003 launcher is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/hdr/ifx-hdr-peer-field.ksh" ]] || fail "HDR peer-field collector is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-hdr-004" ]] || fail "HDR-004 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-hdr-005" ]] || fail "HDR-005 launcher is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-state.ksh" ]] || fail "HEALTH-001 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-uptime.ksh" ]] || fail "HEALTH-002 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-assert-failures.ksh" ]] || fail "HEALTH-003 collector is missing from the release."
@@ -210,6 +270,9 @@ find "${state_target}" -type f -exec chmod 600 {} \; || fail "Unable to protect 
     print "IFX_CONFIG_DIR=${config_home}"
     print "IFX_STATE_DIR=${state_target}"
     print "IFX_CONNECT_FILE=${connection_target}"
+    print "IFX_HDR_REQUIRED=${hdr_required}"
+    print "IFX_HDR_ALERT_ON_DISCONNECT=${hdr_alert_on_disconnect}"
+    print "IFX_HDR_EXPECTED_PEER=${hdr_expected_peer}"
 } > "${runtime_env}" || fail "Unable to write runtime configuration."
 
 chown root:zabbix "${runtime_env}" || fail "Unable to set runtime-configuration ownership."
@@ -229,6 +292,15 @@ cp "${release_dir}/03-deployment/launchers/ifx-session-003" "${launcher_home}/if
 cp "${release_dir}/03-deployment/launchers/ifx-session-004" "${launcher_home}/ifx-session-004" || fail "Unable to install SESSION-004 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-session-005" "${launcher_home}/ifx-session-005" || fail "Unable to install SESSION-005 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-lock-001" "${launcher_home}/ifx-lock-001" || fail "Unable to install LOCK-001 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-lock-002" "${launcher_home}/ifx-lock-002" || fail "Unable to install LOCK-002 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-lock-003" "${launcher_home}/ifx-lock-003" || fail "Unable to install LOCK-003 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-lock-004" "${launcher_home}/ifx-lock-004" || fail "Unable to install LOCK-004 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-lock-005" "${launcher_home}/ifx-lock-005" || fail "Unable to install LOCK-005 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-hdr-001" "${launcher_home}/ifx-hdr-001" || fail "Unable to install HDR-001 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-hdr-002" "${launcher_home}/ifx-hdr-002" || fail "Unable to install HDR-002 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-hdr-003" "${launcher_home}/ifx-hdr-003" || fail "Unable to install HDR-003 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-hdr-004" "${launcher_home}/ifx-hdr-004" || fail "Unable to install HDR-004 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-hdr-005" "${launcher_home}/ifx-hdr-005" || fail "Unable to install HDR-005 launcher."
 
 chown root:zabbix \
     "${launcher_home}/ifx-health-001" \
@@ -244,7 +316,16 @@ chown root:zabbix \
     "${launcher_home}/ifx-session-003" \
     "${launcher_home}/ifx-session-004" \
     "${launcher_home}/ifx-session-005" \
-    "${launcher_home}/ifx-lock-001" || fail "Unable to set launcher ownership."
+    "${launcher_home}/ifx-lock-001" \
+    "${launcher_home}/ifx-lock-002" \
+    "${launcher_home}/ifx-lock-003" \
+    "${launcher_home}/ifx-lock-004" \
+    "${launcher_home}/ifx-lock-005" \
+    "${launcher_home}/ifx-hdr-001" \
+    "${launcher_home}/ifx-hdr-002" \
+    "${launcher_home}/ifx-hdr-003" \
+    "${launcher_home}/ifx-hdr-004" \
+    "${launcher_home}/ifx-hdr-005" || fail "Unable to set launcher ownership."
 
 chmod 750 \
     "${launcher_home}/ifx-health-001" \
@@ -260,7 +341,16 @@ chmod 750 \
     "${launcher_home}/ifx-session-003" \
     "${launcher_home}/ifx-session-004" \
     "${launcher_home}/ifx-session-005" \
-    "${launcher_home}/ifx-lock-001" || fail "Unable to protect launchers."
+    "${launcher_home}/ifx-lock-001" \
+    "${launcher_home}/ifx-lock-002" \
+    "${launcher_home}/ifx-lock-003" \
+    "${launcher_home}/ifx-lock-004" \
+    "${launcher_home}/ifx-lock-005" \
+    "${launcher_home}/ifx-hdr-001" \
+    "${launcher_home}/ifx-hdr-002" \
+    "${launcher_home}/ifx-hdr-003" \
+    "${launcher_home}/ifx-hdr-004" \
+    "${launcher_home}/ifx-hdr-005"  || fail "Unable to protect launchers."
 
 sed \
     -e "s|@RUNTIME_ENV@|${runtime_env}|g" \

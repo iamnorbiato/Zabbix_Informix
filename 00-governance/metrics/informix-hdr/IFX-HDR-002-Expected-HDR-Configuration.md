@@ -1,153 +1,55 @@
 # IFX-HDR-002 — Expected HDR Configuration
 
-**Status:** `DEFINED`  
-**Implementation status:** Not implemented.  
-**Collection database:** `sysmaster` through the HDR master data contract.  
-**Runtime method:** SQL-derived data plus private deployment configuration; no `onstat` execution.
+**Status:** `DEVELOPMENT_RUNTIME_VALIDATED`; standalone source and required-HDR absence behavior validated; required-HDR behavior on a real pair pending.
+**Implementation status:** Implemented and validated in the standalone Linux development topology.
+**Collection database:** `sysmaster` plus private expected-topology configuration.
 
 ## 1. Objective
 
-Evaluate whether the monitored instance has the HDR configuration that its local monitoring policy requires.
-
-This metric makes absence explicit. It does not confuse an intentional standalone instance with an instance that should participate in HDR but does not.
+Evaluate whether the monitored instance has the intended HDR relationship. This is an **instance-level** metric: it must continue to exist and alert even when no remote HDR peer is discoverable.
 
 ## 2. Inputs
 
-| Input | Source | Meaning |
+| Input | Source | Rule |
 |---|---|---|
-| `IFX_HDR_REQUIRED` | Private Zabbix Informix configuration | Whether HDR is mandatory for this instance. |
-| `local_role` | `IFX-HDR-001` / HDR master payload | Normalized local role. |
-| `local_state` | `IFX-HDR-001` / HDR master payload | Normalized local state. |
-| `hdr_peer_count` | `IFX-HDR-003` / HDR master payload | Number of discovered HDR peers. |
+| `IFX_HDR_REQUIRED` | Private deployment configuration | `YES` or `NO`; `YES` on both members of a required HDR pair. |
+| `IFX_HDR_EXPECTED_PEER` | Private deployment configuration | Exact intended remote Informix server name; required with `YES`, empty with `NO`. |
+| `IFX_HDR_ALERT_ON_DISCONNECT` | Private deployment configuration | Must be `YES` when HDR is required; `NO` only for intentionally standalone instances. |
+| Local role/state and engine-reported partner | `sysmaster:sysdri` | Must come from a successful query. |
+| Remote HDR candidate records | `sysmaster:syscluster` | Exclude the local row; classify remote rows only with validated HDR rules. |
 
-`IFX_HDR_REQUIRED` accepts only `YES` or `NO`; any other value is a collector configuration error.
+Invalid or contradictory configuration is a collection/configuration error, never a healthy result.
 
-## 3. Normalized Result
-
-The future dependent item must expose one numeric compliance value:
+## 3. Proposed output
 
 | Value | Name | Meaning |
 |---:|---|---|
-| `0` | `NOT_REQUIRED` | HDR is optional and no HDR relationship is present. |
-| `1` | `COMPLIANT` | HDR is required and a valid HDR role/relationship is present; or HDR is optional and a relationship is present. |
-| `2` | `REQUIRED_BUT_ABSENT` | HDR is required but the local role or HDR peer relationship is absent. |
-| `3` | `UNKNOWN` | Required source input is unavailable or unrecognized. |
+| `0` | `NOT_REQUIRED` | A successful SQL sample proves no HDR relationship, and `IFX_HDR_REQUIRED=NO`. |
+| `1` | `EXPECTED_RELATIONSHIP_PRESENT` | Required local HDR role and exact expected partner are present in validated source records. Connection and operational health are evaluated separately by HDR-004/005. |
+| `2` | `REQUIRED_BUT_ABSENT_OR_WRONG` | Required relationship or exact expected partner is absent or different. |
+| `3` | `UNKNOWN` | Required source field is absent/unrecognized or topology classification cannot be trusted. Never healthy. |
 
-The textual state must be retained in the raw/master payload or represented through Zabbix value mapping. The numeric result is intended for dependable trigger expressions.
+Do not derive `1` from `syscluster` row count alone. The development standalone instance returned one **local** `syscluster` row while `sysdri` was `Not Initialized`/`Off` with no partner.
 
-## 4. Evaluation Rules
+## 4. Evaluation
 
-| `IFX_HDR_REQUIRED` | Local role | HDR peer count | Result |
-|---|---|---:|---|
-| `NO` | `STANDARD` or `NOT_INITIALIZED` | `0` | `NOT_REQUIRED` (`0`) |
-| `NO` | `PRIMARY` or `SECONDARY` | `>=1` | `COMPLIANT` (`1`) |
-| `NO` | any recognized role | any | `COMPLIANT` (`1`) unless source is unknown |
-| `YES` | `PRIMARY` or `SECONDARY` | `>=1` | `COMPLIANT` (`1`) |
-| `YES` | `STANDARD` or `NOT_INITIALIZED` | `0` | `REQUIRED_BUT_ABSENT` (`2`) |
-| `YES` | `PRIMARY` or `SECONDARY` | `0` | `REQUIRED_BUT_ABSENT` (`2`) pending target confirmation of transitional behavior |
-| either | `UNKNOWN`, missing, or source unavailable | any | `UNKNOWN` (`3`) |
+| Policy and successful SQL observation | Result | Alert |
+|---|---:|---|
+| `NO`, proven standalone/no remote HDR | `0` | None. |
+| `YES`, proven standalone/no remote HDR | `2` | High. |
+| `YES`, observed partner missing or different from `IFX_HDR_EXPECTED_PEER` | `2` | High. |
+| `YES`, expected relationship present with validated role/identity | `1` | No HDR-002 problem; HDR-004/005 still decide connection/state health. |
+| Unexpected or unvalidated source values | `3` | Monitoring-integrity problem; do not claim compliance. |
+| SQL failure or no fresh sample | No synthetic value | Collection/`nodata` problem. |
 
-The initial design is deliberately strict for `IFX_HDR_REQUIRED=YES`: a role without a discovered HDR peer is not considered compliant. A documented temporary exception may be introduced later only after real target validation shows a legitimate stable state.
+If policy says `NO` while an HDR relationship is observed, the result must not be called `NOT_REQUIRED`; report policy mismatch and require explicit configuration correction. A currently observed relationship cannot silently redefine the intended partner.
 
-## 5. Zabbix Design
+## 5. Zabbix design
 
-| Element | Proposed value |
-|---|---|
-| Dependent item key | `ifx.hdr.expected_configuration` |
-| Value type | Numeric unsigned |
-| Value mapping | `0=Not required`, `1=Compliant`, `2=Required but absent`, `3=Unknown` |
-| Master source | `ifx.hdr.local.raw` or approved common HDR master item |
-| Update interval | Inherited from HDR master collection; initial target: 60 seconds. |
+Proposed dependent numeric item key: `ifx.hdr.expected_configuration`. Its High trigger fires for value `2`. A separate High monitoring-integrity trigger covers `3`, unsupported item, collector error, or `nodata` on a required-HDR host. Exact expressions will be set through the Zabbix UI and exported as a complete template, following the project's established workflow.
 
-The item must be dependent. It must not independently reconnect to Informix or reread private configuration outside the approved collector/master execution path.
+The item must not depend on a discovered peer prototype: when the peer disappears, this instance-level item remains evaluable. Recovery requires a fresh successful sample showing the intended partner present. A stale value or deletion of a discovery resource cannot resolve the problem.
 
-## 6. Trigger Policy
+## 6. Evidence and acceptance
 
-Proposed trigger:
-
-| Condition | Proposed severity | Meaning |
-|---|---|---|
-| Latest result is `2` | High | HDR is explicitly required but absent. |
-
-`UNKNOWN` must not be silently treated as a healthy result. The final treatment—item unsupported versus a separate data-quality trigger—will be decided after target validation.
-
-## 7. Examples
-
-### 7.1 Standalone development instance
-
-Configuration:
-
-```ksh
-IFX_HDR_REQUIRED=NO
-```
-
-Observed local data:
-
-```text
-local_role=STANDARD
-hdr_peer_count=0
-```
-
-Expected result: `0` (`NOT_REQUIRED`). No problem.
-
-### 7.2 Required production primary with connected secondary
-
-Configuration:
-
-```ksh
-IFX_HDR_REQUIRED=YES
-```
-
-Observed local data:
-
-```text
-local_role=PRIMARY
-hdr_peer_count=1
-```
-
-Expected result: `1` (`COMPLIANT`).
-
-### 7.3 Required HDR relationship missing
-
-Configuration:
-
-```ksh
-IFX_HDR_REQUIRED=YES
-```
-
-Observed local data:
-
-```text
-local_role=STANDARD
-hdr_peer_count=0
-```
-
-Expected result: `2` (`REQUIRED_BUT_ABSENT`). High problem.
-
-## 8. Failure Behavior
-
-| Condition | Expected behavior |
-|---|---|
-| Parameter is invalid | Collector/configuration failure with explicit standard-error message. |
-| Master payload is invalid | Dependent item becomes unsupported or returns documented unknown state; never `0` or `1` by default. |
-| `local_role` is unknown | Result is `3` (`UNKNOWN`). |
-| Peer discovery cannot be performed | Result is not compliant; preserve source failure separately. |
-
-## 9. Mock Validation
-
-| Fixture | `IFX_HDR_REQUIRED` | Expected result |
-|---|---|---:|
-| `standalone` | `NO` | `0` |
-| `hdr-required-but-absent` | `YES` | `2` |
-| `primary-hdr-connected` | `YES` | `1` |
-| `secondary-hdr-connected` | `YES` | `1` |
-| `unknown-peer-status` with valid role/peer | `YES` | `1`; connectivity is evaluated by a separate metric |
-
-## 10. Acceptance Criteria
-
-- The parameter behavior matches the approved configuration and alerting policy.
-- A no-HDR instance is distinguishable from a failed query.
-- The high-severity condition is limited to an explicitly required but absent HDR relationship.
-- The evaluation is reproducible through approved mock fixtures.
-- Target validation confirms whether transitional states require a grace period or exception.
-
+The real development baseline supports `NO` => `0` and, with monitoring policy changed in an isolated test, `YES` => `2` against the **same real SQL output**. This does not validate a real HDR outage. A real primary and secondary are required to prove that the expected peer identity, row classification, disappearance, and restoration behave as designed. No mock HDR row or fixture is an acceptance substitute.

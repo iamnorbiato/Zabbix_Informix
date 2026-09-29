@@ -16,6 +16,8 @@ The master payload contains `hdr_peers`, an array of normalized peer objects. Ev
 
 ## 3. Filtering Contract
 
+Exclude the local `syscluster` row before remote HDR filtering. The real standalone instance has one local row but zero remote HDR peers. A successful empty discovery is not the same as failed SQL.
+
 Only records with:
 
 ```text
@@ -45,9 +47,9 @@ An empty valid `hdr_peers` array produces `{ "data": [] }`.
 
 Malformed JSON, missing peer name, empty peer name, unsupported schema version, duplicate discovery identity, or an unknown required node type must fail clearly. They must not create anonymous or unstable Zabbix resources.
 
-## 6. Mock Validation
+## 6. Real Source Validation
 
-Validate `standalone` => empty discovery; connected primary/secondary => one HDR peer; `primary-hdr-and-rss` => only HDR peer.
+The real development `syscluster` row is local and must yield empty remote HDR discovery. Confirm remote row identity, uniqueness, RSS/SDS exclusion, disappearance, and restoration on both members of a real HDR pair before enabling discovery prototypes.
 
 ## 7. Acceptance Criteria
 

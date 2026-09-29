@@ -1,4 +1,4 @@
-# IFX-LOCK-002 — Lock Waits — Parser Specification
+# IFX-LOCK-003 — Lock Timeouts — Parser Specification
 
 Lifecycle: `DEVELOPMENT_RUNTIME_VALIDATED`
 
@@ -16,12 +16,12 @@ The collector accepts only a dataset ending in `|`, removes that trailing delimi
 
 ## Runtime Binding
 
-Collector: `05-collectors/informix/locks/ifx-lock-waits.ksh`
+Collector: `05-collectors/informix/locks/ifx-lock-timeouts.ksh`
 
-Agent key: `ifx.lock.waits`
+Agent key: `ifx.lock.timeouts`
 
-Zabbix value type: Numeric unsigned. Unit: `waits`.
+Zabbix value type: Numeric unsigned. Unit: `timeouts`.
 
 ## Validation Evidence
 
-The controlled lock exercise increased the normalized value from `2` to `3`; collector, launcher and Agent execution were validated in development.
+The SQL statement, collector, launcher and Agent returned `0` in development. A positive timeout scenario remains pending because it must be exercised safely.

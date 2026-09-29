@@ -19,7 +19,7 @@ Subtracting log identifiers or page numbers without those semantics can yield a 
 
 ## 3. Candidate Source Contract
 
-Candidate source: `sysmaster:syscluster` HDR rows.
+Candidate source: `sysmaster:syscluster` rows proven remote HDR and matching `IFX_HDR_EXPECTED_PEER`; exclude the observed standalone local row.
 
 Candidate fields:
 
@@ -138,19 +138,9 @@ Thresholds must be evaluated only while HDR-004 reports `CONNECTED`. A disconnec
 | Peer disconnected | Do not assert a normal backlog; HDR-004 owns the availability alert. |
 | Source query fails | Never replace prior non-zero backlog with zero. |
 
-## 10. Mock Validation
+## 10. Real Source Validation
 
-After a source formula is approved, fixtures must cover:
-
-| Case | Expected result |
-|---|---|
-| Sent and acknowledged progress equal | Validated zero backlog. |
-| Peer slightly behind | Positive backlog below warning. |
-| Backlog above warning | Warning problem. |
-| Backlog above high | High problem. |
-| Log rollover | Correct backlog according to validated formula. |
-| Inconsistent or reverse progress | Unknown/error; never a negative healthy value. |
-| Disconnected peer | Connectivity problem; backlog alert suppressed. |
+Validate raw log progress on a real HDR pair through active/idle workload, log rollover, interruption, and recovery. Until units and ordering are proven, no derived backlog or threshold is approved.
 
 ## 11. Acceptance Criteria
 

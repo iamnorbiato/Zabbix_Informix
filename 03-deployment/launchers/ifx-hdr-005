@@ -1,0 +1,32 @@
+#!/bin/ksh
+
+RUNTIME_ENV="${ZABBIX_INFORMIX_RUNTIME_ENV:-/etc/zabbix-informix/runtime.env}"
+[[ -r "${RUNTIME_ENV}" ]] || { print -u2 "Informix runtime configuration is not readable: ${RUNTIME_ENV}"; exit 1; }
+. "${RUNTIME_ENV}" || exit 1
+
+if [[ -z "${IFX_COLLECTOR_HOME}" ||
+      -z "${IFX_INFORMIXDIR}" ||
+      -z "${IFX_INFORMIXSERVER}" ||
+      -z "${IFX_INFORMIXSQLHOSTS}" ||
+      -z "${IFX_CONFIG_DIR}" ||
+      -z "${IFX_STATE_DIR}" ||
+      -z "${IFX_CONNECT_FILE}" ]]; then
+    print -u2 "Informix HDR-005 runtime configuration is incomplete."
+    exit 1
+fi
+
+if (( $# != 1 )); then
+    print -u2 "Usage: $0 <peer-name>"
+    exit 1
+fi
+
+COLLECTOR="${IFX_COLLECTOR_HOME}/05-collectors/informix/hdr/ifx-hdr-peer-field.ksh"
+[[ -f "${COLLECTOR}" ]] || { print -u2 "Informix HDR peer-field collector not found: ${COLLECTOR}"; exit 1; }
+
+export INFORMIXDIR="${IFX_INFORMIXDIR}"
+export IFX_INFORMIXDIR IFX_INFORMIXSERVER IFX_INFORMIXSQLHOSTS
+export IFX_CONFIG_DIR IFX_STATE_DIR IFX_CONNECT_FILE
+export PATH="${INFORMIXDIR}/bin:${PATH}"
+export LD_LIBRARY_PATH="${INFORMIXDIR}/lib:${INFORMIXDIR}/lib/esql${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+
+exec /bin/ksh "${COLLECTOR}" server "$1"

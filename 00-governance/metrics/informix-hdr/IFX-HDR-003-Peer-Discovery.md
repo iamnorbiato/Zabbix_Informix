@@ -29,7 +29,7 @@ Excluded from this metric:
 
 ## 3. Source Contract
 
-Initial source: `sysmaster:syscluster`.
+Initial source: `sysmaster:syscluster`. The real standalone instance returned one **local** `PRIMARY` row named `ol_informix1210` with blank connection status. Exclude this row; row count is not peer count. The remote HDR row predicate remains pending real-pair validation.
 
 Candidate fields:
 
@@ -130,19 +130,13 @@ Future item prototypes for connectivity, server state, synchronization mode, ack
 | Condition | Expected behavior |
 |---|---|
 | `syscluster` unavailable | Master collector fails; discovery is not updated with an empty result. |
-| No qualifying HDR row | Successful `data: []` payload. |
+| Only the observed local row, with successful `sysdri`/`syscluster` queries | Successful `data: []` payload; required-HDR absence is evaluated separately by HDR-002. |
 | Source row has missing name | Collector fails or suppresses the malformed row with explicit error policy to be finalized before coding. |
 | Unsupported schema | Collector fails clearly; no guessed-column fallback. |
 
-## 10. Mock Validation
+## 10. Real Source Validation
 
-| Fixture | Expected discovery result |
-|---|---|
-| `standalone` | Empty `data` array. |
-| `primary-hdr-connected` | One HDR peer. |
-| `secondary-hdr-connected` | One HDR peer. |
-| `primary-hdr-and-rss` | Only the HDR peer appears. |
-| malformed duplicate-peer fixture | Clear failure; no unstable duplicate discovery. |
+The real development `syscluster` row is local and must yield empty remote HDR discovery. Confirm remote row identity, uniqueness, RSS/SDS exclusion, disappearance, and restoration on both members of a real HDR pair before enabling discovery prototypes.
 
 ## 11. Acceptance Criteria
 

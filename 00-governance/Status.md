@@ -39,20 +39,23 @@ Informix Sessions and Concurrency status:
 
 Informix Locks and Contention status:
 
-- IFX-LOCK-001 — Sessions Waiting for Locks — DEVELOPMENT_RUNTIME_VALIDATED — controlled lock detection, active Agent item, red `HIGH` trigger, recovery to `RESOLVED`, exported template, and uninstall/reinstall lifecycle validated
-- IFX-LOCK-002 — Maximum Lock Wait Time — DEFINED
+- IFX-LOCK-001 — Sessions Waiting for Locks — DEVELOPMENT_RUNTIME_VALIDATED — controlled lock detection, 90-second `HIGH` trigger, recovery to `RESOLVED`, exported template and uninstall/reinstall lifecycle validated
+- IFX-LOCK-002 — Lock Waits — DEVELOPMENT_RUNTIME_VALIDATED — controlled counter increment from `2` to `3`, active item, exported template and uninstall/reinstall lifecycle validated
+- IFX-LOCK-003 — Lock Timeouts — DEVELOPMENT_RUNTIME_VALIDATED — source and full runtime chain validated with baseline `0`; safely controlled positive timeout exercise pending
+- IFX-LOCK-004 — Deadlocks — DEVELOPMENT_RUNTIME_VALIDATED — source and full runtime chain validated with baseline `0`; `HIGH` increment trigger exported
+- IFX-LOCK-005 — Lock Table Exhaustion Attempts — DEVELOPMENT_RUNTIME_VALIDATED — `ovlock` source and full runtime chain validated with baseline `0`; `HIGH` increment trigger exported
+- IFX-LOCK-006 — Maximum Lock Wait Duration — SOURCE_REJECTED — `sysrstcb.lkwaittime` did not provide proven current elapsed-wait semantics
+- IFX-LOCK-007 — Lock Escalation — SOURCE_REJECTED — no SQL-visible escalation source in the current SMI catalog or `sysprofile`
 
 Informix HDR status:
 
-- IFX-HDR-001 — Local Role and State — DEFINED
-- IFX-HDR-002 — Expected HDR Configuration — DEFINED
-- IFX-HDR-003 — HDR Peer Discovery — DEFINED
-- IFX-HDR-004 — HDR Peer Connectivity — DEFINED
-- IFX-HDR-005 — HDR Peer State and Sync Mode — DEFINED
+- IFX-HDR-003 — HDR Peer Discovery — SOURCE_VALIDATED — syscluster real validado no standalone e no primary HDR de produção; linha local excluída e peer psk_wms_hdr identificado
+- IFX-HDR-004 — HDR Peer Connectivity — SOURCE_VALIDATED — connection_status=Connected validado no primary HDR de produção; Agent local ainda não aponta para produção
+- IFX-HDR-005 — HDR Peer State and Sync Mode — SOURCE_VALIDATED — server_status=on, role=S e syncmode=SYNC validados no primary HDR de produção; Agent local ainda não aponta para produção
 - IFX-HDR-006 — HDR Last Acknowledgement Age — DEFINED — SOURCE SEMANTICS REQUIRE VALIDATION
 - IFX-HDR-007 — HDR Log Progress and Backlog — DEFINED — SOURCE SEMANTICS REQUIRE VALIDATION
 
-The HDR design is SQL-only at runtime and does not execute `onstat`. Its first source candidates are `sysmaster:sysdri` and `sysmaster:syscluster`. No HDR collector, deployment integration, Zabbix template or trigger has been implemented. Real target HDR validation is mandatory before implementation, including source schema, state mappings, peer identity, acknowledgement-time semantics and log-progress semantics.
+The HDR design is SQL-only at runtime and does not execute `onstat`. IFX-HDR-001 and IFX-HDR-002 have been implemented and validated in the standalone Linux development topology using real sysmaster data. IFX-HDR-003 has real standalone source validation for the local syscluster row. A real HDR primary/secondary pair is still required to validate remote peer identity, connectivity, operational state, synchronization mode, acknowledgement age, and log-progress semantics. No mock HDR data is an acceptance substitute.
 
 **4. construir collector mínimo**
 

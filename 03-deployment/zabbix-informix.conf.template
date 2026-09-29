@@ -15,3 +15,12 @@ UserParameter=ifx.session.weekly_peak_physical_connections,ZABBIX_INFORMIX_RUNTI
 UserParameter=ifx.session.waiting_client_sessions,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-004
 UserParameter=ifx.session.waiting_client_sessions_by_reason.raw,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-005
 UserParameter=ifx.lock.sessions_waiting,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-001
+UserParameter=ifx.lock.waits,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-002
+UserParameter=ifx.lock.timeouts,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-003
+UserParameter=ifx.lock.deadlocks,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-004
+UserParameter=ifx.lock.table_exhaustion_attempts,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-005
+UserParameter=ifx.hdr.local_state.raw,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-001
+UserParameter=ifx.hdr.expected_configuration,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-002
+UserParameter=ifx.hdr.peer.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-003
+UserParameter=ifx.hdr.peer.connection[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-004 "$1"
+UserParameter=ifx.hdr.peer.server_state[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-005 "$1"

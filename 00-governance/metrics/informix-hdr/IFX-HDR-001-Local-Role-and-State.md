@@ -1,8 +1,8 @@
 # IFX-HDR-001 — Local Role and State
 
-**Status:** `DEFINED`  
-**Implementation status:** Not implemented.  
-**Collection database:** `sysmaster`  
+**Status:** `DEVELOPMENT_RUNTIME_VALIDATED`
+**Implementation status:** Implemented and validated in the standalone Linux development topology. Real HDR-pair validation remains pending.
+**Collection database:** `sysmaster`
 **Runtime method:** SQL only; no `onstat` execution.
 
 ## 1. Objective
@@ -14,6 +14,8 @@ Expose the local Informix instance role and its Data Replication Interface state
 Role and state are the foundation for all HDR interpretation. A peer connectivity value is not meaningful unless the monitored instance's own HDR role and state are known.
 
 ## 3. Source Contract
+
+The real development instance returned `sysdri.type=Not Initialized`, `state=Off`, and an empty partner name. This establishes the standalone mapping only.
 
 Initial source: `sysmaster:sysdri`.
 
@@ -99,13 +101,13 @@ No unrecognized source string may be silently treated as `ON` or `OFF`.
 
 This metric alone does not determine whether HDR is required. That decision belongs to `IFX-HDR-002` and `IFX_HDR_REQUIRED`.
 
-Future visibility triggers may report a sustained local `FAILURE` state, but the exact trigger expression and severity require target HDR evidence.
+On required HDR, any validated abnormal local role/state must become a High problem at the first observed sample. Exact source mappings require real HDR evidence; coordinate with HDR-002 so the same outage is not duplicated.
 
 ## 8. Expected Results
 
 | Environment | Expected role | Expected state |
 |---|---|---|
-| Standalone instance | `STANDARD` | `OFF` or source-equivalent normalized value |
+| Observed standalone development instance | `NOT_INITIALIZED` | `OFF` |
 | Healthy HDR primary | `PRIMARY` | `ON` |
 | Healthy HDR secondary | `SECONDARY` | `ON` |
 | Role transition | source-dependent | `CONNECTING` or another documented transitional value |
@@ -125,7 +127,7 @@ Future visibility triggers may report a sustained local `FAILURE` state, but the
 1. Validate the candidate source in **Database: `sysmaster`** on a real target HDR primary and secondary.
 2. Capture source values for healthy, connecting, disconnected, and failure situations where safely possible.
 3. Verify all normalization mappings.
-4. Validate the payload with `primary-hdr-connected`, `secondary-hdr-connected`, `standalone`, and `primary-hdr-failed` fixtures.
+4. Validate standalone normalization against the observed real `sysdri` output; validate primary, secondary, and failures only on a real HDR pair.
 5. Validate Zabbix dependent-item extraction and history.
 
 ## 11. Acceptance Criteria

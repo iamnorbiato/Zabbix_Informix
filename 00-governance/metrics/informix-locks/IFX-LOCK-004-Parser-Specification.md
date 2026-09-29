@@ -1,4 +1,4 @@
-# IFX-LOCK-002 — Lock Waits — Parser Specification
+# IFX-LOCK-004 — Deadlocks — Parser Specification
 
 Lifecycle: `DEVELOPMENT_RUNTIME_VALIDATED`
 
@@ -16,12 +16,14 @@ The collector accepts only a dataset ending in `|`, removes that trailing delimi
 
 ## Runtime Binding
 
-Collector: `05-collectors/informix/locks/ifx-lock-waits.ksh`
+Collector: `05-collectors/informix/locks/ifx-lock-deadlocks.ksh`
 
-Agent key: `ifx.lock.waits`
+Agent key: `ifx.lock.deadlocks`
 
-Zabbix value type: Numeric unsigned. Unit: `waits`.
+Zabbix value type: Numeric unsigned. Unit: `deadlocks`.
+
+The Zabbix trigger detects `change(...) > 0`, with severity `High` and tag `informix: lock-004`.
 
 ## Validation Evidence
 
-The controlled lock exercise increased the normalized value from `2` to `3`; collector, launcher and Agent execution were validated in development.
+The SQL statement, collector, launcher, Agent key, Zabbix item and trigger export were validated in development with a baseline value of `0`.

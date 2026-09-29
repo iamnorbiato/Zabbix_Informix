@@ -19,7 +19,7 @@ Until those facts are established, no SQL statement, collector, Zabbix item, thr
 
 ## 3. Candidate Source Contract
 
-Candidate source: `sysmaster:syscluster.ack_time` for rows classified as HDR.
+Candidate source: `sysmaster:syscluster.ack_time` for rows proven remote HDR and matching `IFX_HDR_EXPECTED_PEER`; exclude the observed standalone local row.
 
 Candidate validation projection:
 
@@ -123,20 +123,9 @@ Threshold triggers must be gated by a `CONNECTED` HDR-004 state. A disconnected 
 | Peer disconnected | Connectivity metric owns the High alert; acknowledgement age is not asserted as healthy. |
 | Source query fails | Existing value is not replaced by zero. |
 
-## 10. Mock Validation
+## 10. Real Source Validation
 
-Fixtures may validate parser and Zabbix threshold behavior only after the timestamp contract is approved.
-
-Required mock cases:
-
-| Case | Expected result |
-|---|---|
-| Age below warning threshold | No problem. |
-| Age equal to warning threshold | Confirm chosen inclusive/exclusive comparison; default proposal is no problem at equality. |
-| Age above warning threshold | Warning. |
-| Age above high threshold | High. |
-| Connected peer with missing timestamp | Unknown/unsupported, not zero seconds. |
-| Disconnected peer with stale timestamp | Connectivity problem only; no duplicate age alert. |
+Validate `ack_time` on a real HDR pair during active, idle, disconnected, and recovered states. Until representation, clock basis, and update semantics are proven, no age calculation or threshold is approved.
 
 ## 11. Acceptance Criteria
 
