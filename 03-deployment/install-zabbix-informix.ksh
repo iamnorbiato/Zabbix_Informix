@@ -188,6 +188,12 @@ esac
 [[ -f "${release_dir}/01-statements/informix-locks/IFX-LOCK-003-Lock-Timeouts.sql" ]] || fail "LOCK-003 statement is missing from the release."
 [[ -f "${release_dir}/01-statements/informix-locks/IFX-LOCK-004-Deadlocks.sql" ]] || fail "LOCK-004 statement is missing from the release."
 [[ -f "${release_dir}/01-statements/informix-locks/IFX-LOCK-005-Lock-Table-Exhaustion.sql" ]] || fail "LOCK-005 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-logs/IFX-LOG-001-Current-Utilization.sql" ]] || fail "LOG-001 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-logs/IFX-LOG-002-Not-Backed-Up.sql" ]] || fail "LOG-002 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-logs/IFX-LOG-003-Not-Archived.sql" ]] || fail "LOG-003 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-logs/IFX-LOG-004-Physical-Utilization.sql" ]] || fail "LOG-004 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-logs/IFX-LOG-005-Logical-Logs-Full.sql" ]] || fail "LOG-005 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-logs/IFX-LOG-006-Backup-Inventory.sql" ]] || fail "LOG-006 statement is missing from the release."
 [[ -f "${release_dir}/01-statements/informix-hdr/IFX-HDR-001-Local-Role-and-State.sql" ]] || fail "HDR-001 statement is missing from the release."
 [[ -f "${release_dir}/01-statements/informix-hdr/IFX-HDR-003-Cluster-Rows.sql" ]] || fail "HDR-003 cluster statement is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/sessions/ifx-session-waiting-by-reason.ksh" ]] || fail "SESSION-005 collector is missing from the release."
@@ -196,6 +202,14 @@ esac
 [[ -f "${release_dir}/05-collectors/informix/locks/ifx-lock-timeouts.ksh" ]] || fail "LOCK-003 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/locks/ifx-lock-deadlocks.ksh" ]] || fail "LOCK-004 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/locks/ifx-lock-table-exhaustion.ksh" ]] || fail "LOCK-005 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/logs/ifx-log-current-utilization.ksh" ]] || fail "LOG-001 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/logs/ifx-log-not-backed-up.ksh" ]] || fail "LOG-002 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/logs/ifx-log-not-archived.ksh" ]] || fail "LOG-003 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/logs/ifx-log-physical-utilization.ksh" ]] || fail "LOG-004 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/logs/ifx-log-full.ksh" ]] || fail "LOG-005 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/logs/ifx-log-backup-discovery.ksh" ]] || fail "LOG-006 collector is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-log-006" ]] || fail "LOG-006 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-log-006-age" ]] || fail "LOG-006 age launcher is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/hdr/ifx-hdr-local-state.ksh" ]] || fail "HDR-001 collector is missing from the release."
 [[ -f "${release_dir}/03-deployment/launchers/ifx-hdr-001" ]] || fail "HDR-001 launcher is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/hdr/ifx-hdr-expected-configuration.ksh" ]] || fail "HDR-002 collector is missing from the release."
@@ -296,6 +310,13 @@ cp "${release_dir}/03-deployment/launchers/ifx-lock-002" "${launcher_home}/ifx-l
 cp "${release_dir}/03-deployment/launchers/ifx-lock-003" "${launcher_home}/ifx-lock-003" || fail "Unable to install LOCK-003 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-lock-004" "${launcher_home}/ifx-lock-004" || fail "Unable to install LOCK-004 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-lock-005" "${launcher_home}/ifx-lock-005" || fail "Unable to install LOCK-005 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-log-001" "${launcher_home}/ifx-log-001" || fail "Unable to install LOG-001 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-log-002" "${launcher_home}/ifx-log-002" || fail "Unable to install LOG-002 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-log-003" "${launcher_home}/ifx-log-003" || fail "Unable to install LOG-003 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-log-004" "${launcher_home}/ifx-log-004" || fail "Unable to install LOG-004 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-log-005" "${launcher_home}/ifx-log-005" || fail "Unable to install LOG-005 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-log-006" "${launcher_home}/ifx-log-006" || fail "Unable to install LOG-006 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-log-006-age" "${launcher_home}/ifx-log-006-age" || fail "Unable to install LOG-006 age launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-hdr-001" "${launcher_home}/ifx-hdr-001" || fail "Unable to install HDR-001 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-hdr-002" "${launcher_home}/ifx-hdr-002" || fail "Unable to install HDR-002 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-hdr-003" "${launcher_home}/ifx-hdr-003" || fail "Unable to install HDR-003 launcher."
@@ -321,6 +342,13 @@ chown root:zabbix \
     "${launcher_home}/ifx-lock-003" \
     "${launcher_home}/ifx-lock-004" \
     "${launcher_home}/ifx-lock-005" \
+    "${launcher_home}/ifx-log-001" \
+    "${launcher_home}/ifx-log-002" \
+    "${launcher_home}/ifx-log-003" \
+    "${launcher_home}/ifx-log-004" \
+    "${launcher_home}/ifx-log-005" \
+    "${launcher_home}/ifx-log-006" \
+    "${launcher_home}/ifx-log-006-age" \
     "${launcher_home}/ifx-hdr-001" \
     "${launcher_home}/ifx-hdr-002" \
     "${launcher_home}/ifx-hdr-003" \
@@ -346,6 +374,13 @@ chmod 750 \
     "${launcher_home}/ifx-lock-003" \
     "${launcher_home}/ifx-lock-004" \
     "${launcher_home}/ifx-lock-005" \
+    "${launcher_home}/ifx-log-001" \
+    "${launcher_home}/ifx-log-002" \
+    "${launcher_home}/ifx-log-003" \
+    "${launcher_home}/ifx-log-004" \
+    "${launcher_home}/ifx-log-005" \
+    "${launcher_home}/ifx-log-006" \
+    "${launcher_home}/ifx-log-006-age" \
     "${launcher_home}/ifx-hdr-001" \
     "${launcher_home}/ifx-hdr-002" \
     "${launcher_home}/ifx-hdr-003" \

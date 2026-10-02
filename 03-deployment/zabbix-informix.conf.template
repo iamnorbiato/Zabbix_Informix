@@ -19,6 +19,13 @@ UserParameter=ifx.lock.waits,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER
 UserParameter=ifx.lock.timeouts,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-003
 UserParameter=ifx.lock.deadlocks,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-004
 UserParameter=ifx.lock.table_exhaustion_attempts,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-005
+UserParameter=ifx.log.current_utilization,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-001
+UserParameter=ifx.log.not_backed_up,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-002
+UserParameter=ifx.log.not_archived,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-003
+UserParameter=ifx.log.physical_utilization,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-004
+UserParameter=ifx.log.full,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-005
+UserParameter=ifx.log.backup.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-006
+UserParameter=ifx.log.backup_age_days[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-006-age "$1" "$2"
 UserParameter=ifx.hdr.local_state.raw,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-001
 UserParameter=ifx.hdr.expected_configuration,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-002
 UserParameter=ifx.hdr.peer.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-003

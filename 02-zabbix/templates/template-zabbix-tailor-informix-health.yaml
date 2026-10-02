@@ -65,7 +65,7 @@ zabbix_export:
                 - tag: informix
                   value: health-003
         - uuid: 4c8082f8bea54326884acd74f07e388f
-          name: 'Informix HEALTH-003 — raw collector output'
+          name: 'HEALTH-003 — raw collector output'
           type: ZABBIX_ACTIVE
           key: ifx.health.assert_failures.raw
           value_type: TEXT
@@ -191,6 +191,68 @@ zabbix_export:
           key: ifx.lock.waits
           units: waits
           timeout: 30s
+        - uuid: a1e202c820854d47ae1124e0cc78f4c8
+          name: 'LOG-001 — current logical-log utilization'
+          type: ZABBIX_ACTIVE
+          key: ifx.log.current_utilization
+          value_type: FLOAT
+          units: '%'
+          timeout: 30s
+          triggers:
+            - uuid: 2362920d45c24939b35521ca69e831d9
+              expression: 'last(/Template Zabbix Tailor Informix Health/ifx.log.current_utilization)>80'
+              name: 'Informix LOG-001: current logical-log utilization is above 80%'
+              priority: WARNING
+              tags:
+                - tag: informix
+                  value: log-001
+            - uuid: f773ecfaecff4077a8655c589c2ca1f7
+              expression: 'last(/Template Zabbix Tailor Informix Health/ifx.log.current_utilization)>90'
+              name: 'Informix LOG-001: current logical-log utilization is above 90%'
+              priority: HIGH
+              tags:
+                - tag: informix
+                  value: log-001
+        - uuid: 235789ab44c445a4bc58f14141b15ce7
+          name: 'LOG-005 — logical logs full'
+          type: ZABBIX_ACTIVE
+          key: ifx.log.full
+          units: logs
+          timeout: 30s
+        - uuid: ebd4ff52b4264da39c65bfcb0d2dce03
+          name: 'LOG-003 — logical logs not archived'
+          type: ZABBIX_ACTIVE
+          key: ifx.log.not_archived
+          units: logs
+          timeout: 30s
+        - uuid: 090015ad9d7949f09e3fe00d7f01fcfa
+          name: 'LOG-002 — logical logs not backed up'
+          type: ZABBIX_ACTIVE
+          key: ifx.log.not_backed_up
+          units: logs
+          timeout: 30s
+        - uuid: 70752b71335e4c4ba2c2ce71f910f888
+          name: 'LOG-004 — physical-log utilization'
+          type: ZABBIX_ACTIVE
+          key: ifx.log.physical_utilization
+          value_type: FLOAT
+          units: '%'
+          timeout: 30s
+          triggers:
+            - uuid: a0b925ed2afa4f58909f2544944724d7
+              expression: 'last(/Template Zabbix Tailor Informix Health/ifx.log.physical_utilization)>80'
+              name: 'Informix LOG-004: physical-log utilization is above 80%'
+              priority: WARNING
+              tags:
+                - tag: informix
+                  value: log-004
+            - uuid: db3516c31d16444a909a8e16e6b725ae
+              expression: 'last(/Template Zabbix Tailor Informix Health/ifx.log.physical_utilization)>90'
+              name: 'Informix LOG-004: physical-log utilization is above 90%'
+              priority: HIGH
+              tags:
+                - tag: informix
+                  value: log-004
         - uuid: fab1f82859824d9da09e5340e1c72067
           name: 'SESSION-002 — sessions in read call'
           type: ZABBIX_ACTIVE
@@ -336,4 +398,28 @@ zabbix_export:
                   tags:
                     - tag: informix
                       value: hdr-005
+          timeout: 30s
+        - uuid: d72811a6a5c2413e8a3627e7a6ae609a
+          name: 'LOG-006 — backup inventory discovery'
+          type: ZABBIX_ACTIVE
+          key: ifx.log.backup.discovery
+          delay: 1h
+          item_prototypes:
+            - uuid: 94538f738a6b4251baabaccede3184a5
+              name: 'LOG-006 — {#IFX_DATABASE}/{#IFX_DBSPACE} — Level-0 backup age'
+              type: ZABBIX_ACTIVE
+              key: 'ifx.log.backup_age_days[{#IFX_DATABASE},{#IFX_DBSPACE}]'
+              delay: 1h
+              value_type: FLOAT
+              units: days
+              timeout: 30s
+              trigger_prototypes:
+                - uuid: 9477982294344187ac4518b841c7bb62
+                  expression: 'last(/Template Zabbix Tailor Informix Health/ifx.log.backup_age_days[{#IFX_DATABASE},{#IFX_DBSPACE}])>7'
+                  name: 'Informix LOG-006: Level-0 backup older than 7 days on {#IFX_DATABASE}/{#IFX_DBSPACE}'
+                  priority: WARNING
+                - uuid: 21e8bb6aee604d81b0c0fe0f25ad80aa
+                  expression: 'last(/Template Zabbix Tailor Informix Health/ifx.log.backup_age_days[{#IFX_DATABASE},{#IFX_DBSPACE}])=-1'
+                  name: 'Informix LOG-006: no Level-0 backup exists on {#IFX_DATABASE}/{#IFX_DBSPACE}'
+                  priority: HIGH
           timeout: 30s
