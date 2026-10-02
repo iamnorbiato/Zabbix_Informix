@@ -1,0 +1,1 @@
+SELECT TRIM(d.name) AS dbspace_name, CAST(100.0 * (SUM(c.chksize) - SUM(c.nfree)) / SUM(c.chksize) AS DECIMAL(10,2)) AS used_percent, SUM(c.nfree) AS free_pages FROM sysdbstab d JOIN syschunks c ON c.dbsnum = d.dbsnum WHERE LOWER(TRIM(d.name)) LIKE 'temp%' GROUP BY d.name;

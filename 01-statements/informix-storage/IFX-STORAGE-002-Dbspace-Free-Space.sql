@@ -1,0 +1,1 @@
+SELECT TRIM(d.name) AS dbspace_name, SUM(c.nfree) AS free_pages, CAST((SUM(c.nfree) * d.pagesize) / 1073741824.0 AS DECIMAL(18,2)) AS free_gb FROM sysdbstab d JOIN syschunks c ON c.dbsnum = d.dbsnum GROUP BY d.name, d.pagesize;

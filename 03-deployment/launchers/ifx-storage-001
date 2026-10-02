@@ -1,0 +1,10 @@
+#!/bin/ksh
+RUNTIME_ENV="${ZABBIX_INFORMIX_RUNTIME_ENV:-/etc/zabbix-informix/runtime.env}"
+[[ -r "${RUNTIME_ENV}" ]] || { print -u2 "Informix runtime configuration is not readable: ${RUNTIME_ENV}"; exit 1; }
+. "${RUNTIME_ENV}" || exit 1
+COLLECTOR="${IFX_COLLECTOR_HOME}/05-collectors/informix/storage/ifx-storage-001-dbspace-utilization.ksh"
+[[ -f "${COLLECTOR}" ]] || { print -u2 "STORAGE-001 collector not found: ${COLLECTOR}"; exit 1; }
+export IFX_CONFIG_DIR IFX_STATE_DIR IFX_CONNECT_FILE IFX_INFORMIXDIR IFX_INFORMIXSERVER IFX_INFORMIXSQLHOSTS
+export INFORMIXDIR="${IFX_INFORMIXDIR}" INFORMIXSERVER="${IFX_INFORMIXSERVER}" INFORMIXSQLHOSTS="${IFX_INFORMIXSQLHOSTS}"
+export PATH="${INFORMIXDIR}/bin:${PATH}" LD_LIBRARY_PATH="${INFORMIXDIR}/lib:${INFORMIXDIR}/lib/esql${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+exec /bin/ksh "${COLLECTOR}"

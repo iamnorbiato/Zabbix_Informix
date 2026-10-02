@@ -3854,3 +3854,9 @@ The target-environment phase remains pending.
 It must validate the same release against the target Informix version and topology, including Informix/AIX compatibility where applicable, monitoring-user permissions, query cost, counter reset behavior and environment-specific alert baselines.
 
 `DEVELOPMENT_RUNTIME_VALIDATED` does not claim production acceptance or target Informix/AIX validation.
+
+## Storage implementation scope decision
+
+The Informix SQL package implements `IFX-STORAGE-001` through `IFX-STORAGE-006` and `IFX-STORAGE-011` using `sysmaster` sources, parameterized collectors, deployment launchers, Zabbix active items and discovery prototypes where applicable.
+
+`IFX-STORAGE-007` (filesystem utilization), `IFX-STORAGE-008` (filesystem free space), `IFX-STORAGE-009` (filesystem inode utilization) and `IFX-STORAGE-010` (operational chunk-to-filesystem mapping) are outside this package's implementation scope. Those metrics depend on the operating-system host that owns the filesystem. Because the Informix SQL collector may execute on a separate client host, client-side filesystem commands would measure the wrong machine. The operating-system/AIX monitoring implementation is responsible for these metrics.

@@ -271,96 +271,67 @@ zabbix_export:
           key: ifx.session.waiting_client_sessions
           units: sessions
           timeout: 30s
-        - uuid: b80848a050b44de7a7b9c10a653dd003
-          name: 'SESSION-005 — waiting client sessions - buffer'
-          type: DEPENDENT
-          key: ifx.session.waiting_client_sessions.buffer
-          delay: '0'
-          units: sessions
-          preprocessing:
-            - type: REGEX
-              parameters:
-                - '(?s).*BUFFER\|Waiting client sessions - buffer\|([0-9]+).*'
-                - \1
-          master_item:
-            key: ifx.session.waiting_client_sessions_by_reason.raw
-        - uuid: c61a720086434a9584f1de311d26155c
-          name: 'SESSION-005 — waiting client sessions - checkpoint'
-          type: DEPENDENT
-          key: ifx.session.waiting_client_sessions.checkpoint
-          delay: '0'
-          units: sessions
-          preprocessing:
-            - type: REGEX
-              parameters:
-                - '(?s).*CHECKPOINT\|Waiting client sessions - checkpoint\|([0-9]+).*'
-                - \1
-          master_item:
-            key: ifx.session.waiting_client_sessions_by_reason.raw
-        - uuid: 2837b5998e8c48f386c5bd6b6c3b56ca
-          name: 'SESSION-005 — waiting client sessions - latch'
-          type: DEPENDENT
-          key: ifx.session.waiting_client_sessions.latch
-          delay: '0'
-          units: sessions
-          preprocessing:
-            - type: REGEX
-              parameters:
-                - '(?s).*LATCH\|Waiting client sessions - latch\|([0-9]+).*'
-                - \1
-          master_item:
-            key: ifx.session.waiting_client_sessions_by_reason.raw
-        - uuid: 01ed310ded7d4610bd8e8647d9a7d766
-          name: 'SESSION-005 — waiting client sessions - lock'
-          type: DEPENDENT
-          key: ifx.session.waiting_client_sessions.lock
-          delay: '0'
-          units: sessions
-          preprocessing:
-            - type: REGEX
-              parameters:
-                - '(?s).*LOCK\|Waiting client sessions - lock\|([0-9]+).*'
-                - \1
-          master_item:
-            key: ifx.session.waiting_client_sessions_by_reason.raw
-        - uuid: 0c45ea081d764956b3fb3bde92c2e62a
-          name: 'SESSION-005 — waiting client sessions - log buffer'
-          type: DEPENDENT
-          key: ifx.session.waiting_client_sessions.log_buffer
-          delay: '0'
-          units: sessions
-          preprocessing:
-            - type: REGEX
-              parameters:
-                - '(?s).*LOG_BUFFER\|Waiting client sessions - log buffer\|([0-9]+).*'
-                - \1
-          master_item:
-            key: ifx.session.waiting_client_sessions_by_reason.raw
-        - uuid: 467e26b59706416584a399c1b30bec78
-          name: 'SESSION-005 — waiting client sessions - transaction'
-          type: DEPENDENT
-          key: ifx.session.waiting_client_sessions.transaction
-          delay: '0'
-          units: sessions
-          preprocessing:
-            - type: REGEX
-              parameters:
-                - '(?s).*TRANSACTION\|Waiting client sessions - transaction\|([0-9]+).*'
-                - \1
-          master_item:
-            key: ifx.session.waiting_client_sessions_by_reason.raw
-        - uuid: 68b2a4bf955c45a3bda04de021650526
-          name: 'SESSION-005 — waiting client sessions by reason — raw collector output'
-          type: ZABBIX_ACTIVE
-          key: ifx.session.waiting_client_sessions_by_reason.raw
-          value_type: TEXT
-          trends: '0'
-          timeout: 30s
         - uuid: 5c2464524ba949bd8f19241fd9374d12
           name: 'SESSION-003 — weekly peak concurrent physical connections'
           type: ZABBIX_ACTIVE
           key: ifx.session.weekly_peak_physical_connections
           units: connections
+          timeout: 30s
+        - uuid: ad96832ec8de4a1389c1d26755678462
+          name: 'STORAGE-006 — chunk free space — raw collector output'
+          type: ZABBIX_ACTIVE
+          key: ifx.storage.chunk.free_space
+          delay: 5m
+          value_type: TEXT
+          trends: '0'
+          timeout: 30s
+        - uuid: 4801af12832d4d63bae2e2edf535d875
+          name: 'STORAGE-004 — chunk state — raw collector output'
+          type: ZABBIX_ACTIVE
+          key: ifx.storage.chunk.state
+          delay: 5m
+          value_type: TEXT
+          trends: '0'
+          timeout: 30s
+        - uuid: abaf103ff85f4e4d87a4d13a0c6571e2
+          name: 'STORAGE-005 — chunk utilization — raw collector output'
+          type: ZABBIX_ACTIVE
+          key: ifx.storage.chunk.utilization
+          delay: 5m
+          value_type: TEXT
+          trends: '0'
+          timeout: 30s
+        - uuid: 85bd57eab3bd486e811597e731113230
+          name: 'STORAGE-002 — dbspace free space — raw collector output'
+          type: ZABBIX_ACTIVE
+          key: ifx.storage.dbspace.free_space
+          delay: 5m
+          value_type: TEXT
+          trends: '0'
+          timeout: 30s
+        - uuid: f85a11db9f4749d49a6562217492aac3
+          name: 'STORAGE-003 — dbspace growth — raw collector output'
+          type: ZABBIX_ACTIVE
+          key: ifx.storage.dbspace.growth
+          delay: 5m
+          value_type: TEXT
+          trends: '0'
+          timeout: 30s
+        - uuid: 646d3827b6bf4565bd473c9b3e33b532
+          name: 'STORAGE-001 — dbspace utilization — raw collector output'
+          type: ZABBIX_ACTIVE
+          key: ifx.storage.dbspace.utilization
+          delay: 5m
+          value_type: TEXT
+          trends: '0'
+          timeout: 30s
+        - uuid: 9c2ed2ce3f3c46afa4d42cfd55f7d7f8
+          name: 'STORAGE-011 — temporary dbspace utilization — raw collector output'
+          type: ZABBIX_ACTIVE
+          key: ifx.storage.temp_dbspace.utilization
+          delay: 5m
+          value_type: TEXT
+          trends: '0'
           timeout: 30s
       discovery_rules:
         - uuid: 51ee77f5496f45cdae4fc36bdd5983d1
@@ -421,5 +392,208 @@ zabbix_export:
                 - uuid: 21e8bb6aee604d81b0c0fe0f25ad80aa
                   expression: 'last(/Template Zabbix Tailor Informix Health/ifx.log.backup_age_days[{#IFX_DATABASE},{#IFX_DBSPACE}])=-1'
                   name: 'Informix LOG-006: no Level-0 backup exists on {#IFX_DATABASE}/{#IFX_DBSPACE}'
+                  priority: HIGH
+          timeout: 30s
+        - uuid: 4cc3cf00a79d4b1d86f716105331bd07
+          name: 'STORAGE — chunk discovery'
+          type: ZABBIX_ACTIVE
+          key: ifx.storage.chunk.discovery
+          delay: 5m
+          item_prototypes:
+            - uuid: 9858511911b34b7fbf6ed43c6b9aee6f
+              name: 'STORAGE-004 — {#IFX_DBSPACE}/{#IFX_CHUNK} — extendable'
+              type: DEPENDENT
+              key: 'ifx.storage.chunk.extendable[{#IFX_DBSPACE},{#IFX_CHUNK}]'
+              delay: '0'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '(?m)^{#IFX_DBSPACE}\|{#IFX_CHUNK}\|[^|]+\|[01]\|[01]\|[01]\|([01])\|$'
+                    - \1
+              master_item:
+                key: ifx.storage.chunk.state
+            - uuid: 93b6d12391494adb8fb865a54ef03b27
+              name: 'STORAGE-006 — {#IFX_DBSPACE}/{#IFX_CHUNK} — free space'
+              type: DEPENDENT
+              key: 'ifx.storage.chunk.free_gb[{#IFX_DBSPACE},{#IFX_CHUNK}]'
+              delay: '0'
+              value_type: FLOAT
+              units: GB
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '(?m)^{#IFX_DBSPACE}\|{#IFX_CHUNK}\|[^|]+\|([0-9.]+)\|$'
+                    - \1
+              master_item:
+                key: ifx.storage.chunk.free_space
+            - uuid: 9a42af96013942e7b9a75aa0de1c9c77
+              name: 'STORAGE-004 — {#IFX_DBSPACE}/{#IFX_CHUNK} — inconsistent'
+              type: DEPENDENT
+              key: 'ifx.storage.chunk.inconsistent[{#IFX_DBSPACE},{#IFX_CHUNK}]'
+              delay: '0'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '(?m)^{#IFX_DBSPACE}\|{#IFX_CHUNK}\|[^|]+\|[01]\|[01]\|([01])\|[01]\|$'
+                    - \1
+              master_item:
+                key: ifx.storage.chunk.state
+              trigger_prototypes:
+                - uuid: bc8be8d690624e41b3ebb7f268f78f14
+                  expression: 'last(/Template Zabbix Tailor Informix Health/ifx.storage.chunk.inconsistent[{#IFX_DBSPACE},{#IFX_CHUNK}])=1'
+                  name: 'Informix STORAGE-004: chunk {#IFX_DBSPACE}/{#IFX_CHUNK} is inconsistent'
+                  priority: HIGH
+            - uuid: 57524698f2484f349ac7edaa9f38c701
+              name: 'STORAGE-004 — {#IFX_DBSPACE}/{#IFX_CHUNK} — offline'
+              type: DEPENDENT
+              key: 'ifx.storage.chunk.offline[{#IFX_DBSPACE},{#IFX_CHUNK}]'
+              delay: '0'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '(?m)^{#IFX_DBSPACE}\|{#IFX_CHUNK}\|[^|]+\|([01])\|[01]\|[01]\|[01]\|$'
+                    - \1
+              master_item:
+                key: ifx.storage.chunk.state
+              trigger_prototypes:
+                - uuid: b47300e6d7054347bcafe066717bc3d0
+                  expression: 'last(/Template Zabbix Tailor Informix Health/ifx.storage.chunk.offline[{#IFX_DBSPACE},{#IFX_CHUNK}])=1'
+                  name: 'Informix STORAGE-004: chunk {#IFX_DBSPACE}/{#IFX_CHUNK} is offline'
+                  priority: HIGH
+            - uuid: 897db98d1fd644aaa30d3eb4953d554d
+              name: 'STORAGE-004 — {#IFX_DBSPACE}/{#IFX_CHUNK} — recovering'
+              type: DEPENDENT
+              key: 'ifx.storage.chunk.recovering[{#IFX_DBSPACE},{#IFX_CHUNK}]'
+              delay: '0'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '(?m)^{#IFX_DBSPACE}\|{#IFX_CHUNK}\|[^|]+\|[01]\|([01])\|[01]\|[01]\|$'
+                    - \1
+              master_item:
+                key: ifx.storage.chunk.state
+              trigger_prototypes:
+                - uuid: c7ceba7a20bd463796babf17f0c6a39e
+                  expression: 'last(/Template Zabbix Tailor Informix Health/ifx.storage.chunk.recovering[{#IFX_DBSPACE},{#IFX_CHUNK}])=1'
+                  name: 'Informix STORAGE-004: chunk {#IFX_DBSPACE}/{#IFX_CHUNK} is recovering'
+                  priority: WARNING
+            - uuid: 793d37c14ae041f9af3543b38133310e
+              name: 'STORAGE-005 — {#IFX_DBSPACE}/{#IFX_CHUNK} — utilization'
+              type: DEPENDENT
+              key: 'ifx.storage.chunk.used_percent[{#IFX_DBSPACE},{#IFX_CHUNK}]'
+              delay: '0'
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '(?m)^{#IFX_DBSPACE}\|{#IFX_CHUNK}\|[^|]+\|[^|]+\|([0-9.]+)\|$'
+                    - \1
+              master_item:
+                key: ifx.storage.chunk.utilization
+          timeout: 30s
+        - uuid: 614ff61f439343a697bd79f086e69e52
+          name: 'STORAGE — dbspace discovery'
+          type: ZABBIX_ACTIVE
+          key: ifx.storage.dbspace.discovery
+          delay: 5m
+          filter:
+            conditions:
+              - macro: '{#IFX_DBSPACE_CLASS}'
+                value: ^APPLICATION$
+                formulaid: A
+          item_prototypes:
+            - uuid: a094fb00216e4c58be804fc4cfa2b522
+              name: 'STORAGE-002 — {#IFX_DBSPACE} — free space'
+              type: DEPENDENT
+              key: 'ifx.storage.dbspace.free_gb[{#IFX_DBSPACE}]'
+              delay: '0'
+              value_type: FLOAT
+              units: GB
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '(?m)^{#IFX_DBSPACE}\|[^|]+\|([0-9.]+)\|[^|]+\|$'
+                    - \1
+              master_item:
+                key: ifx.storage.dbspace.free_space
+            - uuid: 762e327a00034f0aab7803879aca5367
+              name: 'STORAGE-003 — {#IFX_DBSPACE} — growth and expansion'
+              type: DEPENDENT
+              key: 'ifx.storage.dbspace.growth[{#IFX_DBSPACE}]'
+              delay: '0'
+              value_type: TEXT
+              trends: '0'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '(?m)^{#IFX_DBSPACE}\|([^|]+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[^|]+)\|$'
+                    - \1
+              master_item:
+                key: ifx.storage.dbspace.growth
+            - uuid: d907f7bdc6ed4f70b2410cec86abcff5
+              name: 'STORAGE-001 — {#IFX_DBSPACE} — utilization'
+              type: DEPENDENT
+              key: 'ifx.storage.dbspace.used_percent[{#IFX_DBSPACE}]'
+              delay: '0'
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '(?m)^{#IFX_DBSPACE}\|{#IFX_DBSPACE_CLASS}\|[^|]+\|[^|]+\|[^|]+\|([0-9.]+)\|$'
+                    - \1
+              master_item:
+                key: ifx.storage.dbspace.utilization
+              trigger_prototypes:
+                - uuid: d191d5fd4a9d4cb88a68721ccf96bd6b
+                  expression: 'last(/Template Zabbix Tailor Informix Health/ifx.storage.dbspace.used_percent[{#IFX_DBSPACE}])>80'
+                  name: 'Informix STORAGE-001: dbspace {#IFX_DBSPACE} utilization is above 80%'
+                  priority: WARNING
+                - uuid: 085c03fa3e304745a283e27887c6dd90
+                  expression: 'last(/Template Zabbix Tailor Informix Health/ifx.storage.dbspace.used_percent[{#IFX_DBSPACE}])>90'
+                  name: 'Informix STORAGE-001: dbspace {#IFX_DBSPACE} utilization is above 90%'
+                  priority: HIGH
+          timeout: 30s
+        - uuid: 01287028124346538ccc8861f3d2c087
+          name: 'STORAGE — temporary dbspace discovery'
+          key: ifx.storage.temp_dbspace.discovery
+          delay: 5m
+          item_prototypes:
+            - uuid: 57715edc076f4619adf8dc990c6015b9
+              name: 'STORAGE-011 — {#IFX_TEMP_DBSPACE} — free pages'
+              type: DEPENDENT
+              key: 'ifx.storage.temp_dbspace.free_pages[{#IFX_TEMP_DBSPACE}]'
+              delay: '0'
+              units: pages
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '(?m)^{#IFX_TEMP_DBSPACE}\|[^|]+\|([0-9]+)\|$'
+                    - \1
+              master_item:
+                key: ifx.storage.temp_dbspace.utilization
+            - uuid: 64a033832a4b4f68a83564d1cfdf1255
+              name: 'STORAGE-011 — {#IFX_TEMP_DBSPACE} — utilization'
+              type: DEPENDENT
+              key: 'ifx.storage.temp_dbspace.used_percent[{#IFX_TEMP_DBSPACE}]'
+              delay: '0'
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '(?m)^{#IFX_TEMP_DBSPACE}\|([0-9.]+)\|[^|]+\|$'
+                    - \1
+              master_item:
+                key: ifx.storage.temp_dbspace.utilization
+              trigger_prototypes:
+                - uuid: 12a9142d95f94c5482f23f9e6c221eea
+                  expression: 'min(/Template Zabbix Tailor Informix Health/ifx.storage.temp_dbspace.used_percent[{#IFX_TEMP_DBSPACE}],5m)>80'
+                  name: 'Informix STORAGE-011: temporary dbspace {#IFX_TEMP_DBSPACE} utilization is above 80% for 5 minutes'
+                  priority: WARNING
+                - uuid: 2d8ecbc502684aa686d2749f887e8f83
+                  expression: 'min(/Template Zabbix Tailor Informix Health/ifx.storage.temp_dbspace.used_percent[{#IFX_TEMP_DBSPACE}],5m)>90'
+                  name: 'Informix STORAGE-011: temporary dbspace {#IFX_TEMP_DBSPACE} utilization is above 90% for 5 minutes'
                   priority: HIGH
           timeout: 30s

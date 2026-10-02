@@ -116,6 +116,16 @@ rm -f "${launcher_home}/ifx-hdr-002" || fail "Unable to remove HDR-002 launcher.
 rm -f "${launcher_home}/ifx-hdr-003" || fail "Unable to remove HDR-003 launcher."
 rm -f "${launcher_home}/ifx-hdr-004" || fail "Unable to remove HDR-004 launcher."
 rm -f "${launcher_home}/ifx-hdr-005" || fail "Unable to remove HDR-005 launcher."
+rm -f "${launcher_home}/ifx-storage-001" || fail "Unable to remove STORAGE-001 launcher."
+rm -f "${launcher_home}/ifx-storage-002" || fail "Unable to remove STORAGE-002 launcher."
+rm -f "${launcher_home}/ifx-storage-003" || fail "Unable to remove STORAGE-003 launcher."
+rm -f "${launcher_home}/ifx-storage-004" || fail "Unable to remove STORAGE-004 launcher."
+rm -f "${launcher_home}/ifx-storage-005" || fail "Unable to remove STORAGE-005 launcher."
+rm -f "${launcher_home}/ifx-storage-006" || fail "Unable to remove STORAGE-006 launcher."
+rm -f "${launcher_home}/ifx-storage-011" || fail "Unable to remove STORAGE-011 launcher."
+rm -f "${launcher_home}/ifx-storage-dbspace-discovery" || fail "Unable to remove storage dbspace discovery launcher."
+rm -f "${launcher_home}/ifx-storage-chunk-discovery" || fail "Unable to remove storage chunk discovery launcher."
+rm -f "${launcher_home}/ifx-storage-temp-dbspace-discovery" || fail "Unable to remove storage temporary dbspace discovery launcher."
 
 if [[ -d "${launcher_home}" ]]; then
     rmdir "${launcher_home}" 2>/dev/null || true

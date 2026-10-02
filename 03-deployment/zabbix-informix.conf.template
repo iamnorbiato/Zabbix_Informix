@@ -26,6 +26,16 @@ UserParameter=ifx.log.physical_utilization,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_
 UserParameter=ifx.log.full,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-005
 UserParameter=ifx.log.backup.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-006
 UserParameter=ifx.log.backup_age_days[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-006-age "$1" "$2"
+UserParameter=ifx.storage.dbspace.utilization,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-001
+UserParameter=ifx.storage.dbspace.free_space,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-002
+UserParameter=ifx.storage.dbspace.growth,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-003
+UserParameter=ifx.storage.chunk.state,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-004
+UserParameter=ifx.storage.chunk.utilization,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-005
+UserParameter=ifx.storage.chunk.free_space,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-006
+UserParameter=ifx.storage.temp_dbspace.utilization,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-011
+UserParameter=ifx.storage.dbspace.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-dbspace-discovery
+UserParameter=ifx.storage.chunk.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-chunk-discovery
+UserParameter=ifx.storage.temp_dbspace.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-temp-dbspace-discovery
 UserParameter=ifx.hdr.local_state.raw,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-001
 UserParameter=ifx.hdr.expected_configuration,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-002
 UserParameter=ifx.hdr.peer.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-003

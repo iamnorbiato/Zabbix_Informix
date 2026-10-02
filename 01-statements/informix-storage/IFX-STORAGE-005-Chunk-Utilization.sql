@@ -1,0 +1,1 @@
+SELECT TRIM(d.name) AS dbspace_name, c.chknum, SUM(c.chksize) AS total_pages, SUM(c.nfree) AS free_pages, CAST(100.0 * (c.chksize - c.nfree) / c.chksize AS DECIMAL(10,2)) AS used_percent FROM sysdbstab d JOIN syschunks c ON c.dbsnum = d.dbsnum GROUP BY d.name, c.chknum, c.chksize, c.nfree;

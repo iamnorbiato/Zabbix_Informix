@@ -210,6 +210,20 @@ esac
 [[ -f "${release_dir}/05-collectors/informix/logs/ifx-log-backup-discovery.ksh" ]] || fail "LOG-006 collector is missing from the release."
 [[ -f "${release_dir}/03-deployment/launchers/ifx-log-006" ]] || fail "LOG-006 launcher is missing from the release."
 [[ -f "${release_dir}/03-deployment/launchers/ifx-log-006-age" ]] || fail "LOG-006 age launcher is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-storage/IFX-STORAGE-001-Dbspace-Utilization.sql" ]] || fail "STORAGE-001 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-storage/IFX-STORAGE-002-Dbspace-Free-Space.sql" ]] || fail "STORAGE-002 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-storage/IFX-STORAGE-003-Dbspace-Growth-and-Expansion.sql" ]] || fail "STORAGE-003 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-storage/IFX-STORAGE-004-Chunk-State.sql" ]] || fail "STORAGE-004 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-storage/IFX-STORAGE-005-Chunk-Utilization.sql" ]] || fail "STORAGE-005 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-storage/IFX-STORAGE-006-Chunk-Free-Space.sql" ]] || fail "STORAGE-006 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-storage/IFX-STORAGE-011-Temporary-Dbspace-Utilization.sql" ]] || fail "STORAGE-011 statement is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/storage/ifx-storage-001-dbspace-utilization.ksh" ]] || fail "STORAGE-001 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/storage/ifx-storage-002-dbspace-free-space.ksh" ]] || fail "STORAGE-002 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/storage/ifx-storage-003-dbspace-growth.ksh" ]] || fail "STORAGE-003 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/storage/ifx-storage-004-chunk-state.ksh" ]] || fail "STORAGE-004 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/storage/ifx-storage-005-chunk-utilization.ksh" ]] || fail "STORAGE-005 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/storage/ifx-storage-006-chunk-free-space.ksh" ]] || fail "STORAGE-006 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/storage/ifx-storage-011-temporary-dbspace.ksh" ]] || fail "STORAGE-011 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/hdr/ifx-hdr-local-state.ksh" ]] || fail "HDR-001 collector is missing from the release."
 [[ -f "${release_dir}/03-deployment/launchers/ifx-hdr-001" ]] || fail "HDR-001 launcher is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/hdr/ifx-hdr-expected-configuration.ksh" ]] || fail "HDR-002 collector is missing from the release."
@@ -219,6 +233,19 @@ esac
 [[ -f "${release_dir}/05-collectors/informix/hdr/ifx-hdr-peer-field.ksh" ]] || fail "HDR peer-field collector is missing from the release."
 [[ -f "${release_dir}/03-deployment/launchers/ifx-hdr-004" ]] || fail "HDR-004 launcher is missing from the release."
 [[ -f "${release_dir}/03-deployment/launchers/ifx-hdr-005" ]] || fail "HDR-005 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-storage-001" ]] || fail "STORAGE-001 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-storage-002" ]] || fail "STORAGE-002 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-storage-003" ]] || fail "STORAGE-003 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-storage-004" ]] || fail "STORAGE-004 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-storage-005" ]] || fail "STORAGE-005 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-storage-006" ]] || fail "STORAGE-006 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-storage-011" ]] || fail "STORAGE-011 launcher is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/storage/ifx-storage-dbspace-discovery.ksh" ]] || fail "Storage dbspace discovery collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/storage/ifx-storage-chunk-discovery.ksh" ]] || fail "Storage chunk discovery collector is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-storage-dbspace-discovery" ]] || fail "Storage dbspace discovery launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-storage-chunk-discovery" ]] || fail "Storage chunk discovery launcher is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/storage/ifx-storage-temp-dbspace-discovery.ksh" ]] || fail "Storage temporary dbspace discovery collector is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-storage-temp-dbspace-discovery" ]] || fail "Storage temporary dbspace discovery launcher is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-state.ksh" ]] || fail "HEALTH-001 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-uptime.ksh" ]] || fail "HEALTH-002 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/health/ifx-health-assert-failures.ksh" ]] || fail "HEALTH-003 collector is missing from the release."
@@ -317,6 +344,16 @@ cp "${release_dir}/03-deployment/launchers/ifx-log-004" "${launcher_home}/ifx-lo
 cp "${release_dir}/03-deployment/launchers/ifx-log-005" "${launcher_home}/ifx-log-005" || fail "Unable to install LOG-005 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-log-006" "${launcher_home}/ifx-log-006" || fail "Unable to install LOG-006 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-log-006-age" "${launcher_home}/ifx-log-006-age" || fail "Unable to install LOG-006 age launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-storage-001" "${launcher_home}/ifx-storage-001" || fail "Unable to install STORAGE-001 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-storage-002" "${launcher_home}/ifx-storage-002" || fail "Unable to install STORAGE-002 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-storage-003" "${launcher_home}/ifx-storage-003" || fail "Unable to install STORAGE-003 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-storage-004" "${launcher_home}/ifx-storage-004" || fail "Unable to install STORAGE-004 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-storage-005" "${launcher_home}/ifx-storage-005" || fail "Unable to install STORAGE-005 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-storage-006" "${launcher_home}/ifx-storage-006" || fail "Unable to install STORAGE-006 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-storage-011" "${launcher_home}/ifx-storage-011" || fail "Unable to install STORAGE-011 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-storage-dbspace-discovery" "${launcher_home}/ifx-storage-dbspace-discovery" || fail "Unable to install storage dbspace discovery launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-storage-chunk-discovery" "${launcher_home}/ifx-storage-chunk-discovery" || fail "Unable to install storage chunk discovery launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-storage-temp-dbspace-discovery" "${launcher_home}/ifx-storage-temp-dbspace-discovery" || fail "Unable to install storage temporary dbspace discovery launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-hdr-001" "${launcher_home}/ifx-hdr-001" || fail "Unable to install HDR-001 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-hdr-002" "${launcher_home}/ifx-hdr-002" || fail "Unable to install HDR-002 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-hdr-003" "${launcher_home}/ifx-hdr-003" || fail "Unable to install HDR-003 launcher."
@@ -353,7 +390,17 @@ chown root:zabbix \
     "${launcher_home}/ifx-hdr-002" \
     "${launcher_home}/ifx-hdr-003" \
     "${launcher_home}/ifx-hdr-004" \
-    "${launcher_home}/ifx-hdr-005" || fail "Unable to set launcher ownership."
+    "${launcher_home}/ifx-hdr-005" \
+    "${launcher_home}/ifx-storage-001" \
+    "${launcher_home}/ifx-storage-002" \
+    "${launcher_home}/ifx-storage-003" \
+    "${launcher_home}/ifx-storage-004" \
+    "${launcher_home}/ifx-storage-005" \
+    "${launcher_home}/ifx-storage-006" \
+    "${launcher_home}/ifx-storage-011" \
+    "${launcher_home}/ifx-storage-dbspace-discovery" \
+    "${launcher_home}/ifx-storage-chunk-discovery" \
+    "${launcher_home}/ifx-storage-temp-dbspace-discovery" || fail "Unable to set launcher ownership."
 
 chmod 750 \
     "${launcher_home}/ifx-health-001" \
@@ -385,7 +432,17 @@ chmod 750 \
     "${launcher_home}/ifx-hdr-002" \
     "${launcher_home}/ifx-hdr-003" \
     "${launcher_home}/ifx-hdr-004" \
-    "${launcher_home}/ifx-hdr-005"  || fail "Unable to protect launchers."
+    "${launcher_home}/ifx-hdr-005" \
+    "${launcher_home}/ifx-storage-001" \
+    "${launcher_home}/ifx-storage-002" \
+    "${launcher_home}/ifx-storage-003" \
+    "${launcher_home}/ifx-storage-004" \
+    "${launcher_home}/ifx-storage-005" \
+    "${launcher_home}/ifx-storage-006" \
+    "${launcher_home}/ifx-storage-011" \
+    "${launcher_home}/ifx-storage-dbspace-discovery" \
+    "${launcher_home}/ifx-storage-chunk-discovery" \
+    "${launcher_home}/ifx-storage-temp-dbspace-discovery" || fail "Unable to protect launchers."
 
 sed \
     -e "s|@RUNTIME_ENV@|${runtime_env}|g" \

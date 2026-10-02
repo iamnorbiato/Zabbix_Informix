@@ -76,3 +76,15 @@ The HDR design is SQL-only at runtime and does not execute `onstat`. IFX-HDR-001
 **12. Grafana**
 
 **13. tuning de triggers/baselines**
+
+Informix Storage status:
+
+- IFX-STORAGE-001 — Dbspace Utilization — DEVELOPMENT_RUNTIME_VALIDATED — SQL source, collector, launcher, active Agent item, dbspace discovery prototype and Warning/High utilization triggers validated in the Linux development topology
+- IFX-STORAGE-002 — Dbspace Free Space — DEVELOPMENT_RUNTIME_VALIDATED — SQL source, collector, launcher, active Agent item and dbspace discovery prototype validated in the Linux development topology
+- IFX-STORAGE-003 — Dbspace Growth and Expansion — DEVELOPMENT_RUNTIME_VALIDATED — SQL source, collector, launcher, active Agent item and dbspace discovery prototype validated in the Linux development topology
+- IFX-STORAGE-004 — Chunk State — DEVELOPMENT_RUNTIME_VALIDATED — SQL source, collector, launcher, active Agent item, chunk discovery prototypes and offline/recovering/inconsistent triggers validated in the Linux development topology
+- IFX-STORAGE-005 — Chunk Utilization — DEVELOPMENT_RUNTIME_VALIDATED — SQL source, collector, launcher, active Agent item and chunk discovery prototype validated; class-specific utilization triggers remain intentionally deferred
+- IFX-STORAGE-006 — Chunk Free Space — DEVELOPMENT_RUNTIME_VALIDATED — SQL source, collector, launcher, active Agent item and chunk discovery prototype validated in the Linux development topology
+- IFX-STORAGE-011 — Temporary Dbspace Utilization — DEVELOPMENT_RUNTIME_VALIDATED — SQL source, collector, launcher, temporary-dbspace discovery, utilization/free-pages prototypes and sustained Warning/High triggers validated in the Linux development topology
+
+IFX-STORAGE-007, IFX-STORAGE-008, IFX-STORAGE-009 and IFX-STORAGE-010 are outside the Informix SQL package scope. Filesystem utilization, filesystem free space, inode utilization and operational chunk-to-filesystem correlation belong to the operating-system/AIX monitoring implementation because the Informix collector may execute on a client host different from the Informix server. These metrics are not accepted as implemented by this repository.
