@@ -1,0 +1,3 @@
+#!/bin/ksh
+set -e
+exec /opt/zabbix-informix/05-collectors/informix/sql/ifx-sql-017-user-sql-qps.ksh

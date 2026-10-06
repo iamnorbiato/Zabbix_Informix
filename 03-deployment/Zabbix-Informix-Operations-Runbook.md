@@ -2,31 +2,11 @@
 
 ## 1. Escopo e estado
 
-Este procedimento cobre os coletores implementados de HEALTH-001 a HEALTH-008, SESSION-001 a SESSION-005, LOCK-001 a LOCK-005 e HDR-001 a HDR-005.
+Este procedimento cobre os coletores implementados de HEALTH-001 a HEALTH-008, SESSION-001 a SESSION-005 e LOCK-001 a LOCK-005. LOCK-006 e LOCK-007 não possuem implementação aprovada. HDR ainda está na fase de documentação.
 
-LOCK-006 e LOCK-007 não possuem implementação aprovada. HDR-006 e HDR-007 permanecem pendentes por dependerem da validação da semântica de `ack_time` e do backlog de logs em um ambiente HDR real.
+O procedimento completo abaixo foi exercitado na topologia Linux de desenvolvimento. A instalação no AIX depende das verificações da seção 10.
 
-O procedimento completo foi exercitado na topologia Linux de desenvolvimento para HEALTH, SESSION, LOCK e para a configuração standalone de HDR. Os valores HDR do primary de produção foram validados via SQL no DBeaver, mas o Agent local ainda não aponta para esse ambiente.
-
-O Agent e o Informix Client SDK ficam no host de coleta. O servidor Informix e o Zabbix Server podem estar em outros hosts. Os caminhos do repositório de desenvolvimento não fazem parte da execução instalada.
-
-Para um host standalone, use:
-
-```text
-IFX_HDR_REQUIRED=NO
-IFX_HDR_ALERT_ON_DISCONNECT=NO
-IFX_HDR_EXPECTED_PEER=
-```
-
-Para cada membro de um par HDR obrigatório, use:
-
-```text
-IFX_HDR_REQUIRED=YES
-IFX_HDR_ALERT_ON_DISCONNECT=YES
-IFX_HDR_EXPECTED_PEER=<nome-exato-do-parceiro>
-```
-
-A validação runtime pelo Zabbix somente pode ser declarada quando o Agent e o Client SDK estiverem conectados à mesma instância Informix que está sendo avaliada.
+O Agent e o Informix Client SDK ficam no **host de coleta**. O servidor Informix e o Zabbix Server podem estar em outros hosts. Os caminhos do repositório de desenvolvimento não fazem parte da execução instalada.
 
 ## 2. Inventário obrigatório antes da instalação
 
@@ -74,44 +54,17 @@ IFX_INFORMIXSQLHOSTS=<INFORMIXSQLHOSTS>
 IFX_CONFIG_DIR=<CONFIG_HOME>
 IFX_STATE_DIR=<CONFIG_HOME>/state
 IFX_CONNECT_FILE=<CONFIG_HOME>/informix-connect.sql
-IFX_HDR_REQUIRED=<YES|NO>
-IFX_HDR_ALERT_ON_DISCONNECT=<YES|NO>
-IFX_HDR_EXPECTED_PEER=<server-name-or-empty>
 ```
 
-A política HDR deve ser coerente:
-
-```text
-IFX_HDR_REQUIRED=NO
-IFX_HDR_ALERT_ON_DISCONNECT=NO
-IFX_HDR_EXPECTED_PEER=
-```
-
-ou:
-
-```text
-IFX_HDR_REQUIRED=YES
-IFX_HDR_ALERT_ON_DISCONNECT=YES
-IFX_HDR_EXPECTED_PEER=<nome-exato-do-parceiro>
-```
-
-Combinações diferentes falham na instalação e não publicam um estado HDR saudável.
-
-Cada launcher carrega esse arquivo e exporta `INFORMIXDIR`, `INFORMIXSERVER`, `INFORMIXSQLHOSTS`, `PATH` com `<INFORMIXDIR>/bin`, e `LD_LIBRARY_PATH` com `<INFORMIXDIR>/lib` e `<INFORMIXDIR>/lib/esql`. Os launchers HDR-004 e HDR-005 também recebem o nome do peer descoberto como argumento.
-
-O processo do Agent não depende do `.bashrc` ou `.profile` pessoal de um operador.
+Cada launcher carrega esse arquivo e exporta `INFORMIXDIR`, `INFORMIXSERVER`, `INFORMIXSQLHOSTS`, `PATH` com `<INFORMIXDIR>/bin`, e `LD_LIBRARY_PATH` com `<INFORMIXDIR>/lib` e `<INFORMIXDIR>/lib/esql`. O processo do Agent não depende do `.bashrc` ou `.profile` pessoal de um operador.
 
 O usuário do Agent precisa conseguir atravessar os diretórios do SDK, ler `sqlhosts`, carregar as bibliotecas e executar `dbaccess`. Confirme os nomes e caminhos de biblioteca no AIX antes de reutilizar a configuração Linux de `LD_LIBRARY_PATH`.
 
 Os valores padrão de desenvolvimento ainda presentes em `05-collectors/informix/lib/informix-env.ksh` são substituídos por `runtime.env` na instalação. Eles não devem ser usados como configuração de produção.
 
-As credenciais de Informix permanecem em `informix-connect.sql`, fora do Git e fora deste runbook.
+## 5. Instalação no `cluster-prime`
 
-## 5. Instalação no host de coleta
-
-Execute a partir da raiz da release, no host de coleta.
-
-Para um Informix standalone:
+Execute a partir da raiz da release, no host de coleta:
 
 ```bash
 sudo ksh 03-deployment/install-zabbix-informix.ksh \
@@ -122,27 +75,8 @@ sudo ksh 03-deployment/install-zabbix-informix.ksh \
   --informix-home /opt/informix \
   --informix-server ol_informix1210 \
   --informix-sqlhosts /opt/informix/etc/sqlhosts \
-  --connection-file /etc/zabbix-informix/informix-connect.sql \
-  --hdr-required NO \
-  --hdr-alert-on-disconnect NO \
-  --hdr-expected-peer ''
+  --connection-file /etc/zabbix-informix/informix-connect.sql
 ```
-
-Para um membro de um par HDR obrigatório, substitua os três parâmetros HDR:
-
-```bash
-  --hdr-required YES \
-  --hdr-alert-on-disconnect YES \
-  --hdr-expected-peer <nome-exato-do-parceiro>
-```
-
-No primary de produção, por exemplo:
-
-```bash
-  --hdr-expected-peer psk_wms_hdr
-```
-
-No secondary de produção, use o nome exato do primary, conforme retornado pelo `sysdri` e validado no `syscluster`.
 
 Na primeira instalação, substitua `--connection-file` pela localização real do arquivo privado existente. Se migrar o estado de outra instalação, acrescente `--state-source <diretório-existente>` somente na primeira instalação, antes de o novo `<CONFIG_HOME>/state` existir. O instalador preserva o estado já presente no destino.
 
@@ -153,28 +87,14 @@ Zabbix Informix installation completed.
 Restart the Zabbix Agent using the service-management command for this host.
 ```
 
-Reinicie o Agent:
+Reinicie o Agent no desenvolvimento:
 
 ```bash
 sudo systemctl restart zabbix-agent
 sudo systemctl is-active zabbix-agent
 ```
 
-Resultado esperado:
-
-```text
-active
-```
-
-A instalação não importa o template no Zabbix Server nem cadastra o host. Esses passos pertencem à configuração do Zabbix.
-
-Em um host configurado para HDR, confirme também:
-
-```bash
-sudo grep '^IFX_HDR_' /etc/zabbix-informix/runtime.env
-```
-
-Nunca copie credenciais para a linha de comando, para o Git ou para tickets.
+Resultado esperado: `active`.
 
 ## 6. Permissões esperadas
 
@@ -209,62 +129,9 @@ sudo zabbix_agentd -t ifx.lock.deadlocks
 sudo zabbix_agentd -t ifx.lock.table_exhaustion_attempts
 ```
 
-Para uma instalação HDR, valide também:
+Os valores dependem da instância e do instante da coleta. Cada chave deve retornar um valor válido, não uma mensagem de erro. A chave HEALTH-003 é stateful: o primeiro uso pode estabelecer baseline; confirme a política de cursor antes da instalação em outra instância.
 
-```bash
-sudo zabbix_agentd -t ifx.hdr.local_state.raw
-sudo zabbix_agentd -t ifx.hdr.expected_configuration
-sudo zabbix_agentd -t ifx.hdr.peer.discovery
-```
-
-Em um host standalone configurado com `IFX_HDR_REQUIRED=NO`, o resultado esperado é:
-
-```text
-ifx.hdr.expected_configuration [t|0]
-ifx.hdr.peer.discovery [t|{"data":[]}]
-```
-
-Em um host HDR, o resultado esperado depende da instância monitorada. O discovery deve retornar o peer HDR real, por exemplo:
-
-```json
-{
-  "data": [
-    {
-      "{#IFX_HDR_PEER}": "psk_wms_hdr"
-    }
-  ]
-}
-```
-
-Os prototypes HDR-004 e HDR-005 já pertencem à regra de descoberta. Os itens derivados desses prototypes somente serão criados depois que um peer for descoberto. Não considere a ausência de itens HDR-004/005 em um host standalone como falha.
-
-Para validação SQL independente, conecte-se ao banco `sysmaster` da instância Informix correta e confirme:
-
-```sql
-SELECT
-    type,
-    state,
-    name,
-    intvl,
-    timeout
-FROM sysdri;
-```
-
-```sql
-SELECT
-    name,
-    role,
-    syncmode,
-    nodetype,
-    server_status,
-    connection_status
-FROM syscluster
-ORDER BY name, role, nodetype;
-```
-
-Os valores coletados pelo DBeaver em uma instância diferente não validam o Agent de outro host. A classificação `DEVELOPMENT_RUNTIME_VALIDATED` só deve ser usada quando o Agent e o Client SDK estiverem conectados à mesma instância Informix avaliada.
-
-No Zabbix Server, importe o template exportado, vincule-o ao host que representa o Agent de coleta e confira `Monitoring → Latest data`. O item bruto HEALTH-003 deve alimentar seu item dependente; SESSION-005 deve alimentar seis itens dependentes; a regra HDR-003 deve retornar uma descoberta vazia em standalone ou o peer real em HDR.
+No Zabbix Server, importe o template exportado, vincule-o ao host que representa o Agent de coleta e confira `Monitoring → Latest data`. O item bruto HEALTH-003 deve alimentar seu item dependente; SESSION-005 deve alimentar seis itens dependentes. Confirme que os triggers esperados foram importados.
 
 O instalador local não importa o template no Zabbix Server nem cadastra o host. Esses passos pertencem à configuração do Zabbix.
 
@@ -292,52 +159,13 @@ sudo ksh 03-deployment/uninstall-zabbix-informix.ksh \
   --agent-include-dir /etc/zabbix/zabbix_agentd.d
 ```
 
-Essa operação remove:
-
-- o include `zabbix-informix.conf`;
-- os launchers HEALTH;
-- os launchers SESSION;
-- os launchers LOCK;
-- os launchers HDR.
-
-A remoção padrão preserva:
-
-- `<INSTALL_HOME>`;
-- `<CONFIG_HOME>`;
-- `runtime.env`;
-- `informix-connect.sql`;
-- o diretório `state`;
-- os cursores persistentes dos coletores.
-
-Reinicie o Agent depois da remoção:
-
-```bash
-sudo systemctl restart zabbix-agent
-sudo systemctl is-active zabbix-agent
-```
-
-Depois confirme que a integração foi removida:
-
-```bash
-sudo test ! -e /etc/zabbix/zabbix_agentd.d/zabbix-informix.conf \
-  && echo 'AGENT_CONFIG_REMOVED=YES'
-```
-
-A remoção do pacote não remove automaticamente o template, o host, os itens, os prototypes ou as triggers do Zabbix Server. Esses objetos devem ser tratados separadamente na interface ou API do Zabbix, conforme a política operacional.
+Essa operação remove o include `zabbix-informix.conf` e os launchers conhecidos. Preserva `<INSTALL_HOME>`, `<CONFIG_HOME>`, as credenciais e o estado dos coletores. Reinicie o Agent depois da remoção.
 
 ### Remoção completa
 
-O mesmo comando com `--purge` também remove `<INSTALL_HOME>` e `<CONFIG_HOME>`, incluindo:
+O mesmo comando com `--purge` também remove `<INSTALL_HOME>` e `<CONFIG_HOME>`, incluindo `informix-connect.sql` e o estado HEALTH-003. Faça isso somente após confirmar os caminhos exatos e decidir o destino do estado e das credenciais. O desinstalador aceita para os três diretórios do produto apenas caminhos absolutos terminados em `/zabbix-informix`.
 
-- `informix-connect.sql`;
-- `runtime.env`;
-- o estado HEALTH-003;
-- qualquer estado persistente dos coletores HDR;
-- o restante da configuração privada do produto.
-
-Execute `--purge` somente após confirmar os caminhos exatos e decidir o destino do estado e das credenciais.
-
-Exemplo:
+Exemplo de desenvolvimento:
 
 ```bash
 sudo ksh 03-deployment/uninstall-zabbix-informix.ksh \
@@ -350,54 +178,35 @@ sudo ksh 03-deployment/uninstall-zabbix-informix.ksh \
 
 O modo `--purge` ainda não foi exercitado no desenvolvimento. O runbook não presume recuperação automática do que ele remove.
 
-Antes de usar `--purge`, confirme que:
-
-- nenhuma instância do Agent depende do include;
-- nenhuma coleta ainda usa os launchers;
-- o arquivo privado de conexão foi preservado ou inutilizado conscientemente;
-- o cursor HEALTH-003 e demais estados não são mais necessários;
-- o template e os objetos Zabbix foram tratados separadamente.
-
 ## 10. Pendências específicas do AIX
 
 Antes de executar o instalador no AIX, registrar e confirmar:
 
 1. Versão do AIX, arquitetura, versão de `ksh` e disponibilidade dos comandos usados pelos scripts (`id`, `find`, `sed`, `cp`, `chmod`, `chown`, `dbaccess`).
-
-2. Versão e localização do Informix Client SDK, caminhos das bibliotecas compartilhadas e variável de carregamento adequada ao AIX. A configuração atual exporta `LD_LIBRARY_PATH`, validada no Linux. Confirmar a convenção de bibliotecas exigida pelo AIX antes do primeiro deploy.
-
-3. Identidade real do usuário e grupo do Zabbix Agent. O instalador atual usa `zabbix` de forma fixa.
-
+2. Versão e localização do Informix Client SDK, caminhos das bibliotecas compartilhadas e variável de carregamento adequada ao AIX. A configuração atual exporta `LD_LIBRARY_PATH`, validada no Linux.
+3. Identidade real do usuário/grupo do Zabbix Agent. O instalador atual usa `zabbix` de forma fixa.
 4. Localização do include do Agent, opções `ServerActive`/`Hostname` e comando de parada, início ou reinício do serviço nesse host.
-
 5. Rotas de rede entre host de coleta, instância Informix e Zabbix Server; resolução de `INFORMIXSERVER` por `sqlhosts`.
-
-6. Localizações aprovadas para código, configuração privada, estado e launchers; confirmar que os diretórios são exclusivos do produto.
-
+6. Localizações aprovadas para código, configuração privada e launchers; confirmar que os diretórios são exclusivos do produto.
 7. Método de distribuição e importação do template no Zabbix Server de destino.
-
 8. Política de backup e migração do cursor HEALTH-003, incluindo o comportamento esperado na primeira coleta.
 
-9. Para cada host HDR, registrar explicitamente:
-
-   ```text
-   IFX_HDR_REQUIRED=YES
-   IFX_HDR_ALERT_ON_DISCONNECT=YES
-   IFX_HDR_EXPECTED_PEER=<nome-exato-do-parceiro>
-   ```
-
-10. Para cada host Informix standalone, registrar explicitamente:
-
-    ```text
-    IFX_HDR_REQUIRED=NO
-    IFX_HDR_ALERT_ON_DISCONNECT=NO
-    IFX_HDR_EXPECTED_PEER=
-    ```
-
-11. Validar, no `sysmaster` de cada membro HDR, os valores reais de `sysdri` e `syscluster`. A validação DBeaver de uma instância não substitui a validação do Agent em outra instância.
-
-12. Não habilitar HDR-006 e HDR-007 como itens ou triggers até confirmar, em um par HDR real, a semântica de `ack_time`, rollover de logs e cálculo de backlog.
-
-13. Confirmar se o Agent de coleta está instalado no mesmo host que possui acesso ao Informix HDR ou se o Client SDK remoto consegue alcançar corretamente ambos os servidores.
-
 O primeiro deploy AIX deve seguir um procedimento validado nesse próprio sistema antes de ser chamado de instalação suportada.
+
+## 11. Dashboard Informix SQL — Top-N
+
+O painel é um módulo do frontend do Zabbix Server, não um coletor do host Informix.
+
+| Componente | Host | Localização |
+|---|---|---|
+| Coletor e item mestre `ifx.sql.top_n` | Host do Agent/Client SDK | `/usr/local/lib/zabbix-informix` |
+| Statement `IFX-SQL-002-Top-Runtime.sql` | Host do Agent/Client SDK | `/opt/zabbix-informix/01-statements/informix-sql` |
+| Widget frontend | Zabbix Server | `/usr/share/zabbix/modules/informix_sql_top_n` |
+
+O item mestre retorna texto delimitado por `|`. O widget apresenta as linhas em uma tabela fixa, com rolagem interna, e mostra o SQL completo da linha selecionada no painel de detalhe. Os statements administrativos `DATABASE` e `SET ISOLATION` são excluídos do Top-N.
+
+O seletor interno do widget permite ordenar o mesmo conjunto de dados por runtime, execuções, tempo médio, leituras, cache, locks, I/O, sorts, custo estimado, linhas estimadas, linhas reais e razão leitura/escrita. SQL-003 a SQL-016 são, portanto, visões do SQL-MASTER e não devem ser recriados como itens duplicados.
+
+Os contadores `sql_sorttotal`, `sql_sortdisk` e `sql_sortmem` cobrem a observabilidade de sorts e possíveis spills para disco. Não foi criado um contador separado de package-cache changes, pois o `syssqltrace` não fornece um contador por SQL para isso. Também não foi criado um contador genérico de stale statistics: `systables.ustlowts` informa a última atualização LOW, mas não determina sozinho que uma estatística está obsoleta.
+
+Após atualizar o módulo frontend, recarregue o dashboard com recarga forçada do navegador. Após atualizar o statement ou o coletor, reinstale a release no host do Agent e reinicie o Agent.

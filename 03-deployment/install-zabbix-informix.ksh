@@ -196,6 +196,25 @@ esac
 [[ -f "${release_dir}/01-statements/informix-logs/IFX-LOG-006-Backup-Inventory.sql" ]] || fail "LOG-006 statement is missing from the release."
 [[ -f "${release_dir}/01-statements/informix-hdr/IFX-HDR-001-Local-Role-and-State.sql" ]] || fail "HDR-001 statement is missing from the release."
 [[ -f "${release_dir}/01-statements/informix-hdr/IFX-HDR-003-Cluster-Rows.sql" ]] || fail "HDR-003 cluster statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-003-Top-Max-Time.sql" ]] || fail "SQL-003 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-002-Top-Runtime.sql" ]] || fail "SQL master statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-001-Active-SQL-Top-N.sql" ]] || fail "SQL-001 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-002-Discovery.sql" ]] || fail "SQL-002 discovery statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-002-By-ID.sql" ]] || fail "SQL-002 detail statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-004-Top-Executions.sql" ]] || fail "SQL-004 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-005-Top-Average-Time.sql" ]] || fail "SQL-005 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-006-Top-Disk-Reads.sql" ]] || fail "SQL-006 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-007-Top-Buffer-Reads.sql" ]] || fail "SQL-007 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-008-Top-Cache-Ratio.sql" ]] || fail "SQL-008 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-009-Top-Lock-Waits.sql" ]] || fail "SQL-009 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-010-Top-Lock-Wait-Time.sql" ]] || fail "SQL-010 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-011-Top-IO-Waits.sql" ]] || fail "SQL-011 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-012-Top-Disk-Sorts.sql" ]] || fail "SQL-012 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-013-Top-Memory-Sorts.sql" ]] || fail "SQL-013 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-014-Top-Estimated-Cost.sql" ]] || fail "SQL-014 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-015-Top-Estimated-Rows.sql" ]] || fail "SQL-015 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-016-Top-Actual-Rows.sql" ]] || fail "SQL-016 statement is missing from the release."
+[[ -f "${release_dir}/01-statements/informix-sql/IFX-SQL-017-User-SQL-QPS.sql" ]] || fail "SQL-017 statement is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/sessions/ifx-session-waiting-by-reason.ksh" ]] || fail "SESSION-005 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/locks/ifx-lock-sessions-waiting.ksh" ]] || fail "LOCK-001 collector is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/locks/ifx-lock-waits.ksh" ]] || fail "LOCK-002 collector is missing from the release."
@@ -231,8 +250,40 @@ esac
 [[ -f "${release_dir}/05-collectors/informix/hdr/ifx-hdr-peer-discovery.ksh" ]] || fail "HDR-003 collector is missing from the release."
 [[ -f "${release_dir}/03-deployment/launchers/ifx-hdr-003" ]] || fail "HDR-003 launcher is missing from the release."
 [[ -f "${release_dir}/05-collectors/informix/hdr/ifx-hdr-peer-field.ksh" ]] || fail "HDR peer-field collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-003-top-max-time.ksh" ]] || fail "SQL-003 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-001-active-sql.ksh" ]] || fail "SQL-001 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-004-top-executions.ksh" ]] || fail "SQL-004 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-005-top-average-time.ksh" ]] || fail "SQL-005 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-006-top-disk-reads.ksh" ]] || fail "SQL-006 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-007-top-buffer-reads.ksh" ]] || fail "SQL-007 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-008-top-cache-ratio.ksh" ]] || fail "SQL-008 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-009-top-lock-waits.ksh" ]] || fail "SQL-009 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-010-top-lock-wait-time.ksh" ]] || fail "SQL-010 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-011-top-io-waits.ksh" ]] || fail "SQL-011 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-012-top-disk-sorts.ksh" ]] || fail "SQL-012 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-013-top-memory-sorts.ksh" ]] || fail "SQL-013 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-014-top-estimated-cost.ksh" ]] || fail "SQL-014 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-015-top-estimated-rows.ksh" ]] || fail "SQL-015 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-016-top-actual-rows.ksh" ]] || fail "SQL-016 collector is missing from the release."
+[[ -f "${release_dir}/05-collectors/informix/sql/ifx-sql-017-user-sql-qps.ksh" ]] || fail "SQL-017 collector is missing from the release."
 [[ -f "${release_dir}/03-deployment/launchers/ifx-hdr-004" ]] || fail "HDR-004 launcher is missing from the release."
 [[ -f "${release_dir}/03-deployment/launchers/ifx-hdr-005" ]] || fail "HDR-005 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-003" ]] || fail "SQL-003 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-001" ]] || fail "SQL-001 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-004" ]] || fail "SQL-004 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-005" ]] || fail "SQL-005 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-006" ]] || fail "SQL-006 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-007" ]] || fail "SQL-007 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-008" ]] || fail "SQL-008 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-009" ]] || fail "SQL-009 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-010" ]] || fail "SQL-010 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-011" ]] || fail "SQL-011 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-012" ]] || fail "SQL-012 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-013" ]] || fail "SQL-013 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-014" ]] || fail "SQL-014 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-015" ]] || fail "SQL-015 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-016" ]] || fail "SQL-016 launcher is missing from the release."
+[[ -f "${release_dir}/03-deployment/launchers/ifx-sql-017" ]] || fail "SQL-017 launcher is missing from the release."
 [[ -f "${release_dir}/03-deployment/launchers/ifx-storage-001" ]] || fail "STORAGE-001 launcher is missing from the release."
 [[ -f "${release_dir}/03-deployment/launchers/ifx-storage-002" ]] || fail "STORAGE-002 launcher is missing from the release."
 [[ -f "${release_dir}/03-deployment/launchers/ifx-storage-003" ]] || fail "STORAGE-003 launcher is missing from the release."
@@ -359,6 +410,23 @@ cp "${release_dir}/03-deployment/launchers/ifx-hdr-002" "${launcher_home}/ifx-hd
 cp "${release_dir}/03-deployment/launchers/ifx-hdr-003" "${launcher_home}/ifx-hdr-003" || fail "Unable to install HDR-003 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-hdr-004" "${launcher_home}/ifx-hdr-004" || fail "Unable to install HDR-004 launcher."
 cp "${release_dir}/03-deployment/launchers/ifx-hdr-005" "${launcher_home}/ifx-hdr-005" || fail "Unable to install HDR-005 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-003" "${launcher_home}/ifx-sql-003" || fail "Unable to install SQL-003 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-top-n" "${launcher_home}/ifx-sql-top-n" || fail "Unable to install SQL master launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-001" "${launcher_home}/ifx-sql-001" || fail "Unable to install SQL-001 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-004" "${launcher_home}/ifx-sql-004" || fail "Unable to install SQL-004 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-005" "${launcher_home}/ifx-sql-005" || fail "Unable to install SQL-005 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-006" "${launcher_home}/ifx-sql-006" || fail "Unable to install SQL-006 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-007" "${launcher_home}/ifx-sql-007" || fail "Unable to install SQL-007 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-008" "${launcher_home}/ifx-sql-008" || fail "Unable to install SQL-008 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-009" "${launcher_home}/ifx-sql-009" || fail "Unable to install SQL-009 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-010" "${launcher_home}/ifx-sql-010" || fail "Unable to install SQL-010 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-011" "${launcher_home}/ifx-sql-011" || fail "Unable to install SQL-011 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-012" "${launcher_home}/ifx-sql-012" || fail "Unable to install SQL-012 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-013" "${launcher_home}/ifx-sql-013" || fail "Unable to install SQL-013 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-014" "${launcher_home}/ifx-sql-014" || fail "Unable to install SQL-014 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-015" "${launcher_home}/ifx-sql-015" || fail "Unable to install SQL-015 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-016" "${launcher_home}/ifx-sql-016" || fail "Unable to install SQL-016 launcher."
+cp "${release_dir}/03-deployment/launchers/ifx-sql-017" "${launcher_home}/ifx-sql-017" || fail "Unable to install SQL-017 launcher."
 
 chown root:zabbix \
     "${launcher_home}/ifx-health-001" \
@@ -390,7 +458,51 @@ chown root:zabbix \
     "${launcher_home}/ifx-hdr-002" \
     "${launcher_home}/ifx-hdr-003" \
     "${launcher_home}/ifx-hdr-004" \
-    "${launcher_home}/ifx-hdr-005" \
+   "${launcher_home}/ifx-hdr-005" \
+    "${launcher_home}/ifx-sql-003" \
+    "${launcher_home}/ifx-sql-004" \
+    "${launcher_home}/ifx-sql-005" \
+    "${launcher_home}/ifx-sql-006" \
+    "${launcher_home}/ifx-sql-007" \
+    "${launcher_home}/ifx-sql-008" \
+    "${launcher_home}/ifx-sql-009" \
+    "${launcher_home}/ifx-sql-010" \
+    "${launcher_home}/ifx-sql-011" \
+    "${launcher_home}/ifx-sql-012" \
+    "${launcher_home}/ifx-sql-013" \
+    "${launcher_home}/ifx-sql-014" \
+    "${launcher_home}/ifx-sql-015" \
+    "${launcher_home}/ifx-sql-016" \
+    "${launcher_home}/ifx-sql-017" \
+    "${launcher_home}/ifx-sql-top-n" \
+   "${launcher_home}/ifx-sql-003" \
+    "${launcher_home}/ifx-sql-004" \
+    "${launcher_home}/ifx-sql-005" \
+    "${launcher_home}/ifx-sql-006" \
+    "${launcher_home}/ifx-sql-007" \
+    "${launcher_home}/ifx-sql-008" \
+    "${launcher_home}/ifx-sql-009" \
+    "${launcher_home}/ifx-sql-010" \
+    "${launcher_home}/ifx-sql-011" \
+    "${launcher_home}/ifx-sql-012" \
+    "${launcher_home}/ifx-sql-013" \
+    "${launcher_home}/ifx-sql-014" \
+    "${launcher_home}/ifx-sql-015" \
+    "${launcher_home}/ifx-sql-016" \
+    "${launcher_home}/ifx-sql-004" \
+    "${launcher_home}/ifx-sql-005" \
+    "${launcher_home}/ifx-sql-006" \
+    "${launcher_home}/ifx-sql-007" \
+    "${launcher_home}/ifx-sql-008" \
+    "${launcher_home}/ifx-sql-009" \
+    "${launcher_home}/ifx-sql-010" \
+    "${launcher_home}/ifx-sql-011" \
+    "${launcher_home}/ifx-sql-012" \
+    "${launcher_home}/ifx-sql-013" \
+    "${launcher_home}/ifx-sql-014" \
+    "${launcher_home}/ifx-sql-015" \
+    "${launcher_home}/ifx-sql-016" \
+    "${launcher_home}/ifx-sql-017" \
     "${launcher_home}/ifx-storage-001" \
     "${launcher_home}/ifx-storage-002" \
     "${launcher_home}/ifx-storage-003" \
@@ -403,7 +515,7 @@ chown root:zabbix \
     "${launcher_home}/ifx-storage-temp-dbspace-discovery" || fail "Unable to set launcher ownership."
 
 chmod 750 \
-    "${launcher_home}/ifx-health-001" \
+   "${launcher_home}/ifx-health-001" \
     "${launcher_home}/ifx-health-002" \
     "${launcher_home}/ifx-health-003" \
     "${launcher_home}/ifx-health-004" \
@@ -432,7 +544,22 @@ chmod 750 \
     "${launcher_home}/ifx-hdr-002" \
     "${launcher_home}/ifx-hdr-003" \
     "${launcher_home}/ifx-hdr-004" \
-    "${launcher_home}/ifx-hdr-005" \
+   "${launcher_home}/ifx-hdr-005" \
+    "${launcher_home}/ifx-sql-003" \
+    "${launcher_home}/ifx-sql-004" \
+    "${launcher_home}/ifx-sql-005" \
+    "${launcher_home}/ifx-sql-006" \
+    "${launcher_home}/ifx-sql-007" \
+    "${launcher_home}/ifx-sql-008" \
+    "${launcher_home}/ifx-sql-009" \
+    "${launcher_home}/ifx-sql-010" \
+    "${launcher_home}/ifx-sql-011" \
+    "${launcher_home}/ifx-sql-012" \
+    "${launcher_home}/ifx-sql-013" \
+    "${launcher_home}/ifx-sql-014" \
+    "${launcher_home}/ifx-sql-015" \
+    "${launcher_home}/ifx-sql-016" \
+    "${launcher_home}/ifx-sql-top-n" \
     "${launcher_home}/ifx-storage-001" \
     "${launcher_home}/ifx-storage-002" \
     "${launcher_home}/ifx-storage-003" \
@@ -443,6 +570,12 @@ chmod 750 \
     "${launcher_home}/ifx-storage-dbspace-discovery" \
     "${launcher_home}/ifx-storage-chunk-discovery" \
     "${launcher_home}/ifx-storage-temp-dbspace-discovery" || fail "Unable to protect launchers."
+
+chown root:zabbix \
+    "${launcher_home}/ifx-sql-001" \
+
+chmod 750 \
+    "${launcher_home}/ifx-sql-001" \
 
 sed \
     -e "s|@RUNTIME_ENV@|${runtime_env}|g" \

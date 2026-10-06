@@ -41,3 +41,20 @@ UserParameter=ifx.hdr.expected_configuration,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIM
 UserParameter=ifx.hdr.peer.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-003
 UserParameter=ifx.hdr.peer.connection[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-004 "$1"
 UserParameter=ifx.hdr.peer.server_state[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-005 "$1"
+UserParameter=ifx.sql.top_max_time,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-003
+UserParameter=ifx.sql.active.raw,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-001
+UserParameter=ifx.sql.top_n,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-top-n
+UserParameter=ifx.sql.top_executions,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-004
+UserParameter=ifx.sql.top_average_time,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-005
+UserParameter=ifx.sql.top_disk_reads,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-006
+UserParameter=ifx.sql.top_buffer_reads,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-007
+UserParameter=ifx.sql.top_cache_ratio,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-008
+UserParameter=ifx.sql.top_lock_waits,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-009
+UserParameter=ifx.sql.top_lock_wait_time,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-010
+UserParameter=ifx.sql.top_io_waits,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-011
+UserParameter=ifx.sql.top_disk_sorts,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-012
+UserParameter=ifx.sql.top_memory_sorts,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-013
+UserParameter=ifx.sql.top_estimated_cost,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-014
+UserParameter=ifx.sql.top_estimated_rows,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-015
+UserParameter=ifx.sql.top_actual_rows,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-016
+UserParameter=ifx.sql.user_qps,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-017
