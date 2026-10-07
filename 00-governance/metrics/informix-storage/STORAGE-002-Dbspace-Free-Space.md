@@ -1,8 +1,8 @@
 # STORAGE-002 — Dbspace Free Space
 
-**Status:** DEFINED
+**Status:** DEVELOPMENT_RUNTIME_VALIDATED
 
-**Implementation status:** Source validated in the production Informix topology; collector, launcher, Zabbix item and trigger implementation remain pending.
+**Implementation status:** Source, collector, launcher and Zabbix runtime validated in the Linux development topology; target acceptance remains pending.
 
 ## Purpose
 
@@ -75,4 +75,4 @@ Discovery: Yes, using the same dbspace discovery contract as `STORAGE-001`.
 
 ## Lifecycle
 
-The metric is ready for SQL-contract review. Runtime implementation remains pending classification and threshold approval.
+The metric is implemented and runtime-validated in development. Classification, thresholds and target-environment acceptance remain pending.

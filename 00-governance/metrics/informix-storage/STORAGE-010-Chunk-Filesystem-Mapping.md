@@ -1,8 +1,8 @@
 # STORAGE-010 — Chunk to Filesystem Mapping
 
-**Status:** DEFINED
+**Status:** OUT_OF_SCOPE
 
-**Implementation status:** Source relationship validated in the production topology; runtime implementation remains pending.
+**Implementation status:** Belongs to the operating-system/filesystem ownership boundary and is not implemented in this Informix package.
 
 ## Purpose
 

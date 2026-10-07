@@ -1,8 +1,8 @@
 # STORAGE-003 — Dbspace Growth and Expansion
 
-**Status:** DEFINED
+**Status:** DEVELOPMENT_RUNTIME_VALIDATED
 
-**Implementation status:** Source validated in the production Informix topology; growth calculation, collector, launcher, Zabbix item and trigger implementation remain pending.
+**Implementation status:** Growth calculation, collector, launcher and Zabbix runtime validated in development; target acceptance remains pending.
 
 ## Purpose
 
@@ -87,4 +87,4 @@ Value types and units must follow the normalized source contract. Boolean state 
 
 ## Lifecycle
 
-The source semantics are validated. Runtime implementation remains pending final interpretation of `max_size = 0` and approval of class-specific thresholds.
+The source semantics and runtime implementation are validated in development. Interpretation of `max_size = 0` and class-specific thresholds remain pending.

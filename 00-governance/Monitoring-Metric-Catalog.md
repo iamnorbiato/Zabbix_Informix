@@ -1120,6 +1120,22 @@ Detect or measure Informix lock-escalation events.
 ---
 # 8. SQL and Query Performance
 
+## Current implementation decision
+
+The provisional SQL candidates below are superseded by the validated SQL-MASTER design. The authoritative runtime source is the consolidated `syssqltrace` dataset exposed by the SQL-MASTER item and the reusable Zabbix Top-N widget.
+
+| Scope | Current decision |
+|---|---|
+| Active SQL | SQL-001 remains a separate diagnostic dataset. |
+| SQL-002 discovery/detail | Retired; selected-row detail is provided inside the widget. |
+| SQL-003 through SQL-016 | Reused as selectable Top-N views of the SQL-MASTER; no duplicate items are required. |
+| SQL-017 | User SQL QPS from the recent Informix trace window. |
+| Sorts | `sql_sorttotal`, `sql_sortdisk` and `sql_sortmem` are already available in the SQL-MASTER dataset. |
+| Package-cache changes | Not implemented; no reliable per-SQL counter was validated in `syssqltrace`. |
+| Stale statistics | Not implemented as a count; `systables.ustlowts` identifies the last LOW update but does not itself determine staleness. |
+
+The remainder of this section is retained as the original candidate catalog and must not be interpreted as an approval of separate duplicate collectors.
+
 ## IFX-SQL-001 — Long Running SQL Count
 
 **Purpose**

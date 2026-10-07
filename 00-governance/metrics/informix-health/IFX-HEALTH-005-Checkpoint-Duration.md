@@ -1,5 +1,7 @@
 # IFX-HEALTH-005 — Checkpoint Duration
 
+> **Status atual (2026-10-07):** `DEVELOPMENT_RUNTIME_VALIDATED`. Registros históricos de mock abaixo são preservados como histórico.
+
 ## 1. Purpose
 
 This document defines the engineering specification and validation state of metric:

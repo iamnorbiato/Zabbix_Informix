@@ -1,5 +1,7 @@
 # IFX-LOG-006 — Level-0 Backup Age by Database and Dbspace
 
+**Status atual:** `DEFINED` — fonte e semântica definidas; implementação runtime ainda pendente.
+
 ## 1. Purpose
 
 This document defines the engineering contract for:

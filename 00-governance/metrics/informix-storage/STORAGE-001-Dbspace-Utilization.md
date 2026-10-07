@@ -1,8 +1,8 @@
 # STORAGE-001 — Dbspace Utilization
 
-**Status:** DEFINED
+**Status:** DEVELOPMENT_RUNTIME_VALIDATED
 
-**Implementation status:** Source validated in the production Informix topology; collector, launcher, Zabbix item and trigger implementation remain pending.
+**Implementation status:** Source, collector, launcher and Zabbix runtime validated in the Linux development topology; target Informix/AIX acceptance remains pending.
 
 ## Purpose
 

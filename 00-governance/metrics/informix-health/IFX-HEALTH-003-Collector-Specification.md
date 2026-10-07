@@ -1,5 +1,7 @@
 # IFX-HEALTH-003 — Collector Specification
 
+> **Status atual (2026-10-07):** `DEVELOPMENT_RUNTIME_VALIDATED`. Registros históricos de mock abaixo não substituem esta validação runtime; aceite no alvo ainda é pendente.
+
 ## 1. Purpose
 
 This document defines the collection and parsing behavior for:

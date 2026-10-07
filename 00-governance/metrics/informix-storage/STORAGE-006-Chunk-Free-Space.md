@@ -1,8 +1,8 @@
 # STORAGE-006 — Chunk Free Space
 
-**Status:** DEFINED
+**Status:** DEVELOPMENT_RUNTIME_VALIDATED
 
-**Implementation status:** Source validated in the production Informix topology; runtime implementation remains pending.
+**Implementation status:** Source and runtime implementation validated in development; target acceptance remains pending.
 
 ## Purpose
 
@@ -34,4 +34,4 @@ Value type: Numeric (float). Unit: `GB`.
 
 ## Lifecycle
 
-Source semantics are validated. Runtime implementation remains pending.
+Source semantics and runtime implementation are validated in development; target baseline remains pending.

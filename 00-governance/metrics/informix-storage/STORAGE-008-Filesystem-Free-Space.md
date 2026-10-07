@@ -1,8 +1,8 @@
 # STORAGE-008 — Filesystem Free Space
 
-**Status:** DEFINED
+**Status:** OUT_OF_SCOPE
 
-**Implementation status:** Source validation is available from the host operating system; runtime implementation remains pending.
+**Implementation status:** Owned by the operating-system/AIX monitoring package; not implemented here.
 
 ## Purpose
 
@@ -33,4 +33,4 @@ Value type: Numeric (float). Unit: `GB`.
 
 ## Lifecycle
 
-Filesystem evidence is validated. Runtime implementation remains pending host-side collection design.
+Filesystem evidence is validated. Runtime collection is `OUT_OF_SCOPE` for this Informix package and belongs to the host-side SO/AIX monitoring.

@@ -1,5 +1,7 @@
 # IFX-LOG-003 — Logical Logs Not Archived
 
+**Status atual:** `DEFINED` — fonte e semântica definidas; implementação runtime ainda pendente.
+
 ## 1. Purpose
 
 This document defines the engineering contract for:

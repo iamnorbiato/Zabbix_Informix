@@ -83,6 +83,10 @@ IBM AIX
 
 The collection layer exists to prevent Zabbix monitoring definitions from becoming unnecessarily coupled to complex Informix or AIX collection logic.
 
+For SQL performance telemetry, the approved pattern is one consolidated SQL-MASTER item backed by `syssqltrace`. The Zabbix dashboard widget orders the returned dataset by the selected metric (runtime, executions, reads, writes, sorts, estimates or read/write ratio) and displays the full statement for the selected row. SQL-002 dynamic discovery was retired because it created one persistent item per transient `sql_id`.
+
+The SQL-MASTER source is collected on the Informix host through the existing Informix connection/runtime contract. The custom visualization module is installed only on the Zabbix frontend host; it consumes the stored Zabbix text item and does not connect directly to Informix.
+
 ---
 
 # 4. Collection Sources

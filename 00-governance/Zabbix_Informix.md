@@ -18,6 +18,8 @@ Zabbix Informix shall provide a controlled engineering repository for:
 
 The repository is not the production runtime environment.
 
+Current implementation status: the SQL performance path uses the consolidated SQL-MASTER plus the reusable Zabbix Top-N widget. SQL-003 through SQL-016 are represented as selectable views of that master dataset; they are not separate duplicate runtime items. SQL-017 is the user SQL QPS metric. The retired SQL-002 discovery/detail design must not be reintroduced.
+
 Artifacts developed here are intended to be validated, versioned and subsequently exported or deployed into the environments where Informix, AIX, Zabbix and Grafana are actually running.
 
 ---

@@ -1,5 +1,7 @@
 # IFX-LOG-004 — Physical Log Utilization
 
+**Status atual:** `DEFINED` — fonte e semântica definidas; implementação runtime ainda pendente.
+
 ## 1. Purpose
 
 This document defines the engineering contract for:

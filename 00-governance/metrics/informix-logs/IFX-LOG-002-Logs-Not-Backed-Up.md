@@ -1,5 +1,7 @@
 # IFX-LOG-002 — Logical Logs Not Backed Up
 
+**Status atual:** `DEFINED` — fonte e semântica definidas; implementação runtime ainda pendente.
+
 ## 1. Purpose
 
 This document defines the engineering contract for:

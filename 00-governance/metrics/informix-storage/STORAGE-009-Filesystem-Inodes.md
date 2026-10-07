@@ -1,8 +1,8 @@
 # STORAGE-009 — Filesystem Inode Utilization
 
-**Status:** DEFINED
+**Status:** OUT_OF_SCOPE
 
-**Implementation status:** Source validation is available from the host operating system; runtime implementation remains pending.
+**Implementation status:** Owned by the operating-system/AIX monitoring package; not implemented here.
 
 ## Purpose
 
@@ -37,4 +37,4 @@ Value type: Numeric (float). Unit: `%`.
 
 ## Lifecycle
 
-Source semantics are defined. Runtime implementation remains pending AIX/Linux normalization.
+Source semantics are defined. Runtime collection is `OUT_OF_SCOPE` for this Informix package and belongs to the AIX/Linux monitoring owner.

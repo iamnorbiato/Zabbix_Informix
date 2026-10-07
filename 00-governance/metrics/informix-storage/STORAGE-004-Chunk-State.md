@@ -1,8 +1,8 @@
 # STORAGE-004 — Chunk State
 
-**Status:** DEFINED
+**Status:** DEVELOPMENT_RUNTIME_VALIDATED
 
-**Implementation status:** Source validated in the production Informix topology; collector, launcher, Zabbix item and trigger implementation remain pending.
+**Implementation status:** Source, collector, launcher and Zabbix runtime validated in development; target acceptance remains pending.
 
 ## Purpose
 
@@ -90,4 +90,4 @@ Chunk state is independent of capacity. A chunk can be healthy while nearly full
 
 ## Lifecycle
 
-The source fields and healthy baseline are validated. Runtime implementation remains pending normalized-output and discovery-contract approval.
+The source fields, normalized output and runtime implementation are validated in development. Target baseline and discovery-contract acceptance remain pending.

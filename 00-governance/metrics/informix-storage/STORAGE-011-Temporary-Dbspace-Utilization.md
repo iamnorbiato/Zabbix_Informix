@@ -1,8 +1,8 @@
 # STORAGE-011 — Temporary Dbspace Utilization
 
-**Status:** DEFINED
+**Status:** DEVELOPMENT_RUNTIME_VALIDATED
 
-**Implementation status:** Source validated in a production topology; runtime implementation remains pending.
+**Implementation status:** Source, discovery, collector, launcher and Zabbix runtime validated in development; target acceptance remains pending.
 
 ## Purpose
 
@@ -40,4 +40,4 @@ Value types: Numeric (float). Units: `%` and `GB`.
 
 ## Lifecycle
 
-Source semantics are validated. Runtime implementation remains pending temporary-dbspace classification and baseline approval.
+Source semantics, classification and runtime implementation are validated in development; target baseline approval remains pending.
