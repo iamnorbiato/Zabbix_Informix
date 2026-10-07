@@ -1,0 +1,21 @@
+{
+    "manifest_version": 2.0,
+    "id": "informix_sql_top_n",
+    "type": "widget",
+    "name": "Informix SQL Top-N",
+    "namespace": "InformixSqlTopN",
+    "version": "1.0.1",
+    "author": "Tailor",
+    "actions": {
+        "widget.informix_sql_top_n.view": {
+            "class": "WidgetView"
+        }
+    },
+    "widget": {
+        "js_class": "WidgetInformixSqlTopN"
+    },
+    "assets": {
+        "js": ["class.widget.js"],
+        "css": ["widget.css"]
+    }
+}
