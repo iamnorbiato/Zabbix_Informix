@@ -1,0 +1,34 @@
+--- 05-collectors/informix/lib/informix-db.ksh
++++ 05-collectors/informix/lib/informix-db.ksh
+@@
+ . "${IFX_DB_LIB_DIR}/informix-env.ksh"
+ . "${IFX_DB_LIB_DIR}/informix-connection.ksh"
++. "${IFX_DB_LIB_DIR}/informix-targets.ksh"
+ . "${IFX_DB_LIB_DIR}/informix-query.ksh"
+--- 05-collectors/informix/lib/informix-query.ksh
++++ 05-collectors/informix/lib/informix-query.ksh
+@@
+ ifx_db_render_last_id()
+ {
+@@
+ }
+
++# Execute a statement against an explicitly selected target. The existing
++# ifx_db_execute function remains available for the current single-target
++# runtime until each collector is migrated to this entry point.
++ifx_db_execute_target()
++{
++    typeset target="$1"
++    shift
++
++    if [[ -z "${target}" || $# -lt 2 ]]; then
++        print -u2 "Usage: ifx_db_execute_target <target> <database> <statement-file> [last-id]"
++        return 1
++    fi
++
++    ifx_target_load "${target}" || return 1
++    ifx_db_execute "$@"
++}
+
+ ifx_db_execute()
+ {

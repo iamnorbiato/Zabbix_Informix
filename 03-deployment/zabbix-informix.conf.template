@@ -2,59 +2,116 @@
 # @RUNTIME_ENV@ and @LAUNCHER_HOME@ are replaced by the installer.
 
 UserParameter=ifx.health.instance_state,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-001
+UserParameter=ifx.health.instance_state_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-001 "$1"
 UserParameter=ifx.health.instance_uptime,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-002
+UserParameter=ifx.health.instance_uptime_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-002 "$1"
 UserParameter=ifx.health.assert_failures.raw,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-003
+UserParameter=ifx.health.assert_failures.raw_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-003 "$1"
 UserParameter=ifx.health.checkpoint_count,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-004
+UserParameter=ifx.health.checkpoint_count_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-004 "$1"
 UserParameter=ifx.health.checkpoint_duration,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-005
+UserParameter=ifx.health.checkpoint_duration_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-005 "$1"
 UserParameter=ifx.health.checkpoint_waits,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-006
+UserParameter=ifx.health.checkpoint_waits_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-006 "$1"
 UserParameter=ifx.health.lru_writes,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-007
+UserParameter=ifx.health.lru_writes_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-007 "$1"
 UserParameter=ifx.health.foreground_writes,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-008
+UserParameter=ifx.health.foreground_writes_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-health-008 "$1"
 UserParameter=ifx.session.total_connected,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-001
+UserParameter=ifx.session.total_connected_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-001 "$1"
 UserParameter=ifx.session.in_read_call,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-002
+UserParameter=ifx.session.in_read_call_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-002 "$1"
 UserParameter=ifx.session.weekly_peak_physical_connections,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-003
+UserParameter=ifx.session.weekly_peak_physical_connections_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-003 "$1"
 UserParameter=ifx.session.waiting_client_sessions,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-004
+UserParameter=ifx.session.waiting_client_sessions_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-004 "$1"
 UserParameter=ifx.session.waiting_client_sessions_by_reason.raw,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-005
+UserParameter=ifx.session.waiting_client_sessions_by_reason.raw_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-session-005 "$1"
 UserParameter=ifx.lock.sessions_waiting,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-001
+UserParameter=ifx.lock.sessions_waiting_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-001 "$1"
 UserParameter=ifx.lock.waits,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-002
+UserParameter=ifx.lock.waits_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-002 "$1"
 UserParameter=ifx.lock.timeouts,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-003
+UserParameter=ifx.lock.timeouts_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-003 "$1"
 UserParameter=ifx.lock.deadlocks,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-004
+UserParameter=ifx.lock.deadlocks_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-004 "$1"
 UserParameter=ifx.lock.table_exhaustion_attempts,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-005
+UserParameter=ifx.lock.table_exhaustion_attempts_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-lock-005 "$1"
 UserParameter=ifx.log.current_utilization,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-001
+UserParameter=ifx.log.current_utilization_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-001 "$1"
 UserParameter=ifx.log.not_backed_up,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-002
+UserParameter=ifx.log.not_backed_up_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-002 "$1"
 UserParameter=ifx.log.not_archived,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-003
+UserParameter=ifx.log.not_archived_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-003 "$1"
 UserParameter=ifx.log.physical_utilization,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-004
+UserParameter=ifx.log.physical_utilization_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-004 "$1"
 UserParameter=ifx.log.full,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-005
 UserParameter=ifx.log.backup.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-006
+UserParameter=ifx.log.backup.discovery_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-006 "$1"
 UserParameter=ifx.log.backup_age_days[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-006-age "$1" "$2"
+UserParameter=ifx.log.backup_age_days_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-006-age "$1" "$2" "$3"
 UserParameter=ifx.storage.dbspace.utilization,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-001
+UserParameter=ifx.storage.dbspace.utilization_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-001 "$1"
 UserParameter=ifx.storage.dbspace.free_space,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-002
+UserParameter=ifx.storage.dbspace.free_space_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-002 "$1"
 UserParameter=ifx.storage.dbspace.growth,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-003
+UserParameter=ifx.storage.dbspace.growth_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-003 "$1"
 UserParameter=ifx.storage.chunk.state,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-004
+UserParameter=ifx.storage.chunk.state_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-004 "$1"
 UserParameter=ifx.storage.chunk.utilization,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-005
+UserParameter=ifx.storage.chunk.utilization_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-005 "$1"
 UserParameter=ifx.storage.chunk.free_space,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-006
+UserParameter=ifx.storage.chunk.free_space_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-006 "$1"
 UserParameter=ifx.storage.temp_dbspace.utilization,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-011
+UserParameter=ifx.storage.temp_dbspace.utilization_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-011 "$1"
 UserParameter=ifx.storage.dbspace.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-dbspace-discovery
+UserParameter=ifx.storage.dbspace.discovery_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-dbspace-discovery "$1"
 UserParameter=ifx.storage.chunk.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-chunk-discovery
+UserParameter=ifx.storage.chunk.discovery_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-chunk-discovery "$1"
 UserParameter=ifx.storage.temp_dbspace.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-temp-dbspace-discovery
+UserParameter=ifx.storage.temp_dbspace.discovery_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-storage-temp-dbspace-discovery "$1"
 UserParameter=ifx.hdr.local_state.raw,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-001
+UserParameter=ifx.hdr.local_state.raw_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-001 "$1"
 UserParameter=ifx.hdr.expected_configuration,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-002
+UserParameter=ifx.hdr.expected_configuration_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-002 "$1"
 UserParameter=ifx.hdr.peer.discovery,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-003
+UserParameter=ifx.hdr.peer.discovery_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-003 "$1"
 UserParameter=ifx.hdr.peer.connection[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-004 "$1"
+UserParameter=ifx.hdr.peer.connection_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-004 "$1" "$2"
 UserParameter=ifx.hdr.peer.server_state[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-005 "$1"
+UserParameter=ifx.hdr.peer.server_state_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-hdr-005 "$1" "$2"
 UserParameter=ifx.sql.top_max_time,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-003
+UserParameter=ifx.sql.top_max_time_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-003 "$1"
 UserParameter=ifx.sql.active.raw,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-001
 UserParameter=ifx.sql.top_n,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-top-n
+UserParameter=ifx.sql.top_n_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-top-n "$1"
+UserParameter=ifx.sql.by_id[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-002-by-id "$1"
 UserParameter=ifx.sql.top_executions,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-004
+UserParameter=ifx.sql.top_executions_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-004 "$1"
 UserParameter=ifx.sql.top_average_time,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-005
+UserParameter=ifx.sql.top_average_time_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-005 "$1"
 UserParameter=ifx.sql.top_disk_reads,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-006
+UserParameter=ifx.sql.top_disk_reads_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-006 "$1"
 UserParameter=ifx.sql.top_buffer_reads,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-007
+UserParameter=ifx.sql.top_buffer_reads_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-007 "$1"
 UserParameter=ifx.sql.top_cache_ratio,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-008
+UserParameter=ifx.sql.top_cache_ratio_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-008 "$1"
 UserParameter=ifx.sql.top_lock_waits,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-009
+UserParameter=ifx.sql.top_lock_waits_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-009 "$1"
 UserParameter=ifx.sql.top_lock_wait_time,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-010
+UserParameter=ifx.sql.top_lock_wait_time_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-010 "$1"
 UserParameter=ifx.sql.top_io_waits,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-011
+UserParameter=ifx.sql.top_io_waits_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-011 "$1"
 UserParameter=ifx.sql.top_disk_sorts,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-012
+UserParameter=ifx.sql.top_disk_sorts_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-012 "$1"
 UserParameter=ifx.sql.top_memory_sorts,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-013
+UserParameter=ifx.sql.top_memory_sorts_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-013 "$1"
 UserParameter=ifx.sql.top_estimated_cost,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-014
+UserParameter=ifx.sql.top_estimated_cost_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-014 "$1"
 UserParameter=ifx.sql.top_estimated_rows,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-015
+UserParameter=ifx.sql.top_estimated_rows_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-015 "$1"
 UserParameter=ifx.sql.top_actual_rows,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-016
+UserParameter=ifx.sql.top_actual_rows_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-016 "$1"
 UserParameter=ifx.sql.user_qps,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-017
+UserParameter=ifx.sql.user_qps_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-017 "$1"
+UserParameter=ifx.log.full_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-log-005 "$1"

@@ -20,17 +20,24 @@ fail()
     exit 1
 }
 
-if (( $# != 0 )); then
-    fail "Usage: $0"
+target="${1:-}"
+if (( $# > 1 )); then
+    fail "Usage: $0 [target-alias-or-INFORMIXSERVER]"
 fi
 
 if [[ ! -f "${IFX_HDR_001_STATEMENT_FILE}" ]]; then
     fail "HDR-001 statement file not found: ${IFX_HDR_001_STATEMENT_FILE}"
 fi
 
-dataset="$(ifx_db_execute sysmaster "${IFX_HDR_001_STATEMENT_FILE}")" || {
-    fail "Unable to collect HDR-001 local role and state."
-}
+if [[ -n "${target}" ]]; then
+    dataset="$(ifx_db_execute_target "${target}" sysmaster "${IFX_HDR_001_STATEMENT_FILE}")" || {
+        fail "Unable to collect HDR-001 local role and state."
+    }
+else
+    dataset="$(ifx_db_execute sysmaster "${IFX_HDR_001_STATEMENT_FILE}")" || {
+        fail "Unable to collect HDR-001 local role and state."
+    }
+fi
 
 normalized_dataset="$(
     print -r -- "${dataset}" |

@@ -33,17 +33,24 @@ fail()
     exit 1
 }
 
-if (( $# != 0 )); then
-    fail "Usage: $0"
+target="${1:-}"
+if (( $# > 1 )); then
+    fail "Usage: $0 [target-alias-or-INFORMIXSERVER]"
 fi
 
 if [[ ! -f "${IFX_SESSION_003_STATEMENT_FILE}" ]]; then
     fail "SESSION-003 statement file not found: ${IFX_SESSION_003_STATEMENT_FILE}"
 fi
 
-dataset="$(ifx_db_execute sysmaster "${IFX_SESSION_003_STATEMENT_FILE}")" || {
-    fail "Unable to collect SESSION-003 weekly peak physical connections."
-}
+if [[ -n "${target}" ]]; then
+    dataset="$(ifx_db_execute_target "${target}" sysmaster "${IFX_SESSION_003_STATEMENT_FILE}")" || {
+        fail "Unable to collect SESSION-003 weekly peak physical connections."
+    }
+else
+    dataset="$(ifx_db_execute sysmaster "${IFX_SESSION_003_STATEMENT_FILE}")" || {
+        fail "Unable to collect SESSION-003 weekly peak physical connections."
+    }
+fi
 
 case "${dataset}" in
     *'|')

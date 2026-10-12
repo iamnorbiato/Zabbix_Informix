@@ -73,3 +73,24 @@ Não exiba `informix-connect.sql`, não coloque credenciais no Git e não use co
 ## 7. Escopo
 
 O SQL-MASTER é a fonte única para o painel. SQL-002 discovery/detail não deve ser recriado. Package Cache Changes, CPU por SQL e Stale Statistics permanecem fora do escopo implementado.
+# Exportador de cadastro de target
+
+O arquivo `05-collectors/informix/tools/ifx-export-agent-target.ksh` é executado no host Informix e produz um relatório somente leitura para o cadastro manual no Linux com Zabbix Agent.
+
+Após transferir o arquivo, ajuste a permissão obrigatoriamente:
+
+```sh
+chmod 0750 05-collectors/informix/tools/ifx-export-agent-target.ksh
+```
+
+Valide com `ksh -n`, execute o exportador e revise `SQLHOSTS_ENTRY`, `OBSERVED_ROLE`, `OBSERVED_STATE`, `OBSERVED_HDR_PEER` e `CANONICAL_ROLE`. Não copie senhas para o relatório. O arquivo `informix-connect.sql` do target deve ser criado separadamente com proprietário `root`, grupo `zabbix` e modo `0640`.
+# Operação do catálogo manual
+
+Para adicionar um Informix, inclua uma linha `alias|INFORMIXSERVER` em `/etc/zabbix-informix/targets/catalog`, crie `/etc/zabbix-informix/targets/<INFORMIXSERVER>/informix-connect.sql` e valide o target pelo alias com `ifx_target_load <alias>`. Não grave `PRIMARY`, `SECONDARY` ou senha no catálogo. O papel é sempre determinado pelo Informix durante a coleta.
+
+Após qualquer transferência ou alteração do catálogo:
+
+```sh
+sudo chown root:zabbix /etc/zabbix-informix/targets/catalog
+sudo chmod 0640 /etc/zabbix-informix/targets/catalog
+```

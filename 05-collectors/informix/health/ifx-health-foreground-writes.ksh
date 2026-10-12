@@ -34,17 +34,24 @@ fail()
     exit 1
 }
 
-if (( $# != 0 )); then
-    fail "Usage: $0"
+target="${1:-}"
+if (( $# > 1 )); then
+    fail "Usage: $0 [target-alias-or-INFORMIXSERVER]"
 fi
 
 if [[ ! -f "${IFX_HEALTH_008_STATEMENT_FILE}" ]]; then
     fail "HEALTH-008 statement file not found: ${IFX_HEALTH_008_STATEMENT_FILE}"
 fi
 
-dataset="$(ifx_db_execute sysmaster "${IFX_HEALTH_008_STATEMENT_FILE}")" || {
-    fail "Unable to collect HEALTH-008 foreground writes."
-}
+if [[ -n "${target}" ]]; then
+    dataset="$(ifx_db_execute_target "${target}" sysmaster "${IFX_HEALTH_008_STATEMENT_FILE}")" || {
+        fail "Unable to collect HEALTH-008 foreground writes."
+    }
+else
+    dataset="$(ifx_db_execute sysmaster "${IFX_HEALTH_008_STATEMENT_FILE}")" || {
+        fail "Unable to collect HEALTH-008 foreground writes."
+    }
+fi
 
 case "${dataset}" in
     *'|')

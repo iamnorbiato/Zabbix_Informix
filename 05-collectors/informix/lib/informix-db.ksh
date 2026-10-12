@@ -23,4 +23,5 @@ IFX_DB_LIB_DIR="$(cd "$(dirname "${.sh.file}")" && pwd)"
 
 . "${IFX_DB_LIB_DIR}/informix-env.ksh"
 . "${IFX_DB_LIB_DIR}/informix-connection.ksh"
+. "${IFX_DB_LIB_DIR}/informix-targets.ksh"
 . "${IFX_DB_LIB_DIR}/informix-query.ksh"

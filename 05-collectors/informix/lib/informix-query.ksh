@@ -149,3 +149,24 @@ ifx_db_execute()
 
     return ${rc}
 }
+
+ifx_db_execute_target()
+{
+    typeset target="$1"
+    typeset database="$2"
+    typeset statement_file="$3"
+    typeset last_id="$4"
+
+    if [[ -z "${target}" || -z "${database}" || -z "${statement_file}" ]]; then
+        print -u2 "Usage: ifx_db_execute_target <target> <database> <statement-file> [last-id]"
+        return 1
+    fi
+
+    ifx_target_load "${target}" || return 1
+
+    if [[ -n "${last_id}" ]]; then
+        ifx_db_execute "${database}" "${statement_file}" "${last_id}"
+    else
+        ifx_db_execute "${database}" "${statement_file}"
+    fi
+}

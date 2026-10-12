@@ -13,12 +13,13 @@ fail()
     exit 1
 }
 
-if (( $# != 2 )); then
-    fail "Usage: $0 <connection|server> <peer-name>"
+if (( $# != 2 && $# != 3 )); then
+    fail "Usage: $0 <connection|server> <peer-name> [target-alias-or-INFORMIXSERVER]"
 fi
 
 field="$1"
 peer="$2"
+target="${3:-}"
 
 case "${field}" in
     connection|server)
@@ -36,7 +37,11 @@ esac
 
 [[ -f "${IFX_STATEMENT_FILE}" ]] || fail "HDR peer statement file not found: ${IFX_STATEMENT_FILE}"
 
-dataset="$(ifx_db_execute sysmaster "${IFX_STATEMENT_FILE}")" || fail "Unable to collect HDR peer state."
+if [[ -n "${target}" ]]; then
+    dataset="$(ifx_db_execute_target "${target}" sysmaster "${IFX_STATEMENT_FILE}")" || fail "Unable to collect HDR peer state."
+else
+    dataset="$(ifx_db_execute sysmaster "${IFX_STATEMENT_FILE}")" || fail "Unable to collect HDR peer state."
+fi
 
 print -r -- "${dataset}" |
 awk -F '|' -v expected_peer="${peer}" -v field="${field}" '

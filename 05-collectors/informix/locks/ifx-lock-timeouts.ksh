@@ -18,17 +18,24 @@ fail()
     exit 1
 }
 
-if (( $# != 0 )); then
-    fail "Usage: $0"
+target="${1:-}"
+if (( $# > 1 )); then
+    fail "Usage: $0 [target-alias-or-INFORMIXSERVER]"
 fi
 
 if [[ ! -f "${IFX_LOCK_003_STATEMENT_FILE}" ]]; then
     fail "LOCK-003 statement file not found: ${IFX_LOCK_003_STATEMENT_FILE}"
 fi
 
-dataset="$(ifx_db_execute sysmaster "${IFX_LOCK_003_STATEMENT_FILE}")" || {
-    fail "Unable to collect LOCK-003 lock timeouts."
-}
+if [[ -n "${target}" ]]; then
+    dataset="$(ifx_db_execute_target "${target}" sysmaster "${IFX_LOCK_003_STATEMENT_FILE}")" || {
+        fail "Unable to collect LOCK-003 lock timeouts."
+    }
+else
+    dataset="$(ifx_db_execute sysmaster "${IFX_LOCK_003_STATEMENT_FILE}")" || {
+        fail "Unable to collect LOCK-003 lock timeouts."
+    }
+fi
 
 case "${dataset}" in
     *'|')

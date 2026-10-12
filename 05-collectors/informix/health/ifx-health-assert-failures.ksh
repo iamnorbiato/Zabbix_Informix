@@ -241,8 +241,9 @@ emit_batch()
     return 0
 }
 
-if (( $# != 0 )); then
-    fail "Usage: $0"
+target="${1:-}"
+if (( $# > 1 )); then
+    fail "Usage: $0 [target-alias-or-INFORMIXSERVER]"
 fi
 
 if [[ ! -f "${IFX_HEALTH_003_STATEMENT_FILE}" ]]; then
@@ -265,7 +266,11 @@ fi
 
 chmod 700 "${IFX_STATE_DIR}" || fail "Unable to protect Informix state directory."
 
-state_file="${IFX_STATE_DIR}/ifx-health-003.${IFX_INFORMIXSERVER}.last-id"
+state_key="${target:-${IFX_INFORMIXSERVER}}"
+case "${state_key}" in
+    ''|*[!A-Za-z0-9_.-]*) fail "Invalid target name for HEALTH-003 state." ;;
+esac
+state_file="${IFX_STATE_DIR}/ifx-health-003.${state_key}.last-id"
 lock_dir="${state_file}.lock"
 
 if [[ -e "${lock_dir}" ]]; then
@@ -282,9 +287,15 @@ trap 'cleanup' EXIT
 trap 'cleanup; exit 1' HUP INT TERM
 
 if [[ ! -e "${state_file}" ]]; then
-    baseline_output="$(ifx_db_execute sysadmin "${IFX_HEALTH_003_BASELINE_FILE}")" || {
-        fail "Unable to establish HEALTH-003 baseline."
-    }
+    if [[ -n "${target}" ]]; then
+        baseline_output="$(ifx_db_execute_target "${target}" sysadmin "${IFX_HEALTH_003_BASELINE_FILE}")" || {
+            fail "Unable to establish HEALTH-003 baseline."
+        }
+    else
+        baseline_output="$(ifx_db_execute sysadmin "${IFX_HEALTH_003_BASELINE_FILE}")" || {
+            fail "Unable to establish HEALTH-003 baseline."
+        }
+    fi
 
     parse_baseline "${baseline_output}" || exit 1
 
@@ -298,9 +309,15 @@ fi
 
 read_state || exit 1
 
-dataset="$(ifx_db_execute sysadmin "${IFX_HEALTH_003_STATEMENT_FILE}" "${last_id}")" || {
-    fail "Unable to collect HEALTH-003 event dataset."
-}
+if [[ -n "${target}" ]]; then
+    dataset="$(ifx_db_execute_target "${target}" sysadmin "${IFX_HEALTH_003_STATEMENT_FILE}" "${last_id}")" || {
+        fail "Unable to collect HEALTH-003 event dataset."
+    }
+else
+    dataset="$(ifx_db_execute sysadmin "${IFX_HEALTH_003_STATEMENT_FILE}" "${last_id}")" || {
+        fail "Unable to collect HEALTH-003 event dataset."
+    }
+fi
 
 assertion_count=0
 next_last_id="${last_id}"

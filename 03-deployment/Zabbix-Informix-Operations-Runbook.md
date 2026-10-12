@@ -210,3 +210,6 @@ O seletor interno do widget permite ordenar o mesmo conjunto de dados por runtim
 Os contadores `sql_sorttotal`, `sql_sortdisk` e `sql_sortmem` cobrem a observabilidade de sorts e possíveis spills para disco. Não foi criado um contador separado de package-cache changes, pois o `syssqltrace` não fornece um contador por SQL para isso. Também não foi criado um contador genérico de stale statistics: `systables.ustlowts` informa a última atualização LOW, mas não determina sozinho que uma estatística está obsoleta.
 
 Após atualizar o módulo frontend, recarregue o dashboard com recarga forçada do navegador. Após atualizar o statement ou o coletor, reinstale a release no host do Agent e reinicie o Agent.
+# Target registration export
+
+Target registration is manual. Run `05-collectors/informix/tools/ifx-export-agent-target.ksh` on the Informix host after transferring it, then set executable mode with `chmod 0750`. Validate with `ksh -n` before execution. The report contains sqlhosts metadata and observed HDR state, but never credentials. Create the target connection file on the Linux collector with owner `root`, group `zabbix`, and mode `0640`. HDR role remains dynamically collected and must not be hard-coded.

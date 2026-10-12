@@ -36,4 +36,8 @@ export INFORMIXDIR="${IFX_INFORMIXDIR}"
 export PATH="${INFORMIXDIR}/bin:${PATH}"
 export LD_LIBRARY_PATH="${INFORMIXDIR}/lib:${INFORMIXDIR}/lib/esql${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 
-exec /bin/ksh "${COLLECTOR}"
+if (( $# > 1 )); then
+    print -u2 "Usage: $0 [target-alias-or-INFORMIXSERVER]"
+    exit 1
+fi
+exec /bin/ksh "${COLLECTOR}" "$1"

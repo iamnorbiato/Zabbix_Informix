@@ -16,18 +16,29 @@ fail()
     exit 1
 }
 
-if (( $# != 2 )); then
-    fail "Usage: $0 <database> <dbspace>"
+target=""
+if (( $# == 2 )); then
+    database_name="${1}"
+    dbspace_name="${2}"
+elif (( $# == 3 )); then
+    target="${1}"
+    database_name="${2}"
+    dbspace_name="${3}"
+else
+    fail "Usage: $0 [target-alias-or-INFORMIXSERVER] <database> <dbspace>"
 fi
-
-database_name="${1}"
-dbspace_name="${2}"
 
 [[ -f "${IFX_LOG_006_STATEMENT_FILE}" ]] || fail "LOG-006 statement file not found: ${IFX_LOG_006_STATEMENT_FILE}"
 
-dataset="$(ifx_db_execute sysmaster "${IFX_LOG_006_STATEMENT_FILE}")" || {
-    fail "Unable to collect LOG-006 backup age."
-}
+if [[ -n "${target}" ]]; then
+    dataset="$(ifx_db_execute_target "${target}" sysmaster "${IFX_LOG_006_STATEMENT_FILE}")" || {
+        fail "Unable to collect LOG-006 backup age."
+    }
+else
+    dataset="$(ifx_db_execute sysmaster "${IFX_LOG_006_STATEMENT_FILE}")" || {
+        fail "Unable to collect LOG-006 backup age."
+    }
+fi
 
 age="$(print -r -- "${dataset}" | awk -F '|' -v database="${database_name}" -v dbspace="${dbspace_name}" '
     NF == 8 && $8 == "" && $1 == database && $2 == dbspace {print $3; found++}

@@ -33,17 +33,24 @@ fail()
     exit 1
 }
 
-if (( $# != 0 )); then
-    fail "Usage: $0"
+target="${1:-}"
+if (( $# > 1 )); then
+    fail "Usage: $0 [target-alias-or-INFORMIXSERVER]"
 fi
 
 if [[ ! -f "${IFX_SESSION_002_STATEMENT_FILE}" ]]; then
     fail "SESSION-002 statement file not found: ${IFX_SESSION_002_STATEMENT_FILE}"
 fi
 
-dataset="$(ifx_db_execute sysmaster "${IFX_SESSION_002_STATEMENT_FILE}")" || {
-    fail "Unable to collect SESSION-002 sessions in read call."
-}
+if [[ -n "${target}" ]]; then
+    dataset="$(ifx_db_execute_target "${target}" sysmaster "${IFX_SESSION_002_STATEMENT_FILE}")" || {
+        fail "Unable to collect SESSION-002 sessions in read call."
+    }
+else
+    dataset="$(ifx_db_execute sysmaster "${IFX_SESSION_002_STATEMENT_FILE}")" || {
+        fail "Unable to collect SESSION-002 sessions in read call."
+    }
+fi
 
 case "${dataset}" in
     *'|')

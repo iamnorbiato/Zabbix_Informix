@@ -268,3 +268,41 @@ Antes, remova o widget dos dashboards ou substitua-o por outro widget. Reinicie 
 - SQL-003 a SQL-016 são visões do SQL-MASTER, não itens duplicados.
 - Package Cache Changes e Stale Statistics não possuem implementação aprovada.
 - Validação de desenvolvimento não equivale a aceite de produção/AIX.
+# Exportação do cadastro de target no host Informix
+
+O cadastro dos servidores Informix no Linux coletor é manual. No host Informix, execute o exportador somente para gerar um relatório de referência:
+
+```sh
+ksh -n 05-collectors/informix/tools/ifx-export-agent-target.ksh
+print "EXPORTER_SYNTAX_RC=$?"
+
+chmod 0750 05-collectors/informix/tools/ifx-export-agent-target.ksh
+print "EXPORTER_MODE_RC=$?"
+
+ksh -c '
+. /etc/zabbix-informix/runtime.env || return 1
+IFX_CONNECT_FILE=/etc/zabbix-informix/informix-connect.sql \\
+  05-collectors/informix/tools/ifx-export-agent-target.ksh
+print "EXPORTER_RC=$?"
+'
+```
+
+O relatório deve ser revisado antes do cadastro no Linux coletor. `OBSERVED_ROLE` e `OBSERVED_STATE` são valores brutos do Informix; `CANONICAL_ROLE` é a normalização operacional. O papel não deve ser gravado como configuração fixa, pois é redescoberto durante a coleta.
+
+No Linux coletor, após criar o diretório do target, o arquivo de conexão deve permanecer protegido:
+
+```sh
+sudo chown root:zabbix /etc/zabbix-informix/targets/<INFORMIXSERVER>/informix-connect.sql
+sudo chmod 0640 /etc/zabbix-informix/targets/<INFORMIXSERVER>/informix-connect.sql
+```
+# Catálogo manual de targets Informix
+
+Quando um Agent Linux monitora mais de um Informix, mantenha o catálogo em `/etc/zabbix-informix/targets/catalog`. O formato é `alias|INFORMIXSERVER`, uma linha por target autorizado:
+
+```text
+producao-primary|ol_informix1210
+producao-standby|ol_informix1210_hdr
+homologacao|ol_informix_hml
+```
+
+O arquivo deve ser instalado com `root:zabbix` e modo `0640`. Ative `IFX_TARGET_REQUIRE_CATALOG=YES` no `runtime.env`. O alias é apenas uma identificação operacional; o papel `PRIMARY`, `SECONDARY` ou `STANDALONE` continua sendo coletado dinamicamente.

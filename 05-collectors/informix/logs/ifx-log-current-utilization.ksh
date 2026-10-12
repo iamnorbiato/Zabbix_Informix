@@ -22,17 +22,24 @@ fail()
     exit 1
 }
 
-if (( $# != 0 )); then
-    fail "Usage: $0"
+target="${1:-}"
+if (( $# > 1 )); then
+    fail "Usage: $0 [target-alias-or-INFORMIXSERVER]"
 fi
 
 if [[ ! -f "${IFX_LOG_001_STATEMENT_FILE}" ]]; then
     fail "LOG-001 statement file not found: ${IFX_LOG_001_STATEMENT_FILE}"
 fi
 
-dataset="$(ifx_db_execute sysmaster "${IFX_LOG_001_STATEMENT_FILE}")" || {
-    fail "Unable to collect LOG-001 current logical-log utilization."
-}
+if [[ -n "${target}" ]]; then
+    dataset="$(ifx_db_execute_target "${target}" sysmaster "${IFX_LOG_001_STATEMENT_FILE}")" || {
+        fail "Unable to collect LOG-001 current logical-log utilization."
+    }
+else
+    dataset="$(ifx_db_execute sysmaster "${IFX_LOG_001_STATEMENT_FILE}")" || {
+        fail "Unable to collect LOG-001 current logical-log utilization."
+    }
+fi
 
 case "${dataset}" in
     *'|') utilization="${dataset%"|"}" ;;

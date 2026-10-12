@@ -1,0 +1,6 @@
+# alias|INFORMIXSERVER
+# Keep one manually reviewed line for each Informix target authorized for collection.
+# Do not add role, password, host, or port here; those are resolved separately.
+producao-primary|ol_informix1210
+# producao-standby|ol_informix1210_hdr
+# homologacao|ol_informix_hml

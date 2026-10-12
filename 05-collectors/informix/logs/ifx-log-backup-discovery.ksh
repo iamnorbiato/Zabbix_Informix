@@ -16,15 +16,22 @@ fail()
     exit 1
 }
 
-if (( $# != 0 )); then
-    fail "Usage: $0"
+target="${1:-}"
+if (( $# > 1 )); then
+    fail "Usage: $0 [target-alias-or-INFORMIXSERVER]"
 fi
 
 [[ -f "${IFX_LOG_006_STATEMENT_FILE}" ]] || fail "LOG-006 statement file not found: ${IFX_LOG_006_STATEMENT_FILE}"
 
-dataset="$(ifx_db_execute sysmaster "${IFX_LOG_006_STATEMENT_FILE}")" || {
-    fail "Unable to collect LOG-006 backup inventory."
-}
+if [[ -n "${target}" ]]; then
+    dataset="$(ifx_db_execute_target "${target}" sysmaster "${IFX_LOG_006_STATEMENT_FILE}")" || {
+        fail "Unable to collect LOG-006 backup inventory."
+    }
+else
+    dataset="$(ifx_db_execute sysmaster "${IFX_LOG_006_STATEMENT_FILE}")" || {
+        fail "Unable to collect LOG-006 backup inventory."
+    }
+fi
 
 print -r -- "${dataset}" |
 awk -F '|' '

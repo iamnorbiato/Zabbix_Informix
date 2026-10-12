@@ -21,8 +21,9 @@ fail()
     exit 1
 }
 
-if (( $# != 0 )); then
-    fail "Usage: $0"
+target="${1:-}"
+if (( $# > 1 )); then
+    fail "Usage: $0 [target-alias-or-INFORMIXSERVER]"
 fi
 
 case "${IFX_HDR_REQUIRED:-}:${IFX_HDR_ALERT_ON_DISCONNECT:-}" in
@@ -49,8 +50,13 @@ esac
 [[ -f "${IFX_HDR_001_STATEMENT_FILE}" ]] || fail "HDR-001 statement file not found: ${IFX_HDR_001_STATEMENT_FILE}"
 [[ -f "${IFX_HDR_003_STATEMENT_FILE}" ]] || fail "HDR-003 statement file not found: ${IFX_HDR_003_STATEMENT_FILE}"
 
-local_dataset="$(ifx_db_execute sysmaster "${IFX_HDR_001_STATEMENT_FILE}")" || fail "Unable to collect HDR local DRI state."
-cluster_dataset="$(ifx_db_execute sysmaster "${IFX_HDR_003_STATEMENT_FILE}")" || fail "Unable to collect HDR cluster rows."
+if [[ -n "${target}" ]]; then
+    local_dataset="$(ifx_db_execute_target "${target}" sysmaster "${IFX_HDR_001_STATEMENT_FILE}")" || fail "Unable to collect HDR local DRI state."
+    cluster_dataset="$(ifx_db_execute_target "${target}" sysmaster "${IFX_HDR_003_STATEMENT_FILE}")" || fail "Unable to collect HDR cluster rows."
+else
+    local_dataset="$(ifx_db_execute sysmaster "${IFX_HDR_001_STATEMENT_FILE}")" || fail "Unable to collect HDR local DRI state."
+    cluster_dataset="$(ifx_db_execute sysmaster "${IFX_HDR_003_STATEMENT_FILE}")" || fail "Unable to collect HDR cluster rows."
+fi
 
 # These exact rows were observed on the standalone development instance.
 # Do not infer connected-HDR health or peer identity from unvalidated rows.

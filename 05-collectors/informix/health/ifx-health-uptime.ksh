@@ -33,17 +33,24 @@ fail()
     exit 1
 }
 
-if (( $# != 0 )); then
-    fail "Usage: $0"
+target="${1:-}"
+if (( $# > 1 )); then
+    fail "Usage: $0 [target-alias-or-INFORMIXSERVER]"
 fi
 
 if [[ ! -f "${IFX_HEALTH_002_STATEMENT_FILE}" ]]; then
     fail "HEALTH-002 statement file not found: ${IFX_HEALTH_002_STATEMENT_FILE}"
 fi
 
-dataset="$(ifx_db_execute sysmaster "${IFX_HEALTH_002_STATEMENT_FILE}")" || {
-    fail "Unable to collect HEALTH-002 instance uptime."
-}
+if [[ -n "${target}" ]]; then
+    dataset="$(ifx_db_execute_target "${target}" sysmaster "${IFX_HEALTH_002_STATEMENT_FILE}")" || {
+        fail "Unable to collect HEALTH-002 instance uptime."
+    }
+else
+    dataset="$(ifx_db_execute sysmaster "${IFX_HEALTH_002_STATEMENT_FILE}")" || {
+        fail "Unable to collect HEALTH-002 instance uptime."
+    }
+fi
 
 case "${dataset}" in
     *'|')
