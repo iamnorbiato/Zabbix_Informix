@@ -35,7 +35,25 @@ class WidgetView extends CControllerDashboardWidgetView {
         }
 
         if ($value !== '') {
-            foreach (preg_split('/\R/', $value) as $line) {
+            // A statement may contain escaped continuation lines. Reassemble
+            // each physical record before splitting its pipe-delimited fields.
+            $records = [];
+            $record = '';
+            foreach (preg_split('/\R/', $value) as $physical_line) {
+                if ($record !== '') {
+                    $record .= "\n";
+                }
+                $record .= $physical_line;
+                if (!str_ends_with(rtrim($physical_line), '\\')) {
+                    $records[] = $record;
+                    $record = '';
+                }
+            }
+            if ($record !== '') {
+                $records[] = $record;
+            }
+
+            foreach ($records as $line) {
                 if (trim($line) === '') continue;
                 $fields = explode('|', $line);
                 if (count($fields) < 23) continue;
