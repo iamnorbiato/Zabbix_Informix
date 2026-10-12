@@ -1130,8 +1130,8 @@ The provisional SQL candidates below are superseded by the validated SQL-MASTER 
 | SQL-002 discovery/detail | Retired; selected-row detail is provided inside the widget. |
 | SQL-003 through SQL-016 | Reused as selectable Top-N views of the SQL-MASTER; no duplicate items are required. |
 | SQL-017 | User SQL QPS from the recent Informix trace window. |
-| Sorts | `sql_sorttotal`, `sql_sortdisk` and `sql_sortmem` are already available in the SQL-MASTER dataset. |
-| Package-cache changes | Not implemented; no reliable per-SQL counter was validated in `syssqltrace`. |
+| Sorts and temporary activity | Closed as covered by `sql_sorttotal`, `sql_sortdisk` and `sql_sortmem` in SQL-MASTER/SQL-012/SQL-013, with temporary-dbspace utilization in STORAGE-011. No additional collector is required. |
+| Package-cache changes | Closed as unavailable: no reliable Informix counter was validated in `syssqltrace`; no artificial collector will be created. |
 | Stale statistics | Not implemented as a count; `systables.ustlowts` identifies the last LOW update but does not itself determine staleness. |
 
 The remainder of this section is retained as the original candidate catalog and must not be interpreted as an approval of separate duplicate collectors.

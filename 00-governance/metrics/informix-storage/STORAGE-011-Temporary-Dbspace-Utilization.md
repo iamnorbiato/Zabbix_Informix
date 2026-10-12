@@ -27,7 +27,7 @@ An anonymized production sample showed temporary dbspaces at approximately `3.08
 
 ## Alert policy
 
-Temporary-dbspace thresholds must be workload-specific. A high value may reflect legitimate sort or temporary-table activity, so sustained duration and recovery behavior should be considered before raising a High alert.
+Temporary-dbspace thresholds must be workload-specific. A high value may reflect legitimate sort or temporary-table activity. SQL sort counters are covered separately by SQL-MASTER/SQL-012/SQL-013; this metric measures the resulting temporary-dbspace utilization. Sustained duration and recovery behavior should be considered before raising a High alert.
 
 ## Zabbix contract
 

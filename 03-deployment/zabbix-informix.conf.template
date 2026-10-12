@@ -85,7 +85,6 @@ UserParameter=ifx.sql.top_max_time_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIM
 UserParameter=ifx.sql.active.raw,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-001
 UserParameter=ifx.sql.top_n,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-top-n
 UserParameter=ifx.sql.top_n_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-top-n "$1"
-UserParameter=ifx.sql.by_id[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-002-by-id "$1"
 UserParameter=ifx.sql.top_executions,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-004
 UserParameter=ifx.sql.top_executions_target[*],ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-004 "$1"
 UserParameter=ifx.sql.top_average_time,ZABBIX_INFORMIX_RUNTIME_ENV=@RUNTIME_ENV@ @LAUNCHER_HOME@/ifx-sql-005

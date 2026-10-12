@@ -43,7 +43,7 @@ The installer requires all of the following:
 | `--informix-home` | Informix Client SDK directory on the collection host. |
 | `--informix-server` | Informix server identifier used by the Client SDK. |
 | `--informix-sqlhosts` | Client SDK `sqlhosts` file. |
-| `--connection-file` | Existing private Informix connection file. |
+| `--connection-file` | Existing private connection file for the initial target. Additional targets use `/etc/zabbix-informix/targets/<INFORMIXSERVER>/informix-connect.sql`. |
 | `--state-source` | Optional existing state directory to migrate during first installation. |
 
 All deployment paths must be absolute paths.
@@ -108,7 +108,7 @@ sudo ksh 03-deployment/install-zabbix-informix.ksh \
   --informix-home /opt/informix \
   --informix-server ol_informix1210 \
   --informix-sqlhosts /opt/informix/etc/sqlhosts \
-  --connection-file /etc/zabbix-informix/informix-connect.sql
+  --connection-file /etc/zabbix-informix/targets/ol_informix1210/informix-connect.sql
 ```
 
 Restart the Zabbix Agent with the service-management command appropriate to the host after installation. On the Linux development host:

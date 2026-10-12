@@ -25,7 +25,8 @@ Preencha estes valores para **cada host de coleta**:
 | Diretório de código instalado | `/opt/zabbix-informix` | Confirmar |
 | Diretório de configuração privada | `/etc/zabbix-informix` | Confirmar |
 | Diretório dos launchers | `/usr/local/lib/zabbix-informix` | Confirmar |
-| Origem do arquivo privado de conexão | `/etc/zabbix-informix/informix-connect.sql` nas atualizações | Confirmar |
+| Catálogo de targets | `/etc/zabbix-informix/targets/catalog` | Confirmar |
+| Arquivos privados por target | `/etc/zabbix-informix/targets/<INFORMIXSERVER>/informix-connect.sql` | Confirmar |
 | Comando de reinício do Agent | `systemctl restart zabbix-agent` | Confirmar |
 
 O instalador atual exige um usuário e grupo de sistema chamados `zabbix`. Caso o Agent de destino use outra identidade, adaptar e validar o instalador antes de implantá-lo; a troca não é um parâmetro do instalador atual.
@@ -75,7 +76,7 @@ sudo ksh 03-deployment/install-zabbix-informix.ksh \
   --informix-home /opt/informix \
   --informix-server ol_informix1210 \
   --informix-sqlhosts /opt/informix/etc/sqlhosts \
-  --connection-file /etc/zabbix-informix/informix-connect.sql
+  --connection-file /etc/zabbix-informix/targets/ol_informix1210/informix-connect.sql
 ```
 
 Na primeira instalação, substitua `--connection-file` pela localização real do arquivo privado existente. Se migrar o estado de outra instalação, acrescente `--state-source <diretório-existente>` somente na primeira instalação, antes de o novo `<CONFIG_HOME>/state` existir. O instalador preserva o estado já presente no destino.
@@ -207,7 +208,7 @@ O item mestre retorna texto delimitado por `|`. O widget apresenta as linhas em 
 
 O seletor interno do widget permite ordenar o mesmo conjunto de dados por runtime, execuções, tempo médio, leituras, cache, locks, I/O, sorts, custo estimado, linhas estimadas, linhas reais e razão leitura/escrita. SQL-003 a SQL-016 são, portanto, visões do SQL-MASTER e não devem ser recriados como itens duplicados.
 
-Os contadores `sql_sorttotal`, `sql_sortdisk` e `sql_sortmem` cobrem a observabilidade de sorts e possíveis spills para disco. Não foi criado um contador separado de package-cache changes, pois o `syssqltrace` não fornece um contador por SQL para isso. Também não foi criado um contador genérico de stale statistics: `systables.ustlowts` informa a última atualização LOW, mas não determina sozinho que uma estatística está obsoleta.
+Os contadores `sql_sorttotal`, `sql_sortdisk` e `sql_sortmem` cobrem a observabilidade de sorts e possíveis spills para disco. A utilização de temporary dbspace é tratada separadamente por STORAGE-011. Não deve ser criado coletor adicional para sorts/temporários. Package-cache changes permanece encerrado como indisponível, pois o `syssqltrace` não fornece um contador Informix confiável para isso. Também não foi criado um contador genérico de stale statistics: `systables.ustlowts` informa a última atualização LOW, mas não determina sozinho que uma estatística está obsoleta.
 
 Após atualizar o módulo frontend, recarregue o dashboard com recarga forçada do navegador. Após atualizar o statement ou o coletor, reinstale a release no host do Agent e reinicie o Agent.
 # Target registration export

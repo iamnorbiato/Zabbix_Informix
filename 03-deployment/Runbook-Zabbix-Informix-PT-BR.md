@@ -88,15 +88,34 @@ grep -E "^[[:space:]]*${INFORMIXSERVER}[[:space:]]" "$INFORMIXSQLHOSTS"
 
 O segundo comando deve retornar exatamente a entrada da instância. Se não retornar, o nome passado ao instalador não corresponde ao `sqlhosts`.
 
-### 2.5 Arquivo `informix-connect.sql`
+### 2.5 Catálogo e arquivos de conexão por target
 
-O `informix-connect.sql` é um script SQL privado usado pelo executor para abrir a sessão não interativa. Ele deve ser criado pelo DBA ou pelo responsável pelas credenciais, nunca pelo Git ou pelo instalador.
-
-Localização aprovada:
+O Collector Linux pode monitorar vários Informix com uma única instalação. O
+catálogo é manual e relaciona um alias operacional ao valor `INFORMIXSERVER`:
 
 ```text
-/etc/zabbix-informix/informix-connect.sql
+/etc/zabbix-informix/targets/catalog
 ```
+
+Exemplo com três targets:
+
+```text
+producao-primary|ol_informix1210
+producao-hdr|ol_informix1210_hdr
+homologacao|ol_informix_hml
+```
+
+Para cada valor `INFORMIXSERVER`, crie um diretório e um arquivo privado de
+conexão separado:
+
+```text
+/etc/zabbix-informix/targets/ol_informix1210/informix-connect.sql
+/etc/zabbix-informix/targets/ol_informix1210_hdr/informix-connect.sql
+/etc/zabbix-informix/targets/ol_informix_hml/informix-connect.sql
+```
+
+O `informix-connect.sql` deve ser criado pelo DBA ou responsável pelas
+credenciais, nunca pelo Git ou pelo instalador. Não coloque senha no catálogo.
 
 Exemplo mínimo, usando placeholders que devem ser substituídos pelo DBA:
 
@@ -111,9 +130,14 @@ O formato exato pode variar conforme a política de autenticação Informix. Nã
 Propriedade e permissões:
 
 ```bash
-sudo chown root:zabbix /etc/zabbix-informix/informix-connect.sql
-sudo chmod 0640 /etc/zabbix-informix/informix-connect.sql
-sudo test -r /etc/zabbix-informix/informix-connect.sql
+sudo install -d -o root -g zabbix -m 0750 \
+  /etc/zabbix-informix/targets/ol_informix1210
+sudo chown root:zabbix \
+  /etc/zabbix-informix/targets/ol_informix1210/informix-connect.sql
+sudo chmod 0640 \
+  /etc/zabbix-informix/targets/ol_informix1210/informix-connect.sql
+sudo test -r \
+  /etc/zabbix-informix/targets/ol_informix1210/informix-connect.sql
 ```
 
 O arquivo deve ser somente leitura para o processo (`0640`), pertencente a `root:zabbix`. Não use `777`, não deixe o arquivo no diretório pessoal de um operador e não o envie para Git, tickets ou logs.
@@ -123,7 +147,7 @@ O arquivo deve ser somente leitura para o processo (`0640`), pertencente a `root
 Com `INFORMIXDIR`, `INFORMIXSERVER` e `INFORMIXSQLHOSTS` definidos:
 
 ```bash
-dbaccess - /etc/zabbix-informix/informix-connect.sql
+dbaccess - /etc/zabbix-informix/targets/ol_informix1210/informix-connect.sql
 ```
 
 O comando deve terminar com retorno `0`, sem erro de servidor, usuário, senha ou `sqlhosts`. Se o script de conexão abrir a sessão mas não encerrar, use o formato de conexão aprovado pelo DBA com `DISCONNECT CURRENT;`.
@@ -144,7 +168,7 @@ EOF
 Execute usando o mesmo ambiente do Client SDK:
 
 ```bash
-dbaccess - /etc/zabbix-informix/informix-connect.sql < /tmp/ifx-zabbix-preflight.sql
+dbaccess - /etc/zabbix-informix/targets/ol_informix1210/informix-connect.sql < /tmp/ifx-zabbix-preflight.sql
 echo "DBACCESS_RC=$?"
 rm -f /tmp/ifx-zabbix-preflight.sql
 ```
@@ -166,7 +190,7 @@ sudo ksh 03-deployment/install-zabbix-informix.ksh \
   --informix-home /opt/informix \
   --informix-server ol_informix1210 \
   --informix-sqlhosts /opt/informix/etc/sqlhosts \
-  --connection-file /etc/zabbix-informix/informix-connect.sql
+  --connection-file /etc/zabbix-informix/targets/ol_informix1210/informix-connect.sql
 ```
 
 Resultado esperado: `Zabbix Informix installation completed.`
@@ -190,12 +214,115 @@ sudo zabbix_agentd -t ifx.sql.active.raw
 
 Cada chave deve retornar valor válido, sem mensagem de erro ou `Permission denied`.
 
+### 4.1 Apresentação do Linux Collector ao Zabbix Server
+
+Esta etapa é executada depois que o pacote foi instalado no Linux Collector e o
+serviço `zabbix-agent` está ativo. O template não é instalado no Linux; ele será
+importado posteriormente no Zabbix Server.
+
+No Linux Collector, confirme o nome do host e o endereço que será informado ao
+Zabbix Server:
+
+```bash
+hostname
+hostname -f
+ip -br address
+sudo systemctl is-active zabbix-agent
+```
+
+Confirme que o Agent está escutando na porta padrão:
+
+```bash
+sudo ss -lntp | grep ':10050'
+```
+
+Confirme as chaves instaladas e o parâmetro de target:
+
+```bash
+sudo grep -nE \
+  'ifx\.(sql|health|session|lock|log|hdr|storage).*target' \
+  /etc/zabbix/zabbix_agentd.d/zabbix-informix.conf
+```
+
+Teste localmente uma chave representativa para cada grupo antes de envolver o
+Zabbix Server:
+
+```bash
+sudo zabbix_agentd -t \
+  'ifx.health.instance_state_target[producao-primary]'
+
+sudo zabbix_agentd -t \
+  'ifx.sql.top_n_target[producao-primary]'
+
+sudo zabbix_agentd -t \
+  'ifx.storage.dbspace.discovery_target[producao-primary]'
+```
+
+Todos os testes devem retornar valor válido, sem `ZBX_NOTSUPPORTED`, erro de
+permissão ou erro de conexão Informix.
+
+### 4.2 Teste a partir do Zabbix Server ou Proxy
+
+Execute esta etapa no Zabbix Server ou Proxy que fará a coleta. Substitua
+`<IP_DO_LINUX_COLLECTOR>` pelo endereço do Linux Collector:
+
+```bash
+zabbix_get \
+  -s <IP_DO_LINUX_COLLECTOR> \
+  -p 10050 \
+  -k 'ifx.health.instance_state_target[producao-primary]'
+```
+
+Exemplo:
+
+```bash
+zabbix_get \
+  -s 192.168.0.50 \
+  -p 10050 \
+  -k 'ifx.health.instance_state_target[producao-primary]'
+```
+
+O retorno deve ser um valor Informix válido, por exemplo:
+
+```text
+5
+```
+
+Teste também o SQL-MASTER:
+
+```bash
+zabbix_get \
+  -s 192.168.0.50 \
+  -p 10050 \
+  -k 'ifx.sql.top_n_target[producao-primary]'
+```
+
+O retorno esperado é um texto delimitado por `|`, contendo as linhas do
+SQL-MASTER. Não deve retornar `ZBX_NOTSUPPORTED` nem `Received empty response`.
+
+Se o teste falhar, volte ao Linux Collector e verifique:
+
+```bash
+sudo systemctl status zabbix-agent
+sudo journalctl -u zabbix-agent -n 50 --no-pager
+sudo tail -n 50 /var/log/zabbix/zabbix_agentd.log
+```
+
+No Zabbix Server ou Proxy, confirme a conectividade de rede:
+
+```bash
+nc -vz <IP_DO_LINUX_COLLECTOR> 10050
+```
+
+Somente depois de obter retorno válido com `zabbix_get` deve-se importar o
+template, criar os hosts Informix e definir a macro `{$IFX_TARGET}`.
+
 ## 5. Instalação do painel SQL
 
 No host do frontend Zabbix, copie o pacote para uma área de staging:
 
 ```bash
-sudo mkdir -p /home/norbiato/informix_sql_top_n
+sudo mkdir -p /tmp/informix_sql_top_n
 ```
 
 Instale os arquivos do pacote em:
@@ -264,9 +391,11 @@ Antes, remova o widget dos dashboards ou substitua-o por outro widget. Reinicie 
 
 ## 10. Limites conhecidos
 
-- SQL-002 discovery/detail foi removido; o detalhe é exibido no widget.
+- SQL-002 discovery/detail foi removido do release; o detalhe é exibido no widget.
 - SQL-003 a SQL-016 são visões do SQL-MASTER, não itens duplicados.
-- Package Cache Changes e Stale Statistics não possuem implementação aprovada.
+- Sorts e atividade temporária já são cobertos por SQL-MASTER/SQL-012/SQL-013 (`sql_sorttotal`, `sql_sortdisk`, `sql_sortmem`) e STORAGE-011. Não instale um coletor adicional para essa finalidade.
+- Package Cache Changes não possui contador Informix confiável validado em `syssqltrace`; permanece encerrado como indisponível e não deve ser criado como métrica artificial.
+- Stale Statistics não possui implementação aprovada.
 - Validação de desenvolvimento não equivale a aceite de produção/AIX.
 # Exportação do cadastro de target no host Informix
 
@@ -281,7 +410,7 @@ print "EXPORTER_MODE_RC=$?"
 
 ksh -c '
 . /etc/zabbix-informix/runtime.env || return 1
-IFX_CONNECT_FILE=/etc/zabbix-informix/informix-connect.sql \\
+IFX_CONNECT_FILE=/etc/zabbix-informix/targets/ol_informix1210/informix-connect.sql \\
   05-collectors/informix/tools/ifx-export-agent-target.ksh
 print "EXPORTER_RC=$?"
 '

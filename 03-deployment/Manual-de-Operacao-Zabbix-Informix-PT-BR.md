@@ -28,7 +28,7 @@ A troca é imediata e não exige recarregar a página. Clique em uma linha para 
 
 - `Runtime` representa tempo decorrido da execução, não CPU puro.
 - `Disk reads` e `Buffer reads` são contadores por statement do trace.
-- `Disk sorts` indica sorts executados em disco e é o principal indicador de spill.
+- `Disk sorts` indica sorts executados em disco e é o principal indicador de spill; `sql_sorttotal`, `sql_sortdisk` e `sql_sortmem` já cobrem a observabilidade de sorts. A utilização do temporary dbspace é acompanhada separadamente por STORAGE-011.
 - `Read/write ratio` é derivada dos campos de leitura e escrita disponíveis.
 - `SQL ID` é transitório dentro do buffer do trace.
 - A ausência de linhas pode significar ausência de histórico, filtro de banco ou trace desligado.
@@ -72,7 +72,7 @@ Não exiba `informix-connect.sql`, não coloque credenciais no Git e não use co
 
 ## 7. Escopo
 
-O SQL-MASTER é a fonte única para o painel. SQL-002 discovery/detail não deve ser recriado. Package Cache Changes, CPU por SQL e Stale Statistics permanecem fora do escopo implementado.
+O SQL-MASTER é a fonte única para o painel. SQL-002 discovery/detail não deve ser recriado; seus artefatos legados foram removidos. Sorts/temporários estão cobertos por SQL-MASTER/SQL-012/SQL-013 e STORAGE-011. Package Cache Changes, CPU por SQL e Stale Statistics permanecem indisponíveis ou fora do escopo implementado.
 # Exportador de cadastro de target
 
 O arquivo `05-collectors/informix/tools/ifx-export-agent-target.ksh` é executado no host Informix e produz um relatório somente leitura para o cadastro manual no Linux com Zabbix Agent.
@@ -86,7 +86,7 @@ chmod 0750 05-collectors/informix/tools/ifx-export-agent-target.ksh
 Valide com `ksh -n`, execute o exportador e revise `SQLHOSTS_ENTRY`, `OBSERVED_ROLE`, `OBSERVED_STATE`, `OBSERVED_HDR_PEER` e `CANONICAL_ROLE`. Não copie senhas para o relatório. O arquivo `informix-connect.sql` do target deve ser criado separadamente com proprietário `root`, grupo `zabbix` e modo `0640`.
 # Operação do catálogo manual
 
-Para adicionar um Informix, inclua uma linha `alias|INFORMIXSERVER` em `/etc/zabbix-informix/targets/catalog`, crie `/etc/zabbix-informix/targets/<INFORMIXSERVER>/informix-connect.sql` e valide o target pelo alias com `ifx_target_load <alias>`. Não grave `PRIMARY`, `SECONDARY` ou senha no catálogo. O papel é sempre determinado pelo Informix durante a coleta.
+Para adicionar um Informix, inclua uma linha `alias|INFORMIXSERVER` em `/etc/zabbix-informix/targets/catalog`, crie `/etc/zabbix-informix/targets/<INFORMIXSERVER>/informix-connect.sql` com `root:zabbix` e modo `0640`, e valide o target pelo alias com `ifx_target_load <alias>`. Não grave `PRIMARY`, `SECONDARY` ou senha no catálogo. O papel é sempre determinado pelo Informix durante a coleta.
 
 Após qualquer transferência ou alteração do catálogo:
 

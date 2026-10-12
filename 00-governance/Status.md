@@ -25,9 +25,9 @@ Este arquivo é o controle executivo do projeto. Ele consolida o que foi acordad
 | Sessions | SESSION-001 a SESSION-005 validados no desenvolvimento; aceite no alvo pendente. |
 | Locks | LOCK-001 a LOCK-005 validados; LOCK-006 e LOCK-007 rejeitados por fonte/semântica. |
 | Storage Informix | STORAGE-001 a STORAGE-006 e STORAGE-011 implementados; STORAGE-007 a STORAGE-010 fora deste pacote. |
-| Logs/backup | Definidos/documentados; validação operacional completa pendente. |
-| HDR/HA | Contratos definidos; validação de par HDR real pendente. |
-| SQL performance | SQL-MASTER e widget Top-N validados no desenvolvimento; SQL-017 QPS implementado. |
+| Logs/backup | LOG-001 a LOG-006 target-aware implementados e validados no desenvolvimento. |
+| HDR/HA | HDR-001 a HDR-003 target-aware validados; HDR-004/005 implementados e aguardam peer HDR real. |
+| SQL performance | SQL-MASTER, widget Top-N e SQL-017 QPS validados; SQL-002 legado removido. |
 | Grafana | Reutilização arquitetural definida; dashboard ainda não implementado. |
 
 ## 3. Informix Health
@@ -85,10 +85,10 @@ Este arquivo é o controle executivo do projeto. Ele consolida o que foi acordad
 
 | Área | Métricas | Estado |
 |---|---|---|
-| Logical/physical logs | LOG-001 a LOG-005 | Definidas/documentadas; validação operacional completa pendente. |
-| Backup inventory | LOG-006 | Definida; validação no ambiente-alvo pendente. |
-| HDR local | HDR-001 e HDR-002 | Desenvolvimento/contratos validados; par real pendente. |
-| HDR peer | HDR-003 a HDR-007 | `DEFINED` ou `PENDING_TARGET_VALIDATION`; requer par HDR real. |
+| Logical/physical logs | LOG-001 a LOG-005 | Target-aware implementados e validados no desenvolvimento. |
+| Backup inventory | LOG-006 | Discovery e idade target-aware validadas no desenvolvimento. |
+| HDR local | HDR-001 e HDR-002 | Target-aware validados no desenvolvimento. |
+| HDR peer | HDR-003 a HDR-005 | Discovery target-aware validada; campos de peer aguardam par HDR real. |
 
 ## 8. SQL e performance
 
@@ -108,8 +108,8 @@ O SQL-MASTER é o item mestre textual baseado em `syssqltrace`. O widget Zabbix 
 | Read/write ratio | Incorporada ao SQL-MASTER. |
 | CPU por SQL | Não disponível de forma confiável; não fabricar métrica. |
 | QPS | Coberto pelo SQL-017. |
-| Sorts/temp usage | Coberto por `sql_sorttotal`, `sql_sortdisk`, `sql_sortmem` e campos do trace. |
-| Package-cache changes | `NOT_IMPLEMENTED`; sem contador por SQL validado no `syssqltrace`. |
+| Sorts/temp usage | **Encerrado como coberto** por `sql_sorttotal`, `sql_sortdisk`, `sql_sortmem`, SQL-012/013, SQL-MASTER e STORAGE-011. Não será criado coletor adicional. |
+| Package-cache changes | **Encerrado como não disponível**: não há contador Informix confiável validado no `syssqltrace`; não será criado coletor artificial. |
 | Stale statistics | `NOT_IMPLEMENTED`; `systables.ustlowts` não determina sozinho obsolescência. |
 
 ### SQL-002 legado
@@ -121,7 +121,7 @@ O discovery/detail por `sql_id` foi removido. A criação de itens persistentes 
 - Coletores e launchers usam o `runtime.env` parametrizado.
 - SQL-MASTER e SQL-017 foram instalados no agente.
 - O widget customizado foi instalado no frontend Zabbix.
-- O template/configuração não possui referências ao SQL-002 legado.
+- O template, instalador e configuração ativa não possuem referências ao SQL-002 legado.
 - O trace de desenvolvimento foi validado em modo High/Global para gerar histórico suficiente ao painel.
 - A validação de desenvolvimento não constitui aceite de produção.
 
@@ -129,6 +129,7 @@ O discovery/detail por `sql_id` foi removido. A criação de itens persistentes 
 
 1. Reinstalar/validar o release final no host-alvo.
 2. Validar permissões, custo e compatibilidade no Informix/AIX alvo.
-3. Exportar e revisar o YAML/template Zabbix final.
-4. Definir thresholds a partir de baseline do ambiente-alvo.
-5. Reproduzir o painel no Grafana, se necessário, usando o SQL-MASTER como fonte Zabbix.
+3. Validar HDR-004/005 em um par HDR real.
+4. Exportar e revisar o YAML/template Zabbix final.
+5. Definir thresholds a partir de baseline do ambiente-alvo.
+6. Reproduzir o painel no Grafana, se necessário, usando o SQL-MASTER como fonte Zabbix.
